@@ -91,6 +91,8 @@
     background-color: white !important;
     color: black !important;
     font-family: 'Alegreya', serif !important;
+    margin: 0;
+    padding: 0;
   }
   .no-print {
     display: none !important;
@@ -104,7 +106,9 @@
   main {
     width: 100% !important;
     margin: 0 !important;
-    padding: 0 !important;
+    padding: 1rem !important; /* Add some padding for print */
+    box-shadow: none !important;
+    border: none !important;
   }
   a {
     text-decoration: none !important;
@@ -120,7 +124,10 @@
   }
    /* Ensure recipe cards/details are not split across pages */
   .recipe-card-print, .recipe-detail-print {
-    page-break-inside: avoid;
+    page-break-inside: avoid !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
   }
   /* Hide buttons in print view */
   button, .btn {
