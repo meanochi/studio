@@ -20,7 +20,12 @@ export interface Recipe {
   tags?: string[];
 }
 
-export interface ShoppingListItem extends Ingredient {
-  recipeId?: string; // Optional: to know which recipe it came from
-  recipeName?: string; // Optional
+export interface ShoppingListItem {
+  id: string; // Unique ID for the shopping list entry
+  name: string;
+  amount: number;
+  unit: string;
+  originalIngredientId?: string; // Optional: to trace back to an original ingredient if needed
+  recipeId?: string; 
+  recipeName?: string; 
 }

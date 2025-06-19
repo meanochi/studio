@@ -6,7 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { useShoppingList } from '@/contexts/ShoppingListContext';
-import type { Recipe } from '@/types';
+import type { Recipe, Ingredient } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -26,7 +26,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
-  Clock, Users, Edit3, Trash2, Printer, ShoppingCart, Utensils, Snowflake, Loader2, AlertTriangle, HomeIcon, RefreshCw
+  Clock, Users, Edit3, Trash2, Printer, ShoppingCart, Utensils, Snowflake, Loader2, AlertTriangle, HomeIcon, RefreshCw, PlusSquare
 } from 'lucide-react';
 
 export default function RecipeDetailPage() {
@@ -63,17 +63,17 @@ export default function RecipeDetailPage() {
   const servingsDisplay = useMemo(() => {
     if (!recipe) return '';
     const calculatedServings = recipe.servings * multiplier;
-    // Handle potential floating point inaccuracies for display
     const displayServings = Number(calculatedServings.toFixed(2));
     return `${displayServings} ${recipe.servingUnit}`;
   }, [recipe, multiplier]);
+
 
   const handleMultiplierChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newMultiplier = parseFloat(e.target.value);
     if (!isNaN(newMultiplier) && newMultiplier > 0) {
       setMultiplier(newMultiplier);
     } else if (e.target.value === '') {
-      setMultiplier(1); // Reset to 1 if input is cleared
+      setMultiplier(1); 
     }
   };
 
@@ -89,12 +89,23 @@ export default function RecipeDetailPage() {
     }
   };
 
-  const handleAddToShoppingList = () => {
+  const handleAddAllToShoppingList = () => {
     if (recipe) {
       addIngredientsToShoppingList(displayedIngredients, recipe.id, recipe.name);
       toast({
         title: "נוסף לרשימת הקניות",
-        description: `כמויות עבור "${recipe.name}" (מוכפלות פי ${multiplier}) נוספו.`,
+        description: `כל הכמויות עבור "${recipe.name}" (מוכפלות פי ${multiplier}) נוספו.`,
+      });
+    }
+  };
+
+  const handleAddSingleIngredientToShoppingList = (ingredient: Ingredient) => {
+    if (recipe) {
+      // The ingredient passed from displayedIngredients already has the multiplied amount
+      addIngredientsToShoppingList([ingredient], recipe.id, recipe.name);
+      toast({
+        title: "נוסף לרשימת הקניות",
+        description: `${Number(ingredient.amount.toFixed(2))} ${ingredient.unit} של ${ingredient.name} נוספו.`,
       });
     }
   };
@@ -128,7 +139,6 @@ export default function RecipeDetailPage() {
   }
 
   const totalTime = () => {
-    // recipe is guaranteed to be non-null here due to the checks above
     return `${recipe.prepTime}${recipe.cookTime ? `, ${recipe.cookTime}` : ''}`;
   }
   
@@ -203,11 +213,21 @@ export default function RecipeDetailPage() {
             <ul className="list-none space-y-2 font-body ps-0">
               {displayedIngredients.map(ingredient => (
                 <li key={ingredient.id} className="flex items-center p-2 bg-background rounded-md shadow-sm hover:bg-secondary/20 transition-colors">
-                  <span className="font-semibold text-primary w-1/3">{ingredient.name}</span>
-                  <span className="text-muted-foreground w-1/3 text-center">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="me-2 no-print text-green-600 hover:text-green-700 hover:bg-green-500/10 h-8 w-8" 
+                    onClick={() => handleAddSingleIngredientToShoppingList(ingredient)}
+                    aria-label={`הוסף ${ingredient.name} לרשימת הקניות`}
+                    title={`הוסף ${ingredient.name} לרשימת הקניות`}
+                  >
+                    <PlusSquare size={20} />
+                  </Button>
+                  <span className="font-semibold text-primary flex-1">{ingredient.name}</span>
+                  <span className="text-muted-foreground flex-1 text-center">
                     {Number((ingredient.amount).toFixed(2))} {ingredient.unit}
                   </span>
-                  <span className="text-xs text-gray-400 w-1/3 text-left italic">
+                  <span className="text-xs text-gray-400 flex-1 text-left italic no-print">
                     {multiplier !== 1 && `(מקורי: ${Number((ingredient.amount / multiplier).toFixed(2))} ${ingredient.unit})`}
                   </span>
                 </li>
@@ -230,8 +250,8 @@ export default function RecipeDetailPage() {
         </CardContent>
 
         <CardFooter className="p-6 flex flex-col sm:flex-row justify-start items-center gap-3 border-t no-print">
-          <Button variant="outline" onClick={handleAddToShoppingList} className="w-full sm:w-auto flex items-center gap-2">
-            <ShoppingCart size={18} /> הוסף לרשימת קניות
+          <Button variant="outline" onClick={handleAddAllToShoppingList} className="w-full sm:w-auto flex items-center gap-2">
+            <ShoppingCart size={18} /> הוסף הכל לרשימת קניות
           </Button>
           <Button variant="outline" onClick={handlePrint} className="w-full sm:w-auto flex items-center gap-2">
             <Printer size={18} /> הדפס מתכון
