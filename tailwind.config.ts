@@ -17,7 +17,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        body: ['Alegreya', 'serif'],
+        body: ['Rubik', 'sans-serif'], // Changed from Alegreya
         headline: ['Belleza', 'sans-serif'],
         code: ['monospace'],
       },

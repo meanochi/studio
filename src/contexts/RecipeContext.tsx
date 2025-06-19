@@ -1,12 +1,15 @@
 'use client';
 
-import type { Recipe, Ingredient } from '@/types';
+import type { Recipe, Ingredient, InstructionStep } from '@/types';
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { generateId } from '@/lib/utils';
 
 interface RecipeContextType {
   recipes: Recipe[];
-  addRecipe: (recipe: Omit<Recipe, 'id' | 'ingredients'> & { ingredients: Omit<Ingredient, 'id'>[] }) => Recipe;
+  addRecipe: (recipe: Omit<Recipe, 'id' | 'ingredients' | 'instructions'> & { 
+    ingredients: Omit<Ingredient, 'id'>[],
+    instructions: Omit<InstructionStep, 'id'>[] 
+  }) => Recipe;
   updateRecipe: (updatedRecipe: Recipe) => void;
   deleteRecipe: (recipeId: string) => void;
   getRecipeById: (recipeId: string) => Recipe | undefined;
@@ -34,18 +37,18 @@ const initialRecipes: Recipe[] = [
       { id: generateId(), name: 'סוכר חום, דחוס', amount: 0.75, unit: 'כוס' },
       { id: generateId(), name: 'ביצים גדולות', amount: 2, unit: '' },
       { id: generateId(), name: 'תמצית וניל', amount: 1, unit: 'כפית' },
-      { id: generateId(), name: 'שוקולד צ\'יפס מריר למחצה', amount: 2, unit: 'כוסות' },
+      { id: generateId(), name: 'שוקולד צ\'יפס מריר למחצה', amount: 2, unit: 'כוסות', isOptional: false, notes: 'אפשר גם שוקולד חלב' },
     ],
     instructions: [
-      'חממו תנור מראש ל-190°C (375°F).',
-      'ערבבו קמח, סודה לשתייה ומלח בקערה קטנה.',
-      'הקציפו חמאה, סוכר לבן וסוכר חום בקערת מיקסר גדולה עד לקבלת תערובת קרמית.',
-      'הוסיפו את הביצים אחת אחת, ולאחר מכן ערבבו פנימה את תמצית הווניל.',
-      'הוסיפו בהדרגה את תערובת הקמח.',
-      'ערבבו פנימה את השוקולד צ\'יפס.',
-      'צרו כדורים בעזרת כף גלידה או כף רגילה והניחו על תבניות אפייה לא משומנות.',
-      'אפו במשך 9-11 דקות או עד להזהבה.',
-      'צננו על תבניות האפייה למשך 2 דקות; העבירו לרשתות צינון להתקררות מלאה.',
+      { id: generateId(), text: 'חממו תנור מראש ל-190°C (375°F).', imageUrl: 'https://placehold.co/300x200.png?text=Step+1' },
+      { id: generateId(), text: 'ערבבו קמח, סודה לשתייה ומלח בקערה קטנה.' },
+      { id: generateId(), text: 'הקציפו חמאה, סוכר לבן וסוכר חום בקערת מיקסר גדולה עד לקבלת תערובת קרמית.' },
+      { id: generateId(), text: 'הוסיפו את הביצים אחת אחת, ולאחר מכן ערבבו פנימה את תמצית הווניל.' },
+      { id: generateId(), text: 'הוסיפו בהדרגה את תערובת הקמח.' },
+      { id: generateId(), text: 'ערבבו פנימה את השוקולד צ\'יפס.' },
+      { id: generateId(), text: 'צרו כדורים בעזרת כף גלידה או כף רגילה והניחו על תבניות אפייה לא משומנות.' },
+      { id: generateId(), text: 'אפו במשך 9-11 דקות או עד להזהבה.' },
+      { id: generateId(), text: 'צננו על תבניות האפייה למשך 2 דקות; העבירו לרשתות צינון להתקררות מלאה.' },
     ],
     imageUrl: 'https://placehold.co/600x400.png',
     tags: ['קינוח', 'אפייה', 'עוגיות'],
@@ -66,18 +69,18 @@ const initialRecipes: Recipe[] = [
       { id: generateId(), name: 'שיני שום, כתושות', amount: 2, unit: '' },
       { id: generateId(), name: 'שמן זית', amount: 2, unit: 'כפות' },
       { id: generateId(), name: 'אורגנו מיובש', amount: 1, unit: 'כפית' },
-      { id: generateId(), name: 'מלח ופלפל', amount: 1, unit: 'לפי הטעם' },
-      { id: generateId(), name: 'בזיליקום טרי, קצוץ (אופציונלי)', amount: 1, unit: 'חופן' },
+      { id: generateId(), name: 'מלח ופלפל', amount: 1, unit: 'לפי הטעם', isOptional: true },
+      { id: generateId(), name: 'בזיליקום טרי, קצוץ', amount: 1, unit: 'חופן', isOptional: true, notes: 'מומלץ מאוד לטעם משופר' },
     ],
     instructions: [
-      'בשלו את הפסטה לפי הוראות היצרן.',
-      'בזמן שהפסטה מתבשלת, חממו שמן זית במחבת גדולה על אש בינונית.',
-      'הוסיפו בצל ובשלו עד שהוא מתרכך, כ-5 דקות.',
-      'הוסיפו שום ובשלו עוד דקה עד שעולה ריח.',
-      'ערבבו פנימה עגבניות מרוסקות ואורגנו. תבלו במלח ופלפל.',
-      'הביאו לרתיחה ובשלו על אש נמוכה במשך 10-15 דקות, תוך ערבוב מדי פעם.',
-      'סננו את הפסטה והוסיפו אותה למחבת עם הרוטב. ערבבו היטב.',
-      'הגישו מיד, מקושט בבזיליקום טרי אם רוצים.',
+      { id: generateId(), text: 'בשלו את הפסטה לפי הוראות היצרן.' },
+      { id: generateId(), text: 'בזמן שהפסטה מתבשלת, חממו שמן זית במחבת גדולה על אש בינונית.' },
+      { id: generateId(), text: 'הוסיפו בצל ובשלו עד שהוא מתרכך, כ-5 דקות.' },
+      { id: generateId(), text: 'הוסיפו שום ובשלו עוד דקה עד שעולה ריח.' },
+      { id: generateId(), text: 'ערבבו פנימה עגבניות מרוסקות ואורגנו. תבלו במלח ופלפל.' },
+      { id: generateId(), text: 'הביאו לרתיחה ובשלו על אש נמוכה במשך 10-15 דקות, תוך ערבוב מדי פעם.' },
+      { id: generateId(), text: 'סננו את הפסטה והוסיפו אותה למחבת עם הרוטב. ערבבו היטב.' },
+      { id: generateId(), text: 'הגישו מיד, מקושט בבזיליקום טרי אם רוצים.' },
     ],
     imageUrl: 'https://placehold.co/600x400.png',
     tags: ['מנה עיקרית', 'פסטה', 'צמחוני', 'מהיר'],
@@ -115,19 +118,28 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
   }, [recipes, loading]);
 
-  const addRecipe = (recipeData: Omit<Recipe, 'id' | 'ingredients'> & { ingredients: Omit<Ingredient, 'id'>[] }): Recipe => {
+  const addRecipe = (recipeData: Omit<Recipe, 'id' | 'ingredients' | 'instructions'> & { 
+    ingredients: Omit<Ingredient, 'id'>[],
+    instructions: Omit<InstructionStep, 'id'>[] 
+  }): Recipe => {
     const newRecipe: Recipe = {
       ...recipeData,
       id: generateId(),
-      ingredients: recipeData.ingredients.map(ing => ({ ...ing, id: generateId() })),
+      ingredients: recipeData.ingredients.map(ing => ({ ...ing, id: ing.id || generateId() })),
+      instructions: recipeData.instructions.map(instr => ({ ...instr, id: instr.id || generateId()})),
     };
     setRecipes(prevRecipes => [...prevRecipes, newRecipe]);
     return newRecipe;
   };
 
   const updateRecipe = (updatedRecipe: Recipe) => {
+     const fullUpdatedRecipe: Recipe = {
+      ...updatedRecipe,
+      ingredients: updatedRecipe.ingredients.map(ing => ({ ...ing, id: ing.id || generateId() })),
+      instructions: updatedRecipe.instructions.map(instr => ({ ...instr, id: instr.id || generateId()})),
+    };
     setRecipes(prevRecipes =>
-      prevRecipes.map(recipe => (recipe.id === updatedRecipe.id ? updatedRecipe : recipe))
+      prevRecipes.map(recipe => (recipe.id === fullUpdatedRecipe.id ? fullUpdatedRecipe : recipe))
     );
   };
 

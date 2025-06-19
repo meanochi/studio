@@ -3,6 +3,14 @@ export interface Ingredient {
   name: string;
   amount: number;
   unit: string;
+  isOptional?: boolean;
+  notes?: string;
+}
+
+export interface InstructionStep {
+  id: string;
+  text: string;
+  imageUrl?: string;
 }
 
 export interface Recipe {
@@ -15,7 +23,7 @@ export interface Recipe {
   servingUnit: string;
   freezable: boolean;
   ingredients: Ingredient[];
-  instructions: string[];
+  instructions: InstructionStep[];
   imageUrl?: string;
   tags?: string[];
 }

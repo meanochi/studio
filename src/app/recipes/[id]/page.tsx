@@ -6,7 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { useShoppingList } from '@/contexts/ShoppingListContext';
-import type { Recipe, Ingredient } from '@/types';
+import type { Recipe, Ingredient, InstructionStep } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +14,7 @@ import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { getDisplayUnit } from '@/lib/utils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,7 +27,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
-  Clock, Users, Edit3, Trash2, Printer, ShoppingCart, Utensils, Snowflake, Loader2, AlertTriangle, HomeIcon, RefreshCw, PlusSquare
+  Clock, Users, Edit3, Trash2, Printer, ShoppingCart, Utensils, Snowflake, Loader2, AlertTriangle, HomeIcon, RefreshCw, PlusSquare, Image as ImageIcon, Info
 } from 'lucide-react';
 
 export default function RecipeDetailPage() {
@@ -51,6 +52,13 @@ export default function RecipeDetailPage() {
       setIsLoading(false);
     }
   }, [recipeId, getRecipeById, recipesLoading]);
+  
+  const servingsDisplay = useMemo(() => {
+    if (!recipe) return '';
+    const calculatedServings = recipe.servings * multiplier;
+    const displayServings = Number(calculatedServings.toFixed(2));
+    return `${displayServings} ${recipe.servingUnit}`;
+  }, [recipe, multiplier]);
 
   const displayedIngredients = useMemo(() => {
     if (!recipe) return [];
@@ -58,13 +66,6 @@ export default function RecipeDetailPage() {
       ...ing,
       amount: ing.amount * multiplier,
     }));
-  }, [recipe, multiplier]);
-
-  const servingsDisplay = useMemo(() => {
-    if (!recipe) return '';
-    const calculatedServings = recipe.servings * multiplier;
-    const displayServings = Number(calculatedServings.toFixed(2));
-    return `${displayServings} ${recipe.servingUnit}`;
   }, [recipe, multiplier]);
 
 
@@ -91,10 +92,13 @@ export default function RecipeDetailPage() {
 
   const handleAddAllToShoppingList = () => {
     if (recipe) {
-      addIngredientsToShoppingList(displayedIngredients, recipe.id, recipe.name);
+      // Filter out optional ingredients before adding all to shopping list, unless user explicitly adds them.
+      // For now, "Add all" adds all non-optional ingredients.
+      const nonOptionalIngredients = displayedIngredients.filter(ing => !ing.isOptional);
+      addIngredientsToShoppingList(nonOptionalIngredients, recipe.id, recipe.name);
       toast({
         title: "נוסף לרשימת הקניות",
-        description: `כל הכמויות עבור "${recipe.name}" (מוכפלות פי ${multiplier}) נוספו.`,
+        description: `רכיבים (לא אופציונליים) עבור "${recipe.name}" (מוכפלות פי ${multiplier}) נוספו.`,
       });
     }
   };
@@ -105,7 +109,7 @@ export default function RecipeDetailPage() {
       addIngredientsToShoppingList([ingredient], recipe.id, recipe.name);
       toast({
         title: "נוסף לרשימת הקניות",
-        description: `${Number(ingredient.amount.toFixed(2))} ${ingredient.unit} של ${ingredient.name} נוספו.`,
+        description: `${Number(ingredient.amount.toFixed(2))} ${getDisplayUnit(ingredient.amount, ingredient.unit)} של ${ingredient.name} נוספו.`,
       });
     }
   };
@@ -154,7 +158,7 @@ export default function RecipeDetailPage() {
               height={600}
               className="w-full h-64 md:h-96 object-cover"
               priority
-              data-ai-hint="recipe food"
+              data-ai-hint="recipe food photography"
             />
           )}
           <div className={recipe.imageUrl ? "absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-6 flex flex-col justify-end" : "p-6 bg-primary/10"}>
@@ -184,7 +188,7 @@ export default function RecipeDetailPage() {
           {recipe.tags && recipe.tags.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {recipe.tags.map(tag => (
-                <Badge key={tag} variant="outline" className="font-body text-sm bg-accent/10 text-accent-foreground border-accent hover:bg-accent/20">{tag}</Badge>
+                <Badge key={tag} variant="outline" className="font-body text-sm bg-accent/30 text-accent-foreground border-accent/70 hover:bg-accent/40">{tag}</Badge>
               ))}
             </div>
           )}
@@ -210,26 +214,37 @@ export default function RecipeDetailPage() {
                  </Button>
               </div>
             </div>
-            <ul className="list-none space-y-2 font-body ps-0">
+            <ul className="list-none space-y-3 font-body ps-0">
               {displayedIngredients.map(ingredient => (
-                <li key={ingredient.id} className="flex items-center p-2 bg-background rounded-md shadow-sm hover:bg-secondary/20 transition-colors">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="me-2 no-print text-green-600 hover:text-green-700 hover:bg-green-500/10 h-8 w-8" 
-                    onClick={() => handleAddSingleIngredientToShoppingList(ingredient)}
-                    aria-label={`הוסף ${ingredient.name} לרשימת הקניות`}
-                    title={`הוסף ${ingredient.name} לרשימת הקניות`}
-                  >
-                    <PlusSquare size={20} />
-                  </Button>
-                  <span className="font-semibold text-primary flex-1">{ingredient.name}</span>
-                  <span className="text-muted-foreground flex-1 text-center">
-                    {Number((ingredient.amount).toFixed(2))} {ingredient.unit}
-                  </span>
-                  <span className="text-xs text-gray-400 flex-1 text-left italic no-print">
-                    {multiplier !== 1 && `(מקורי: ${Number((ingredient.amount / multiplier).toFixed(2))} ${ingredient.unit})`}
-                  </span>
+                <li key={ingredient.id} className="flex flex-col p-3 bg-background rounded-md shadow-sm hover:bg-secondary/20 transition-colors">
+                  <div className="flex items-center w-full">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="me-2 no-print text-green-600 hover:text-green-700 hover:bg-green-500/10 h-8 w-8" 
+                      onClick={() => handleAddSingleIngredientToShoppingList(ingredient)}
+                      aria-label={`הוסף ${ingredient.name} לרשימת הקניות`}
+                      title={`הוסף ${ingredient.name} לרשימת הקניות`}
+                    >
+                      <PlusSquare size={20} />
+                    </Button>
+                    <span className="font-semibold text-primary flex-1">
+                        {ingredient.name}
+                        {ingredient.isOptional && <span className="text-xs text-muted-foreground ms-1">(אופציונלי)</span>}
+                    </span>
+                    <span className="text-muted-foreground flex-1 text-center">
+                      {Number((ingredient.amount).toFixed(2))} {getDisplayUnit(ingredient.amount, ingredient.unit)}
+                    </span>
+                    <span className="text-xs text-gray-400 flex-1 text-left italic no-print">
+                      {multiplier !== 1 && `(מקורי: ${Number((ingredient.amount / multiplier).toFixed(2))} ${getDisplayUnit(ingredient.amount/multiplier, ingredient.unit)})`}
+                    </span>
+                  </div>
+                  {ingredient.notes && (
+                    <div className="ps-10 pt-1 text-xs text-muted-foreground/80 flex items-center">
+                        <Info size={12} className="me-1.5 text-accent"/>
+                        <span>{ingredient.notes}</span>
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>
@@ -239,10 +254,22 @@ export default function RecipeDetailPage() {
 
           <div>
             <h3 className="text-2xl font-headline text-primary mb-3">הוראות</h3>
-            <ol className="list-decimal list-inside space-y-3 font-body text-base md:text-lg leading-relaxed">
+            <ol className="list-decimal list-inside space-y-4 font-body text-base md:text-lg leading-relaxed">
               {recipe.instructions.map((step, index) => (
-                <li key={index} className="pe-2 border-r-2 border-primary/50 py-1 hover:bg-primary/5 transition-colors rounded-l-md">
-                  {step}
+                <li key={step.id} className="pe-2 border-r-2 border-primary/50 py-2 hover:bg-primary/5 transition-colors rounded-l-md space-y-2">
+                  <span>{step.text}</span>
+                  {step.imageUrl && (
+                    <div className="mt-2 ms-4">
+                      <Image 
+                        src={step.imageUrl} 
+                        alt={`תמונה עבור שלב ${index + 1}`} 
+                        width={400} 
+                        height={300} 
+                        className="rounded-md object-cover border shadow-sm"
+                        data-ai-hint="cooking instruction photo"
+                      />
+                    </div>
+                  )}
                 </li>
               ))}
             </ol>

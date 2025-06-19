@@ -6,6 +6,7 @@ import { useShoppingList } from '@/contexts/ShoppingListContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Trash2, ShoppingBasket, XCircle, Loader2, Printer } from 'lucide-react';
+import { getDisplayUnit } from '@/lib/utils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,10 +22,10 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 
 interface GroupedShoppingItem {
-  name: string; // Original casing for display
-  items: ShoppingListItem[]; // All original items for this name
-  displayAmount: string; // e.g., "3 cups", or "2 cups + 1 spoon"
-  recipeName?: string; // Representative recipe name for the group
+  name: string; 
+  items: ShoppingListItem[]; 
+  displayAmount: string; 
+  recipeName?: string; 
 }
 
 export default function ShoppingListPage() {
@@ -47,19 +48,17 @@ export default function ShoppingListPage() {
     return Object.entries(groupsByName).map(([normalizedName, nameGroupItems]) => {
       const firstItemInGroup = nameGroupItems[0];
       
-      // Consolidate amounts by unit within this name group
       const unitsMap: { [unitKey: string]: { totalAmount: number, originalUnitDisplay: string } } = {};
       nameGroupItems.forEach(item => {
         const unitKey = item.unit.trim().toLowerCase();
         if (!unitsMap[unitKey]) {
-          // Store the first encountered original casing for the unit display
           unitsMap[unitKey] = { totalAmount: 0, originalUnitDisplay: item.unit };
         }
         unitsMap[unitKey].totalAmount += item.amount;
       });
 
       const displayAmountParts = Object.values(unitsMap).map(unitData => 
-        `${Number(unitData.totalAmount.toFixed(2))} ${unitData.originalUnitDisplay}`
+        `${Number(unitData.totalAmount.toFixed(2))} ${getDisplayUnit(unitData.totalAmount, unitData.originalUnitDisplay)}`
       );
       const displayAmount = displayAmountParts.join(' + ');
       
@@ -72,12 +71,12 @@ export default function ShoppingListPage() {
       }
 
       return {
-        name: firstItemInGroup.name, // Use original casing from the first item for display
-        items: nameGroupItems, // Keep all original items for potential detailed view or other logic
+        name: firstItemInGroup.name, 
+        items: nameGroupItems, 
         displayAmount,
         recipeName: representativeRecipeName,
       };
-    }).sort((a, b) => a.name.localeCompare(b.name, 'he')); // Sort groups by name
+    }).sort((a, b) => a.name.localeCompare(b.name, 'he'));
   }, [shoppingList, loading]);
 
   const handleClearList = () => {
@@ -90,7 +89,6 @@ export default function ShoppingListPage() {
   };
 
   const handleRemoveGroup = (groupName: string) => {
-    // This function removes all items by name, regardless of unit consolidation for display
     removeItemsByNameFromShoppingList(groupName);
     toast({
       title: "הפריטים הוסרו",

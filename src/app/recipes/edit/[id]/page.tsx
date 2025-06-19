@@ -5,11 +5,12 @@ import { useRecipes } from '@/contexts/RecipeContext';
 import { useParams, useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState } from 'react';
-import type { Recipe } from '@/types';
+import type { Recipe, Ingredient, InstructionStep } from '@/types';
 import type { RecipeFormData } from '@/components/recipes/RecipeSchema';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { generateId } from '@/lib/utils';
 
 export default function EditRecipePage() {
   const { getRecipeById, updateRecipe, loading: recipesLoading } = useRecipes();
@@ -31,14 +32,31 @@ export default function EditRecipePage() {
 
   const handleSubmit = (data: RecipeFormData) => {
     if (!recipe) return;
+
+    // Ensure all ingredients and instructions have IDs, mapping from form data
+    const processedIngredients = data.ingredients.map(ing => {
+      const existingIng = recipe.ingredients.find(origIng => origIng.id === ing.id || (origIng.name === ing.name && origIng.unit === ing.unit));
+      return {
+        ...ing,
+        id: ing.id || existingIng?.id || generateId(),
+      };
+    });
+
+    const processedInstructions = data.instructions.map(instr => {
+      const existingInstr = recipe.instructions.find(origInstr => origInstr.id === instr.id || origInstr.text === instr.text);
+      return {
+        ...instr,
+        id: instr.id || existingInstr?.id || generateId(),
+      };
+    });
+    
     const updatedRecipeData: Recipe = {
       ...recipe, 
       ...data,
-       ingredients: data.ingredients.map(ing => ({
-        ...ing,
-        id: ing.id || recipe.ingredients.find(origIng => origIng.name === ing.name)?.id || Math.random().toString(36).substr(2,9) 
-      })),
+      ingredients: processedIngredients,
+      instructions: processedInstructions,
     };
+
     updateRecipe(updatedRecipeData);
     toast({
       title: "המתכון עודכן!",
@@ -68,9 +86,27 @@ export default function EditRecipePage() {
     );
   }
   
+  // Ensure initialData for form has instruction steps with IDs
+  const initialDataForForm: RecipeFormData = {
+    ...recipe,
+    ingredients: recipe.ingredients.map(ing => ({
+        ...ing,
+        amount: Number(ing.amount),
+        isOptional: ing.isOptional || false,
+        notes: ing.notes || '',
+    })),
+    instructions: recipe.instructions.map(instr => ({
+        id: instr.id || generateId(), 
+        text: instr.text,
+        imageUrl: instr.imageUrl || '',
+    })),
+    tags: recipe.tags || [],
+  };
+
+
   return (
     <div>
-      <RecipeForm initialData={recipe} onSubmit={handleSubmit} isEditing={true} />
+      <RecipeForm initialData={initialDataForForm} onSubmit={handleSubmit} isEditing={true} />
     </div>
   );
 }

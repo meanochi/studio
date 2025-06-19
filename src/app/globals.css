@@ -95,7 +95,7 @@
   body {
     background-color: white !important;
     color: black !important;
-    font-family: 'Alegreya', serif !important;
+    font-family: 'Rubik', sans-serif !important; /* Updated from Alegreya */
     margin: 0;
     padding: 0;
   }

@@ -52,7 +52,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
             width={600}
             height={400}
             className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
-            data-ai-hint="food cooking"
+            data-ai-hint="food photography"
           />
         </Link>
       </CardHeader>
@@ -72,7 +72,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
         {recipe.tags && recipe.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-2">
             {recipe.tags.slice(0, 3).map(tag => (
-              <Badge key={tag} variant="secondary" className="font-body">{tag}</Badge>
+              <Badge key={tag} variant="outline" className="font-body text-xs bg-accent/30 text-accent-foreground border-accent/70 hover:bg-accent/40">{tag}</Badge>
             ))}
           </div>
         )}

@@ -4,7 +4,15 @@ export const ingredientSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, "שם הרכיב נדרש"),
   amount: z.coerce.number().min(0.01, "הכמות חייבת להיות חיובית"),
-  unit: z.string().min(1, "יחידת מידה נדרשת"),
+  unit: z.string().min(1, "יחידת מידה נדרשת (לדוגמה: כוסות, גרמים, כפיות)"),
+  isOptional: z.boolean().optional(),
+  notes: z.string().max(150, "הערת הרכיב ארוכה מדי").optional(),
+});
+
+export const instructionStepSchema = z.object({
+  id: z.string().optional(),
+  text: z.string().min(1, "שלב בהוראות אינו יכול להיות ריק"),
+  imageUrl: z.string().optional(),
 });
 
 export const recipeSchema = z.object({
@@ -16,10 +24,11 @@ export const recipeSchema = z.object({
   servingUnit: z.string().min(1, "יחידת מידה למנה נדרשת").max(30, "יחידת מידה למנה ארוכה מדי"),
   freezable: z.boolean().default(false),
   ingredients: z.array(ingredientSchema).min(1, "נדרש לפחות רכיב אחד"),
-  instructions: z.array(z.string().min(1, "שלב בהוראות אינו יכול להיות ריק")).min(1, "נדרש לפחות שלב אחד בהוראות"),
-  imageUrl: z.string().optional(), // Allow data URIs and standard URLs, or empty string
+  instructions: z.array(instructionStepSchema).min(1, "נדרש לפחות שלב אחד בהוראות"),
+  imageUrl: z.string().optional(), 
   tags: z.array(z.string().min(1).max(30)).optional(),
 });
 
 export type RecipeFormData = z.infer<typeof recipeSchema>;
 export type IngredientFormData = z.infer<typeof ingredientSchema>;
+export type InstructionStepFormData = z.infer<typeof instructionStepSchema>;
