@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { PlusCircle, Trash2, Save, Image as ImageIcon } from 'lucide-react';
 import { generateId } from '@/lib/utils';
+import { useState } from 'react'; // Added useState import
 
 interface RecipeFormProps {
   initialData?: Recipe;
