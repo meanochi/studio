@@ -32,17 +32,17 @@ export default function EditRecipePage() {
   const handleSubmit = (data: RecipeFormData) => {
     if (!recipe) return;
     const updatedRecipeData: Recipe = {
-      ...recipe, // Persist original ID and other fields not in form
+      ...recipe, 
       ...data,
        ingredients: data.ingredients.map(ing => ({
         ...ing,
-        id: ing.id || recipe.ingredients.find(origIng => origIng.name === ing.name)?.id || Math.random().toString(36).substr(2,9) // Ensure ID exists
+        id: ing.id || recipe.ingredients.find(origIng => origIng.name === ing.name)?.id || Math.random().toString(36).substr(2,9) 
       })),
     };
     updateRecipe(updatedRecipeData);
     toast({
-      title: "Recipe Updated!",
-      description: `"${updatedRecipeData.name}" has been successfully updated.`,
+      title: "המתכון עודכן!",
+      description: `"${updatedRecipeData.name}" עודכן בהצלחה.`,
     });
     router.push(`/recipes/${updatedRecipeData.id}`);
   };
@@ -51,7 +51,7 @@ export default function EditRecipePage() {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-4 text-xl font-semibold text-primary">Loading recipe for editing...</p>
+        <p className="ms-4 text-xl font-semibold text-primary">טוען מתכון לעריכה...</p>
       </div>
     );
   }
@@ -59,10 +59,10 @@ export default function EditRecipePage() {
   if (!recipe) {
     return (
       <div className="text-center py-10">
-        <h2 className="text-2xl font-headline text-destructive mb-4">Recipe Not Found</h2>
-        <p className="text-muted-foreground font-body">The recipe you are trying to edit does not exist.</p>
+        <h2 className="text-2xl font-headline text-destructive mb-4">מתכון לא נמצא</h2>
+        <p className="text-muted-foreground font-body">המתכון שאתה מנסה לערוך אינו קיים.</p>
         <Button asChild variant="link" className="mt-4">
-          <Link href="/">Go back to Home</Link>
+          <Link href="/">חזור לדף הבית</Link>
         </Button>
       </div>
     );

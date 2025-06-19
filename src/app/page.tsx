@@ -25,7 +25,7 @@ export default function HomePage() {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-4 text-xl font-semibold text-primary">Loading recipes...</p>
+        <p className="ms-4 text-xl font-semibold text-primary">טוען מתכונים...</p>
       </div>
     );
   }
@@ -33,22 +33,22 @@ export default function HomePage() {
   return (
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 bg-card rounded-lg shadow">
-        <h2 className="text-3xl font-headline text-primary">My Recipes</h2>
+        <h2 className="text-3xl font-headline text-primary">המתכונים שלי</h2>
         <div className="relative w-full sm:w-auto sm:min-w-[300px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Search recipes, tags, or ingredients..."
-            className="pl-10 w-full"
+            placeholder="חפש מתכונים, תגיות או רכיבים..."
+            className="pr-10 w-full"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            aria-label="Search recipes"
+            aria-label="חיפוש מתכונים"
           />
         </div>
         <Button asChild className="w-full sm:w-auto">
           <Link href="/recipes/add" className="flex items-center gap-2">
             <PlusCircle size={20} />
-            Add New Recipe
+            הוסף מתכון חדש
           </Link>
         </Button>
       </div>
@@ -62,12 +62,12 @@ export default function HomePage() {
       ) : (
         <div className="text-center py-10">
           <p className="text-xl text-muted-foreground font-body">
-            {searchTerm ? `No recipes found for "${searchTerm}".` : "You haven't added any recipes yet."}
+            {searchTerm ? `לא נמצאו מתכונים עבור "${searchTerm}".` : "עדיין לא הוספת מתכונים."}
           </p>
           {!searchTerm && (
             <Button asChild variant="link" className="mt-4 text-lg">
               <Link href="/recipes/add">
-                Why not add your first one?
+                רוצה להוסיף את הראשון שלך?
               </Link>
             </Button>
           )}

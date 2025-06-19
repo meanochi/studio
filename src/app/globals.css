@@ -81,6 +81,9 @@
   body {
     @apply bg-background text-foreground font-body;
   }
+  html[dir="rtl"] body {
+    text-align: right;
+  }
   h1, h2, h3, h4, h5, h6 {
     @apply font-headline;
   }
@@ -93,6 +96,9 @@
     font-family: 'Alegreya', serif !important;
     margin: 0;
     padding: 0;
+  }
+  html[dir="rtl"] body {
+    text-align: right !important; /* Ensure RTL for print */
   }
   .no-print {
     display: none !important;
@@ -128,6 +134,11 @@
     overflow: visible !important;
     box-shadow: none !important;
     border: 1px solid #ccc !important;
+    background-color: white !important; /* Ensure background is white for print */
+    color: black !important; /* Ensure text is black for print */
+  }
+  .recipe-card-print *, .recipe-detail-print * {
+     color: black !important; /* Ensure all child text is black */
   }
   /* Hide buttons in print view */
   button, .btn {

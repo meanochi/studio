@@ -26,16 +26,18 @@ export default function ShoppingListPage() {
   const handleClearList = () => {
     clearShoppingList();
     toast({
-      title: "Shopping List Cleared",
-      description: "All items have been removed from your shopping list.",
+      title: "רשימת הקניות נוקתה",
+      description: "כל הפריטים הוסרו מרשימת הקניות שלך.",
+      variant: 'destructive',
     });
   };
 
   const handleRemoveItem = (itemId: string, itemName: string) => {
     removeFromShoppingList(itemId);
     toast({
-      title: "Item Removed",
-      description: `"${itemName}" has been removed from your shopping list.`,
+      title: "הפריט הוסר",
+      description: `"${itemName}" הוסר מרשימת הקניות שלך.`,
+      variant: 'destructive',
     });
   };
 
@@ -50,7 +52,7 @@ export default function ShoppingListPage() {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-4 text-xl font-semibold text-primary">Loading shopping list...</p>
+        <p className="ms-4 text-xl font-semibold text-primary">טוען רשימת קניות...</p>
       </div>
     );
   }
@@ -61,25 +63,25 @@ export default function ShoppingListPage() {
       <Card className="shadow-xl">
         <CardHeader className="flex flex-row justify-between items-center">
           <CardTitle className="text-3xl font-headline text-primary flex items-center gap-2">
-            <ShoppingBasket size={32} /> Shopping List
+            <ShoppingBasket size={32} /> רשימת קניות
           </CardTitle>
           {shoppingList.length > 0 && (
              <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" size="sm" className="flex items-center gap-1.5">
-                  <XCircle size={16} /> Clear All
+                  <XCircle size={16} /> נקה הכל
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Clear Shopping List?</AlertDialogTitle>
+                  <AlertDialogTitle>לנקות את רשימת הקניות?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This will remove all items from your shopping list. This action cannot be undone.
+                    פעולה זו תסיר את כל הפריטים מרשימת הקניות שלך. לא ניתן לבטל פעולה זו.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleClearList}>Clear List</AlertDialogAction>
+                  <AlertDialogCancel>ביטול</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleClearList}>נקה רשימה</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
@@ -88,9 +90,9 @@ export default function ShoppingListPage() {
         <CardContent>
           {shoppingList.length === 0 ? (
             <div className="text-center py-10">
-              <p className="text-xl text-muted-foreground font-body">Your shopping list is empty.</p>
+              <p className="text-xl text-muted-foreground font-body">רשימת הקניות שלך ריקה.</p>
               <Button asChild variant="link" className="mt-4 text-lg">
-                <Link href="/">Browse recipes to add ingredients</Link>
+                <Link href="/">עיין במתכונים כדי להוסיף רכיבים</Link>
               </Button>
             </div>
           ) : (
@@ -99,7 +101,7 @@ export default function ShoppingListPage() {
                 <li key={item.id} className="flex items-center justify-between p-3 bg-secondary/20 rounded-md shadow-sm hover:bg-secondary/40 transition-colors">
                   <div className="flex-grow">
                     <span className="font-semibold text-lg text-primary-foreground">{item.name}</span>
-                    {item.recipeName && <span className="text-xs text-muted-foreground block italic"> (for {item.recipeName})</span>}
+                    {item.recipeName && <span className="text-xs text-muted-foreground block italic"> (עבור {item.recipeName})</span>}
                   </div>
                   <div className="flex items-center gap-2">
                     <Input
@@ -109,10 +111,10 @@ export default function ShoppingListPage() {
                       className="w-20 h-8 text-sm text-center"
                       min="0.01"
                       step="0.01"
-                      aria-label={`Amount for ${item.name}`}
+                      aria-label={`כמות עבור ${item.name}`}
                     />
                     <span className="text-sm text-muted-foreground w-16 truncate" title={item.unit}>{item.unit}</span>
-                    <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.id, item.name)} aria-label={`Remove ${item.name}`} className="text-destructive hover:bg-destructive/10">
+                    <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.id, item.name)} aria-label={`הסר את ${item.name}`} className="text-destructive hover:bg-destructive/10">
                       <Trash2 size={18} />
                     </Button>
                   </div>
@@ -124,7 +126,7 @@ export default function ShoppingListPage() {
         {shoppingList.length > 0 && (
           <CardFooter className="border-t pt-6">
             <p className="text-sm text-muted-foreground font-body">
-              You have {shoppingList.length} item(s) in your shopping list.
+              יש לך {shoppingList.length} פריט(ים) ברשימת הקניות.
             </p>
           </CardFooter>
         )}

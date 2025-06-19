@@ -7,9 +7,9 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { href: '/', label: 'Home', icon: Home },
-  { href: '/recipes/add', label: 'Add Recipe', icon: PlusCircle },
-  { href: '/shopping-list', label: 'Shopping List', icon: ShoppingCart },
+  { href: '/', label: 'בית', icon: Home },
+  { href: '/recipes/add', label: 'הוסף מתכון', icon: PlusCircle },
+  { href: '/shopping-list', label: 'רשימת קניות', icon: ShoppingCart },
 ];
 
 export default function Header() {
@@ -23,7 +23,7 @@ export default function Header() {
           <h1 className="text-3xl font-headline">Family Cookbook</h1>
         </Link>
         <nav>
-          <ul className="flex items-center space-x-2 sm:space-x-3">
+          <ul className="flex items-center space-x-2 sm:space-x-3 rtl:space-x-reverse">
             {navItems.map(item => (
               <li key={item.href}>
                 <Button

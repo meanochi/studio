@@ -32,20 +32,20 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
   const handleDelete = () => {
     deleteRecipe(recipe.id);
     toast({
-      title: "Recipe Deleted",
-      description: `"${recipe.name}" has been removed.`,
+      title: "המתכון נמחק",
+      description: `"${recipe.name}" הוסר.`,
+      variant: 'destructive',
     });
   };
   
   const totalTime = () => {
-    // Basic time concatenation, can be improved to sum times if they are numerical
     return `${recipe.prepTime}${recipe.cookTime ? `, ${recipe.cookTime}` : ''}`;
   }
 
   return (
     <Card className="flex flex-col h-full overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 recipe-card-print">
       <CardHeader className="p-0 relative">
-        <Link href={`/recipes/${recipe.id}`} aria-label={`View recipe: ${recipe.name}`}>
+        <Link href={`/recipes/${recipe.id}`} aria-label={`הצג מתכון: ${recipe.name}`}>
           <Image
             src={recipe.imageUrl || 'https://placehold.co/600x400.png'}
             alt={recipe.name}
@@ -60,13 +60,13 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
         <Link href={`/recipes/${recipe.id}`} className="hover:text-primary">
           <CardTitle className="text-2xl font-headline mb-2 truncate" title={recipe.name}>{recipe.name}</CardTitle>
         </Link>
-        <p className="text-sm text-muted-foreground mb-1 font-body italic">Source: {recipe.source}</p>
+        <p className="text-sm text-muted-foreground mb-1 font-body italic">מקור: {recipe.source}</p>
         <div className="flex items-center text-sm text-muted-foreground mb-1 font-body">
-          <Clock size={16} className="mr-1.5 text-accent" />
+          <Clock size={16} className="me-1.5 text-accent" />
           <span>{totalTime()}</span>
         </div>
         <div className="flex items-center text-sm text-muted-foreground mb-3 font-body">
-          <Users size={16} className="mr-1.5 text-accent" />
+          <Users size={16} className="me-1.5 text-accent" />
           <span>{recipe.servings} {recipe.servingUnit}</span>
         </div>
         {recipe.tags && recipe.tags.length > 0 && (
@@ -80,31 +80,31 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
       <CardFooter className="p-4 pt-0 flex flex-col sm:flex-row justify-between items-center gap-2 no-print">
         <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
           <Link href={`/recipes/${recipe.id}`} className="flex items-center gap-1">
-            <Eye size={16} /> View
+            <Eye size={16} /> הצג
           </Link>
         </Button>
         <div className="flex gap-2 w-full sm:w-auto">
           <Button asChild variant="outline" size="sm" className="flex-1 sm:flex-none">
             <Link href={`/recipes/edit/${recipe.id}`} className="flex items-center gap-1">
-              <Edit3 size={16} /> Edit
+              <Edit3 size={16} /> ערוך
             </Link>
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="destructive" size="sm" className="flex-1 sm:flex-none flex items-center gap-1">
-                <Trash2 size={16} /> Delete
+                <Trash2 size={16} /> מחק
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogTitle>האם אתה בטוח?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete the recipe "{recipe.name}".
+                  לא ניתן לבטל פעולה זו. הפעולה תמחק לצמיתות את המתכון "{recipe.name}".
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+                <AlertDialogCancel>ביטול</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete}>מחק</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>

@@ -18,69 +18,69 @@ const RecipeContext = createContext<RecipeContextType | undefined>(undefined);
 const initialRecipes: Recipe[] = [
   {
     id: '1',
-    name: 'Classic Chocolate Chip Cookies',
-    source: 'Grandma\'s Old Cookbook',
-    prepTime: '20 minutes',
-    cookTime: '10-12 minutes',
+    name: 'עוגיות שוקולד צ\'יפס קלאסיות',
+    source: 'ספר המתכונים הישן של סבתא',
+    prepTime: '20 דקות',
+    cookTime: '10-12 דקות',
     servings: 24,
-    servingUnit: 'cookies',
+    servingUnit: 'עוגיות',
     freezable: true,
     ingredients: [
-      { id: generateId(), name: 'All-purpose flour', amount: 2.25, unit: 'cups' },
-      { id: generateId(), name: 'Baking soda', amount: 1, unit: 'tsp' },
-      { id: generateId(), name: 'Salt', amount: 1, unit: 'tsp' },
-      { id: generateId(), name: 'Unsalted butter, softened', amount: 1, unit: 'cup' },
-      { id: generateId(), name: 'Granulated sugar', amount: 0.75, unit: 'cup' },
-      { id: generateId(), name: 'Brown sugar, packed', amount: 0.75, unit: 'cup' },
-      { id: generateId(), name: 'Large eggs', amount: 2, unit: '' },
-      { id: generateId(), name: 'Vanilla extract', amount: 1, unit: 'tsp' },
-      { id: generateId(), name: 'Semi-sweet chocolate chips', amount: 2, unit: 'cups' },
+      { id: generateId(), name: 'קמח לכל מטרה', amount: 2.25, unit: 'כוסות' },
+      { id: generateId(), name: 'סודה לשתייה', amount: 1, unit: 'כפית' },
+      { id: generateId(), name: 'מלח', amount: 1, unit: 'כפית' },
+      { id: generateId(), name: 'חמאה לא מלוחה, רכה', amount: 1, unit: 'כוס' },
+      { id: generateId(), name: 'סוכר לבן', amount: 0.75, unit: 'כוס' },
+      { id: generateId(), name: 'סוכר חום, דחוס', amount: 0.75, unit: 'כוס' },
+      { id: generateId(), name: 'ביצים גדולות', amount: 2, unit: '' },
+      { id: generateId(), name: 'תמצית וניל', amount: 1, unit: 'כפית' },
+      { id: generateId(), name: 'שוקולד צ\'יפס מריר למחצה', amount: 2, unit: 'כוסות' },
     ],
     instructions: [
-      'Preheat oven to 375°F (190°C).',
-      'Combine flour, baking soda, and salt in a small bowl.',
-      'Beat butter, granulated sugar, and brown sugar in a large mixer bowl until creamy.',
-      'Beat in eggs one at a time, then stir in vanilla extract.',
-      'Gradually beat in flour mixture.',
-      'Stir in chocolate chips.',
-      'Drop rounded tablespoons onto ungreased baking sheets.',
-      'Bake for 9-11 minutes or until golden brown.',
-      'Cool on baking sheets for 2 minutes; remove to wire racks to cool completely.',
+      'חממו תנור מראש ל-190°C (375°F).',
+      'ערבבו קמח, סודה לשתייה ומלח בקערה קטנה.',
+      'הקציפו חמאה, סוכר לבן וסוכר חום בקערת מיקסר גדולה עד לקבלת תערובת קרמית.',
+      'הוסיפו את הביצים אחת אחת, ולאחר מכן ערבבו פנימה את תמצית הווניל.',
+      'הוסיפו בהדרגה את תערובת הקמח.',
+      'ערבבו פנימה את השוקולד צ\'יפס.',
+      'צרו כדורים בעזרת כף גלידה או כף רגילה והניחו על תבניות אפייה לא משומנות.',
+      'אפו במשך 9-11 דקות או עד להזהבה.',
+      'צננו על תבניות האפייה למשך 2 דקות; העבירו לרשתות צינון להתקררות מלאה.',
     ],
     imageUrl: 'https://placehold.co/600x400.png',
-    tags: ['dessert', 'baking', 'cookies'],
+    tags: ['קינוח', 'אפייה', 'עוגיות'],
   },
   {
     id: '2',
-    name: 'Simple Tomato Pasta',
-    source: 'Family Favorite',
-    prepTime: '10 minutes',
-    cookTime: '20 minutes',
+    name: 'פסטה עגבניות פשוטה',
+    source: 'האהוב על המשפחה',
+    prepTime: '10 דקות',
+    cookTime: '20 דקות',
     servings: 4,
-    servingUnit: 'servings',
+    servingUnit: 'מנות',
     freezable: false,
     ingredients: [
-      { id: generateId(), name: 'Pasta (e.g., spaghetti)', amount: 400, unit: 'g' },
-      { id: generateId(), name: 'Canned chopped tomatoes', amount: 1, unit: 'can (400g)' },
-      { id: generateId(), name: 'Onion, chopped', amount: 1, unit: '' },
-      { id: generateId(), name: 'Garlic cloves, minced', amount: 2, unit: '' },
-      { id: generateId(), name: 'Olive oil', amount: 2, unit: 'tbsp' },
-      { id: generateId(), name: 'Dried oregano', amount: 1, unit: 'tsp' },
-      { id: generateId(), name: 'Salt and pepper', amount: 1, unit: 'to taste' },
-      { id: generateId(), name: 'Fresh basil, chopped (optional)', amount: 1, unit: 'handful' },
+      { id: generateId(), name: 'פסטה (לדוגמה, ספגטי)', amount: 400, unit: 'גרם' },
+      { id: generateId(), name: 'עגבניות מרוסקות משומרות', amount: 1, unit: 'קופסה (400 גרם)' },
+      { id: generateId(), name: 'בצל, קצוץ', amount: 1, unit: '' },
+      { id: generateId(), name: 'שיני שום, כתושות', amount: 2, unit: '' },
+      { id: generateId(), name: 'שמן זית', amount: 2, unit: 'כפות' },
+      { id: generateId(), name: 'אורגנו מיובש', amount: 1, unit: 'כפית' },
+      { id: generateId(), name: 'מלח ופלפל', amount: 1, unit: 'לפי הטעם' },
+      { id: generateId(), name: 'בזיליקום טרי, קצוץ (אופציונלי)', amount: 1, unit: 'חופן' },
     ],
     instructions: [
-      'Cook pasta according to package directions.',
-      'While pasta cooks, heat olive oil in a large skillet over medium heat.',
-      'Add onion and cook until softened, about 5 minutes.',
-      'Add garlic and cook for another minute until fragrant.',
-      'Stir in chopped tomatoes and oregano. Season with salt and pepper.',
-      'Bring to a simmer and cook for 10-15 minutes, stirring occasionally.',
-      'Drain pasta and add it to the skillet with the sauce. Toss to combine.',
-      'Serve immediately, garnished with fresh basil if desired.',
+      'בשלו את הפסטה לפי הוראות היצרן.',
+      'בזמן שהפסטה מתבשלת, חממו שמן זית במחבת גדולה על אש בינונית.',
+      'הוסיפו בצל ובשלו עד שהוא מתרכך, כ-5 דקות.',
+      'הוסיפו שום ובשלו עוד דקה עד שעולה ריח.',
+      'ערבבו פנימה עגבניות מרוסקות ואורגנו. תבלו במלח ופלפל.',
+      'הביאו לרתיחה ובשלו על אש נמוכה במשך 10-15 דקות, תוך ערבוב מדי פעם.',
+      'סננו את הפסטה והוסיפו אותה למחבת עם הרוטב. ערבבו היטב.',
+      'הגישו מיד, מקושט בבזיליקום טרי אם רוצים.',
     ],
     imageUrl: 'https://placehold.co/600x400.png',
-    tags: ['main course', 'pasta', 'vegetarian', 'quick'],
+    tags: ['מנה עיקרית', 'פסטה', 'צמחוני', 'מהיר'],
   }
 ];
 
@@ -95,19 +95,18 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       if (storedRecipes) {
         setRecipes(JSON.parse(storedRecipes));
       } else {
-        // Initialize with sample data if no recipes are in localStorage
         setRecipes(initialRecipes);
         localStorage.setItem('familyCookbookRecipes', JSON.stringify(initialRecipes));
       }
     } catch (error) {
       console.error("Failed to load recipes from localStorage", error);
-      setRecipes(initialRecipes); // Fallback to initial if localStorage fails
+      setRecipes(initialRecipes); 
     }
     setLoading(false);
   }, []);
 
   useEffect(() => {
-    if (!loading) { // Only save if not in initial loading phase
+    if (!loading) { 
       try {
         localStorage.setItem('familyCookbookRecipes', JSON.stringify(recipes));
       } catch (error) {

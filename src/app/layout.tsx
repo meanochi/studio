@@ -7,9 +7,9 @@ import { ChefHat } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Family Cookbook',
-  description: 'A place for all your family recipes',
+  description: 'מקום לכל המתכונים המשפחתיים שלך',
   icons: {
-    icon: '/favicon.ico', // Assuming a favicon might be added later
+    icon: '/favicon.ico', 
   }
 };
 
@@ -19,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="he" dir="rtl" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -35,7 +35,7 @@ export default function RootLayout({
           <footer className="bg-primary/10 text-primary py-6 text-center no-print">
             <div className="container mx-auto flex justify-center items-center gap-2">
               <ChefHat size={20} />
-              <p className="text-sm font-body">&copy; {new Date().getFullYear()} Family Cookbook. Cherish your culinary heritage.</p>
+              <p className="text-sm font-body">&copy; {new Date().getFullYear()} Family Cookbook. נצרו את המורשת הקולינרית שלכם.</p>
             </div>
           </footer>
           <Toaster />

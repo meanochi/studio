@@ -14,8 +14,8 @@ export default function AddRecipePage() {
   const handleSubmit = (data: RecipeFormData) => {
     const newRecipe = addRecipe(data);
     toast({
-      title: "Recipe Added!",
-      description: `"${newRecipe.name}" has been successfully added to your cookbook.`,
+      title: "המתכון נוסף!",
+      description: `"${newRecipe.name}" נוסף בהצלחה לספר המתכונים שלך.`,
     });
     router.push(`/recipes/${newRecipe.id}`);
   };
