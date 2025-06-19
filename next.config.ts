@@ -32,9 +32,10 @@ const nextConfig: NextConfig = {
             {
               from: path.join(
                 path.dirname(require.resolve('pdfjs-dist/package.json')),
-                'build/pdf.worker.min.mjs' 
+                'build/pdf.worker.min.js' // Use the .js worker as per error message
               ),
-              to: path.join(config.output.path, '..', 'static/chunks/pages'),
+              // Copy to the root of the public folder. __dirname is the project root here.
+              to: path.resolve(__dirname, 'public/pdf.worker.min.js'),
             },
           ],
         })

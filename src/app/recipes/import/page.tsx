@@ -27,9 +27,8 @@ export default function ImportRecipePage() {
     import('pdfjs-dist/build/pdf.mjs')
       .then(pdfjs => {
         pdfjsLib = pdfjs;
-        // The workerSrc path needs to be relative to where the app is served from.
-        // Assuming pdf.worker.min.mjs will be in the public folder.
-        pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+        // Point to the worker copied to the public folder, matching the error.
+        pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
       })
       .catch(err => {
         console.error("Failed to load pdfjs-dist:", err);
