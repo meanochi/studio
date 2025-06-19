@@ -1,10 +1,11 @@
 'use client';
 
+import React, { useRef } from 'react';
 import { useShoppingList } from '@/contexts/ShoppingListContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Trash2, ShoppingBasket, XCircle, Loader2 } from 'lucide-react';
+import { Trash2, ShoppingBasket, XCircle, Loader2, Printer } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,6 +23,7 @@ import Link from 'next/link';
 export default function ShoppingListPage() {
   const { shoppingList, removeFromShoppingList, clearShoppingList, updateItemAmount, loading } = useShoppingList();
   const { toast } = useToast();
+  const printRef = useRef<HTMLDivElement>(null);
 
   const handleClearList = () => {
     clearShoppingList();
@@ -47,6 +49,10 @@ export default function ShoppingListPage() {
       updateItemAmount(itemId, amount);
     }
   };
+
+  const handlePrint = () => {
+    window.print();
+  };
   
   if (loading) {
     return (
@@ -59,39 +65,46 @@ export default function ShoppingListPage() {
 
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto shopping-list-print-container" ref={printRef}>
       <Card className="shadow-xl">
         <CardHeader className="flex flex-row justify-between items-center">
           <CardTitle className="text-3xl font-headline text-primary flex items-center gap-2">
             <ShoppingBasket size={32} /> רשימת קניות
           </CardTitle>
-          {shoppingList.length > 0 && (
-             <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm" className="flex items-center gap-1.5">
-                  <XCircle size={16} /> נקה הכל
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>לנקות את רשימת הקניות?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    פעולה זו תסיר את כל הפריטים מרשימת הקניות שלך. לא ניתן לבטל פעולה זו.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>ביטול</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleClearList}>נקה רשימה</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
+          <div className="flex items-center gap-2 no-print">
+            {shoppingList.length > 0 && (
+              <Button variant="outline" size="sm" onClick={handlePrint} className="flex items-center gap-1.5">
+                <Printer size={16} /> הדפס רשימה
+              </Button>
+            )}
+            {shoppingList.length > 0 && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm" className="flex items-center gap-1.5">
+                    <XCircle size={16} /> נקה הכל
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>לנקות את רשימת הקניות?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      פעולה זו תסיר את כל הפריטים מרשימת הקניות שלך. לא ניתן לבטל פעולה זו.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>ביטול</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleClearList}>נקה רשימה</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           {shoppingList.length === 0 ? (
             <div className="text-center py-10">
               <p className="text-xl text-muted-foreground font-body">רשימת הקניות שלך ריקה.</p>
-              <Button asChild variant="link" className="mt-4 text-lg">
+              <Button asChild variant="link" className="mt-4 text-lg no-print">
                 <Link href="/">עיין במתכונים כדי להוסיף רכיבים</Link>
               </Button>
             </div>
@@ -100,10 +113,13 @@ export default function ShoppingListPage() {
               {shoppingList.map(item => (
                 <li key={item.id} className="flex items-center justify-between p-3 bg-secondary/20 rounded-md shadow-sm hover:bg-secondary/40 transition-colors">
                   <div className="flex-grow">
-                    <span className="font-semibold text-lg text-primary-foreground">{item.name}</span>
-                    {item.recipeName && <span className="text-xs text-muted-foreground block italic"> (עבור {item.recipeName})</span>}
+                    <span className="font-semibold text-lg text-primary-foreground item-name-print">{item.name}</span>
+                    <div className="print-only item-amount-unit-print">
+                      {item.amount} {item.unit}
+                    </div>
+                    {item.recipeName && <span className="text-xs text-muted-foreground block italic item-recipe-print"> (עבור {item.recipeName})</span>}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 no-print">
                     <Input
                       type="number"
                       value={item.amount}
@@ -124,7 +140,7 @@ export default function ShoppingListPage() {
           )}
         </CardContent>
         {shoppingList.length > 0 && (
-          <CardFooter className="border-t pt-6">
+          <CardFooter className="border-t pt-6 no-print">
             <p className="text-sm text-muted-foreground font-body">
               יש לך {shoppingList.length} פריט(ים) ברשימת הקניות.
             </p>

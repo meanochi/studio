@@ -1,19 +1,20 @@
 'use client';
 
 import type { Recipe } from '@/types';
-import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { recipeSchema, RecipeFormData, IngredientFormData } from './RecipeSchema';
+import { recipeSchema, RecipeFormData } from './RecipeSchema';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { PlusCircle, Trash2, Save, Image as ImageIcon } from 'lucide-react';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { PlusCircle, Trash2, Save, Image as ImageIcon, UploadCloud, X } from 'lucide-react';
+import NextImage from 'next/image';
 import { generateId } from '@/lib/utils';
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface RecipeFormProps {
   initialData?: Recipe;
@@ -63,6 +64,15 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
   });
   
   const [newTag, setNewTag] = useState('');
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (initialData?.imageUrl) {
+      setImagePreview(initialData.imageUrl);
+    }
+  }, [initialData?.imageUrl]);
+
 
   const handleAddTag = () => {
     if (newTag.trim() !== '' && !(form.getValues('tags') || []).includes(newTag.trim())) {
@@ -71,6 +81,26 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
     }
   };
 
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        setImagePreview(result);
+        form.setValue('imageUrl', result, { shouldValidate: true });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImagePreview(null);
+    form.setValue('imageUrl', '', { shouldValidate: true });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''; // Reset file input
+    }
+  };
 
   const handleSubmit = (data: RecipeFormData) => {
     const processedData = {
@@ -163,31 +193,70 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
               />
             </div>
             
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-                <FormField
-                    control={form.control}
-                    name="imageUrl"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel className="flex items-center gap-2"><ImageIcon size={18} /> כתובת URL של תמונה (אופציונלי)</FormLabel>
-                        <FormControl><Input placeholder="https://example.com/image.jpg" {...field} value={field.value ?? ''} /></FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <FormLabel className="flex items-center gap-2"><ImageIcon size={18} /> תמונת מתכון</FormLabel>
+                {imagePreview ? (
+                  <div className="relative group">
+                    <NextImage src={imagePreview} alt="תצוגה מקדימה של תמונה" width={200} height={200} className="rounded-md object-cover w-full max-h-64 border" />
+                    <Button type="button" variant="destructive" size="icon" onClick={handleRemoveImage} className="absolute top-2 right-2 opacity-70 group-hover:opacity-100 transition-opacity h-8 w-8">
+                      <X size={16} />
+                    </Button>
+                  </div>
+                ) : (
+                  <div 
+                    className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-input rounded-md cursor-pointer hover:border-primary transition-colors"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <UploadCloud size={40} className="text-muted-foreground mb-2" />
+                    <p className="text-sm text-muted-foreground">גרור ושחרר או לחץ להעלאה</p>
+                    <p className="text-xs text-muted-foreground">(עד 2MB)</p>
+                  </div>
+                )}
+                <Input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleImageUpload} 
+                  className="hidden" 
+                  ref={fileInputRef}
                 />
                 <FormField
-                    control={form.control}
-                    name="freezable"
-                    render={({ field }) => (
-                    <FormItem className="flex flex-row items-center space-x-3 rtl:space-x-reverse space-y-0 rounded-md border p-4 shadow-sm h-full mt-auto">
-                        <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                        <div className="space-y-1 leading-none">
-                        <FormLabel>טוב להקפאה?</FormLabel>
-                        </div>
+                  control={form.control}
+                  name="imageUrl"
+                  render={({ field }) => (
+                    <FormItem className="mt-2">
+                      <FormLabel className="sr-only">כתובת URL של תמונה (למילוי אוטומטי)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="או הדבק כתובת URL של תמונה" 
+                          {...field} 
+                          value={field.value ?? ''} 
+                          onChange={(e) => {
+                            field.onChange(e);
+                            setImagePreview(e.target.value);
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
                     </FormItem>
-                    )}
+                  )}
                 />
+              </div>
+
+              <FormField
+                  control={form.control}
+                  name="freezable"
+                  render={({ field }) => (
+                  <FormItem className="flex flex-row items-center space-x-3 rtl:space-x-reverse space-y-0 rounded-md border p-4 shadow-sm h-fit mt-auto">
+                      <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                      <div className="space-y-1 leading-none">
+                      <FormLabel>טוב להקפאה?</FormLabel>
+                      </div>
+                  </FormItem>
+                  )}
+              />
             </div>
+
 
             <div className="space-y-4">
               <h3 className="text-xl font-headline text-primary">רכיבים</h3>

@@ -17,7 +17,7 @@ export const recipeSchema = z.object({
   freezable: z.boolean().default(false),
   ingredients: z.array(ingredientSchema).min(1, "נדרש לפחות רכיב אחד"),
   instructions: z.array(z.string().min(1, "שלב בהוראות אינו יכול להיות ריק")).min(1, "נדרש לפחות שלב אחד בהוראות"),
-  imageUrl: z.string().url("חייב להיות כתובת URL תקינה").or(z.literal("")).optional(),
+  imageUrl: z.string().optional(), // Allow data URIs and standard URLs, or empty string
   tags: z.array(z.string().min(1).max(30)).optional(),
 });
 

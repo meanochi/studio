@@ -1,16 +1,18 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { useShoppingList } from '@/contexts/ShoppingListContext';
-import type { Recipe, Ingredient } from '@/types';
+import type { Recipe } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -24,7 +26,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
-  Clock, Users, Edit3, Trash2, Printer, ShoppingCart, CheckSquare, Square, Utensils, Snowflake, ChevronsUpDown, Loader2, AlertTriangle, HomeIcon
+  Clock, Users, Edit3, Trash2, Printer, ShoppingCart, Utensils, Snowflake, Loader2, AlertTriangle, HomeIcon, RefreshCw
 } from 'lucide-react';
 
 export default function RecipeDetailPage() {
@@ -35,7 +37,7 @@ export default function RecipeDetailPage() {
   const { toast } = useToast();
 
   const [recipe, setRecipe] = useState<Recipe | null | undefined>(undefined); 
-  const [isAmountsDoubled, setIsAmountsDoubled] = useState(false);
+  const [multiplier, setMultiplier] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
 
   const recipeId = Array.isArray(params.id) ? params.id[0] : params.id;
@@ -50,10 +52,22 @@ export default function RecipeDetailPage() {
     }
   }, [recipeId, getRecipeById, recipesLoading]);
 
-  const displayedIngredients = recipe?.ingredients.map(ing => ({
-    ...ing,
-    amount: isAmountsDoubled ? ing.amount * 2 : ing.amount,
-  })) || [];
+  const displayedIngredients = useMemo(() => {
+    if (!recipe) return [];
+    return recipe.ingredients.map(ing => ({
+      ...ing,
+      amount: ing.amount * multiplier,
+    }));
+  }, [recipe, multiplier]);
+
+  const handleMultiplierChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newMultiplier = parseFloat(e.target.value);
+    if (!isNaN(newMultiplier) && newMultiplier > 0) {
+      setMultiplier(newMultiplier);
+    } else if (e.target.value === '') {
+      setMultiplier(1); // Reset to 1 if input is cleared
+    }
+  };
 
   const handleDelete = () => {
     if (recipe) {
@@ -67,16 +81,12 @@ export default function RecipeDetailPage() {
     }
   };
 
-  const handleToggleDoubleAmounts = () => {
-    setIsAmountsDoubled(!isAmountsDoubled);
-  };
-
   const handleAddToShoppingList = () => {
     if (recipe) {
       addIngredientsToShoppingList(displayedIngredients, recipe.id, recipe.name);
       toast({
         title: "נוסף לרשימת הקניות",
-        description: `${isAmountsDoubled ? 'כמויות כפולות' : 'כמויות מקוריות'} עבור "${recipe.name}" נוספו.`,
+        description: `כמויות עבור "${recipe.name}" (מוכפלות פי ${multiplier}) נוספו.`,
       });
     }
   };
@@ -112,6 +122,15 @@ export default function RecipeDetailPage() {
   const totalTime = () => {
     return `${recipe.prepTime}${recipe.cookTime ? `, ${recipe.cookTime}` : ''}`;
   }
+  
+  const servingsDisplay = useMemo(() => {
+    if (!recipe) return '';
+    const calculatedServings = recipe.servings * multiplier;
+    // Handle potential floating point inaccuracies for display
+    const displayServings = Number(calculatedServings.toFixed(2));
+    return `${displayServings} ${recipe.servingUnit}`;
+  }, [recipe, multiplier]);
+
 
   return (
     <div ref={printRef}>
@@ -143,7 +162,7 @@ export default function RecipeDetailPage() {
             <div className="font-body">
               <Users size={24} className="mx-auto mb-1 text-primary" />
               <p className="font-semibold">מנות</p>
-              <p className="text-sm text-muted-foreground">{isAmountsDoubled ? recipe.servings * 2 : recipe.servings} {recipe.servingUnit}</p>
+              <p className="text-sm text-muted-foreground">{servingsDisplay}</p>
             </div>
             <div className="font-body">
               {recipe.freezable ? <Snowflake size={24} className="mx-auto mb-1 text-primary" /> : <Utensils size={24} className="mx-auto mb-1 text-muted-foreground" />}
@@ -163,19 +182,33 @@ export default function RecipeDetailPage() {
           <Separator />
 
           <div>
-            <div className="flex justify-between items-center mb-3">
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-3 gap-2 no-print">
               <h3 className="text-2xl font-headline text-primary">רכיבים</h3>
-              <Button variant="outline" size="sm" onClick={handleToggleDoubleAmounts} className="flex items-center gap-1.5 no-print">
-                <ChevronsUpDown size={16} /> {isAmountsDoubled ? 'כמויות מקוריות' : 'כמויות כפולות'}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="multiplier" className="font-body">הכפל כמויות ב:</Label>
+                <Input
+                  id="multiplier"
+                  type="number"
+                  value={multiplier}
+                  onChange={handleMultiplierChange}
+                  min="0.1"
+                  step="0.1"
+                  className="w-20 h-9 text-center"
+                />
+                 <Button variant="outline" size="icon" onClick={() => setMultiplier(1)} title="אפס מכפיל" className="h-9 w-9">
+                   <RefreshCw size={16}/>
+                 </Button>
+              </div>
             </div>
             <ul className="list-none space-y-2 font-body ps-0">
               {displayedIngredients.map(ingredient => (
                 <li key={ingredient.id} className="flex items-center p-2 bg-background rounded-md shadow-sm hover:bg-secondary/20 transition-colors">
                   <span className="font-semibold text-primary w-1/3">{ingredient.name}</span>
-                  <span className="text-muted-foreground w-1/3 text-center">{ingredient.amount} {ingredient.unit}</span>
+                  <span className="text-muted-foreground w-1/3 text-center">
+                    {Number((ingredient.amount).toFixed(2))} {ingredient.unit}
+                  </span>
                   <span className="text-xs text-gray-400 w-1/3 text-left italic">
-                    {isAmountsDoubled && `(מקורי: ${ingredient.amount / 2} ${ingredient.unit})`}
+                    {multiplier !== 1 && `(מקורי: ${Number((ingredient.amount / multiplier).toFixed(2))} ${ingredient.unit})`}
                   </span>
                 </li>
               ))}
