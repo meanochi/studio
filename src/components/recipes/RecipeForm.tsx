@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Recipe, Ingredient, InstructionStep } from '@/types';
@@ -14,52 +15,54 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { PlusCircle, Trash2, Save, Image as ImageIcon, UploadCloud, X, FileText, StickyNote, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import NextImage from 'next/image';
 import { generateId } from '@/lib/utils';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 
 interface RecipeFormProps {
-  initialData?: RecipeFormData; 
+  initialData?: RecipeFormData;
   onSubmit: (data: RecipeFormData) => void;
   isEditing?: boolean;
 }
 
 export default function RecipeForm({ initialData, onSubmit, isEditing = false }: RecipeFormProps) {
-  
-  const defaultValues: RecipeFormData = initialData
-    ? {
-        ...initialData,
-        ingredients: initialData.ingredients.map(ing => ({ 
-            ...ing, 
-            id: ing.id || generateId(), 
-            amount: Number(ing.amount),
-            isOptional: ing.isOptional || false,
-            notes: ing.notes || '',
-        })), 
-        instructions: initialData.instructions.map(instr => ({
-            ...instr,
-            id: instr.id || generateId(),
-            text: instr.text || '',
-            imageUrl: instr.imageUrl || '',
-        })),
-        tags: initialData.tags || [],
-        imageUrl: initialData.imageUrl || '',
-      }
-    : {
-        name: '',
-        source: '',
-        prepTime: '',
-        cookTime: '',
-        servings: 1,
-        servingUnit: 'מנה',
-        freezable: false,
-        ingredients: [{ id: generateId(), name: '', amount: 1, unit: 'יחידות', isOptional: false, notes: '' }],
-        instructions: [{ id: generateId(), text: '', imageUrl: '' }],
-        imageUrl: '',
-        tags: [],
-      };
-  
+
+  const defaultFormValues = useMemo<RecipeFormData>(() => {
+    return initialData
+      ? {
+          ...initialData,
+          ingredients: initialData.ingredients.map(ing => ({
+              ...ing,
+              id: ing.id || generateId(),
+              amount: Number(ing.amount),
+              isOptional: ing.isOptional || false,
+              notes: ing.notes || '',
+          })),
+          instructions: initialData.instructions.map(instr => ({
+              ...instr,
+              id: instr.id || generateId(),
+              text: instr.text || '',
+              imageUrl: instr.imageUrl || '',
+          })),
+          tags: initialData.tags || [],
+          imageUrl: initialData.imageUrl || '',
+        }
+      : {
+          name: '',
+          source: '',
+          prepTime: '',
+          cookTime: '',
+          servings: 1,
+          servingUnit: 'מנה',
+          freezable: false,
+          ingredients: [{ id: generateId(), name: '', amount: 1, unit: 'יחידות', isOptional: false, notes: '' }],
+          instructions: [{ id: generateId(), text: '', imageUrl: '' }],
+          imageUrl: '',
+          tags: [],
+        };
+  }, [initialData]);
+
   const form = useForm<RecipeFormData>({
     resolver: zodResolver(recipeSchema),
-    defaultValues,
+    defaultValues: defaultFormValues,
   });
 
   const { fields: ingredientFields, append: appendIngredient, remove: removeIngredient } = useFieldArray({
@@ -76,33 +79,33 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
     control: form.control,
     name: "tags",
   });
-  
+
   const [newTag, setNewTag] = useState('');
   const [recipeImagePreview, setRecipeImagePreview] = useState<string | null>(null);
   const recipeFileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const [instructionImagePreviews, setInstructionImagePreviews] = useState<(string | null)[]>([]);
   const instructionFileInputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [visibleInstructionImageInputs, setVisibleInstructionImageInputs] = useState<Record<string, boolean>>({});
 
 
   useEffect(() => {
-    if (initialData?.imageUrl) {
-      setRecipeImagePreview(initialData.imageUrl);
+    if (defaultFormValues.imageUrl) {
+      setRecipeImagePreview(defaultFormValues.imageUrl);
     }
     const initialVisibleStates: Record<string, boolean> = {};
     const initialPreviews: (string | null)[] = [];
 
-    (initialData?.instructions || defaultValues.instructions).forEach(instr => {
-        initialVisibleStates[instr.id || ''] = false; // Keep image inputs collapsed initially
+    defaultFormValues.instructions.forEach(instr => {
+        initialVisibleStates[instr.id || ''] = false;
         initialPreviews.push(instr.imageUrl || null);
     });
-    
+
     setInstructionImagePreviews(initialPreviews);
     setVisibleInstructionImageInputs(initialVisibleStates);
-    instructionFileInputRefs.current = (initialData?.instructions || defaultValues.instructions).map(() => null);
+    instructionFileInputRefs.current = defaultFormValues.instructions.map(() => null);
 
-  }, [initialData, defaultValues.instructions]);
+  }, [defaultFormValues]);
 
 
   const toggleInstructionImageInputVisibility = (instructionId: string) => {
@@ -173,34 +176,39 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
       currentRef.value = '';
     }
   };
-  
-  useEffect(() => {
-    const currentInstructionCount = form.getValues('instructions')?.length || 0;
-    if (instructionImagePreviews.length !== currentInstructionCount) {
-      const newPreviews = Array(currentInstructionCount).fill(null);
-      const newRefs = Array(currentInstructionCount).fill(null);
-      const newVisibleStates = { ...visibleInstructionImageInputs };
 
-      form.getValues('instructions').forEach((instr, i) => {
-        newPreviews[i] = instr.imageUrl || null;
-        if (instr.id && !(instr.id in newVisibleStates)) {
-          newVisibleStates[instr.id] = false; // Default new steps to collapsed image input
-        }
-      });
-      setInstructionImagePreviews(newPreviews);
-      instructionFileInputRefs.current = newRefs;
-      setVisibleInstructionImageInputs(newVisibleStates);
+  const handleAddInstruction = () => {
+    const newId = generateId();
+    appendInstruction({ id: newId, text: '', imageUrl: '' });
+    setInstructionImagePreviews(prev => [...prev, null]);
+    setVisibleInstructionImageInputs(prev => ({...prev, [newId]: false }));
+    instructionFileInputRefs.current = [...instructionFileInputRefs.current, null];
+  };
+
+  const handleRemoveInstruction = (index: number) => {
+    const instructionIdToRemove = instructionFields[index]?.id;
+
+    const newPreviews = instructionImagePreviews.filter((_, i) => i !== index);
+    const newRefs = instructionFileInputRefs.current.filter((_, i) => i !== index);
+    let newVisibleStates = { ...visibleInstructionImageInputs };
+    if (instructionIdToRemove) {
+      delete newVisibleStates[instructionIdToRemove];
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.watch('instructions')]);
+    
+    removeInstruction(index); // Update RHF state
+
+    setInstructionImagePreviews(newPreviews);
+    setVisibleInstructionImageInputs(newVisibleStates);
+    instructionFileInputRefs.current = newRefs;
+  };
 
 
   const handleSubmitForm = (data: RecipeFormData) => {
     const processedData: RecipeFormData = {
         ...data,
         imageUrl: data.imageUrl?.trim() === '' ? undefined : data.imageUrl,
-        ingredients: data.ingredients.map(ing => ({ 
-            ...ing, 
+        ingredients: data.ingredients.map(ing => ({
+            ...ing,
             id: ing.id || generateId(),
             notes: ing.notes?.trim() === '' ? undefined : ing.notes,
         })),
@@ -212,6 +220,12 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
     };
     onSubmit(processedData);
   };
+
+  // Reset form if initialData changes (e.g. navigating between edit pages)
+  useEffect(() => {
+    form.reset(defaultFormValues);
+  }, [defaultFormValues, form]);
+
 
   return (
     <Form {...form}>
@@ -242,13 +256,13 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
                   <FormItem><FormLabel>זמן בישול (אופציונלי)</FormLabel><FormControl><Input placeholder="לדוגמה, 10-12 דקות" {...field} /></FormControl><FormMessage /></FormItem>
               )}/>
               <FormField control={form.control} name="servings" render={({ field }) => (
-                  <FormItem><FormLabel>מנות</FormLabel><FormControl><Input type="number" min="1" placeholder="לדוגמה, 24" {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>מנות</FormLabel><FormControl><Input type="number" min="1" placeholder="לדוגמה, 24" {...field} onChange={e => field.onChange(parseInt(e.target.value,10) || 1)}/></FormControl><FormMessage /></FormItem>
               )}/>
               <FormField control={form.control} name="servingUnit" render={({ field }) => (
                   <FormItem><FormLabel>יחידת מידה למנה</FormLabel><FormControl><Input placeholder="לדוגמה, עוגיות" {...field} /></FormControl><FormMessage /></FormItem>
               )}/>
             </div>
-            
+
             {/* Recipe Image and Freezable Checkbox */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
@@ -278,7 +292,7 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
                         <FormItem>{index === 0 && <FormLabel>שם הרכיב</FormLabel>}<FormControl><Input placeholder="לדוגמה, קמח" {...f} /></FormControl><FormMessage /></FormItem>
                     )}/>
                     <FormField control={form.control} name={`ingredients.${index}.amount`} render={({ field: f }) => (
-                        <FormItem>{index === 0 && <FormLabel>כמות</FormLabel>}<FormControl><Input type="number" step="0.01" placeholder="לדוגמה, 2.25" {...f} /></FormControl><FormMessage /></FormItem>
+                        <FormItem>{index === 0 && <FormLabel>כמות</FormLabel>}<FormControl><Input type="number" step="0.01" placeholder="לדוגמה, 2.25" {...f} onChange={e => f.onChange(parseFloat(e.target.value) || 0)} /></FormControl><FormMessage /></FormItem>
                     )}/>
                     <FormField control={form.control} name={`ingredients.${index}.unit`} render={({ field: f }) => (
                         <FormItem>{index === 0 && <FormLabel>יחידה</FormLabel>}<FormControl><Input placeholder="לדוגמה, כוסות, גרמים" {...f} /></FormControl><FormMessage /></FormItem>
@@ -308,19 +322,19 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
                     <FormField control={form.control} name={`instructions.${index}.text`} render={({ field: f }) => (
                         <FormItem className="flex-grow"><FormLabel className="sr-only">תיאור השלב</FormLabel><FormControl><Textarea placeholder={`שלב ${index + 1}`} {...f} rows={3} /></FormControl><FormMessage /></FormItem>
                     )}/>
-                    <Button type="button" variant="ghost" size="icon" onClick={() => removeInstruction(index)} aria-label="הסר הוראה" className="text-destructive hover:bg-destructive/10 mt-1.5"><Trash2 size={20} /></Button>
+                    <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveInstruction(index)} aria-label="הסר הוראה" className="text-destructive hover:bg-destructive/10 mt-1.5"><Trash2 size={20} /></Button>
                   </div>
                   <div className="ms-6 space-y-2">
-                    <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm" 
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
                         onClick={() => field.id && toggleInstructionImageInputVisibility(field.id)}
                         className="flex items-center gap-1.5 text-xs"
                     >
                         <ImageIcon size={14}/>
-                        {visibleInstructionImageInputs[field.id || ''] ? 'הסתר אפשרויות תמונה' : 'הוסף/שנה תמונת שלב'}
-                        {visibleInstructionImageInputs[field.id || ''] ? <ChevronUp size={14}/> : <ChevronDown size={14}/>}
+                        {field.id && visibleInstructionImageInputs[field.id] ? 'הסתר אפשרויות תמונה' : 'הוסף/שנה תמונת שלב'}
+                        {field.id && visibleInstructionImageInputs[field.id] ? <ChevronUp size={14}/> : <ChevronDown size={14}/>}
                     </Button>
 
                     {field.id && visibleInstructionImageInputs[field.id] && (
@@ -335,7 +349,7 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
                                 <UploadCloud size={24} className="text-muted-foreground me-2" /> לחץ להעלאת תמונה לשלב
                             </div>
                             )}
-                            <Input type="file" accept="image/*" onChange={(e) => handleInstructionImageUpload(index, e)} className="hidden" ref={el => instructionFileInputRefs.current[index] = el} />
+                            <Input type="file" accept="image/*" onChange={(e) => handleInstructionImageUpload(index, e)} className="hidden" ref={el => { if(instructionFileInputRefs.current) instructionFileInputRefs.current[index] = el; }} />
                             <FormField control={form.control} name={`instructions.${index}.imageUrl`} render={({ field: f }) => (
                                 <FormItem className="mt-1"><FormLabel className="sr-only">כתובת URL</FormLabel><FormControl><Input placeholder="או הדבק URL של תמונת שלב" {...f} value={f.value ?? ''} onChange={(e) => {f.onChange(e); const newPreviews = [...instructionImagePreviews]; newPreviews[index] = e.target.value; setInstructionImagePreviews(newPreviews); }} className="text-xs h-8" /></FormControl><FormMessage /></FormItem>
                             )}/>
@@ -344,21 +358,16 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
                   </div>
                 </div>
               ))}
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => { 
-                    const newId = generateId();
-                    appendInstruction({ id: newId, text: '', imageUrl: '' }); 
-                    setInstructionImagePreviews(prev => [...prev, null]); 
-                    setVisibleInstructionImageInputs(prev => ({...prev, [newId]: false }));
-                }} 
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleAddInstruction}
                 className="flex items-center gap-2"
                >
                 <PlusCircle size={18} /> הוסף שלב
               </Button>
             </div>
-            
+
             {/* Tags Section */}
             <div className="space-y-4">
               <h3 className="text-xl font-headline text-primary">תגיות (אופציונלי)</h3>
@@ -387,3 +396,5 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
     </Form>
   );
 }
+
+
