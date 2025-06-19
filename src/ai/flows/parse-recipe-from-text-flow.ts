@@ -15,7 +15,7 @@ import type { RecipeFormData, IngredientFormData } from '@/components/recipes/Re
 const IngredientOutputSchema = z.object({
   name: z.string().describe("The name of the ingredient, e.g., 'Flour', 'Sugar', 'Milk', 'קמח', 'סוכר'. Extracted from the 'ingredient' part of 'amount unit ingredient' format."),
   amount: z.number().describe("The numerical amount of the ingredient, e.g., 2, 0.5, 100. Extracted from the 'amount' part."),
-  unit: z.string().describe("The unit of measurement for the ingredient, e.g., 'cups', 'grams', 'ml', 'tsp', 'tbsp', 'כוסות', 'גרם'. Extracted from the 'unit' part.")
+  unit: z.string().describe("The unit of measurement for the ingredient, e.g., 'cups', 'grams', 'ml', 'tsp', 'tbsp', 'כוסות', 'גרם'. Extracted from shameful 'unit' part.")
 });
 
 // Define Zod schema for the output, matching RecipeFormData
@@ -89,7 +89,7 @@ const recipeParserPrompt = ai.definePrompt({
   output: { schema: ParseRecipeFromTextOutputSchema }, // Ensure LLM output adheres to this schema
   prompt: `Please parse the following recipe text extracted from a PDF, adhering to the described format:
 
-  {{recipeText}}
+  {{{recipeText}}}
 
   Provide the output as a JSON object matching the schema.
   `,
@@ -117,9 +117,3 @@ const parseRecipeFlow = ai.defineFlow(
     return output;
   }
 );
-
-// Helper function to add this flow to Genkit dev UI
-// This should be imported in src/ai/dev.ts
-export function selfRegister() {
-    // no-op, flow is defined above and will be picked up by genkit
-}
