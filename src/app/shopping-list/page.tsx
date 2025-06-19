@@ -21,9 +21,9 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 
 interface GroupedShoppingItem {
-  name: string;
-  items: ShoppingListItem[];
-  displayAmount: string;
+  name: string; // Original casing for display
+  items: ShoppingListItem[]; // All original items for this name
+  displayAmount: string; // e.g., "3 cups", or "2 cups + 1 spoon"
   recipeName?: string; // Representative recipe name for the group
 }
 
@@ -34,21 +34,37 @@ export default function ShoppingListPage() {
 
   const groupedItems = useMemo(() => {
     if (loading) return [];
-    const groups: { [key: string]: ShoppingListItem[] } = {};
+    const groupsByName: { [key: string]: ShoppingListItem[] } = {};
+    
     shoppingList.forEach(item => {
       const normalizedName = item.name.trim().toLowerCase();
-      if (!groups[normalizedName]) {
-        groups[normalizedName] = [];
+      if (!groupsByName[normalizedName]) {
+        groupsByName[normalizedName] = [];
       }
-      groups[normalizedName].push(item);
+      groupsByName[normalizedName].push(item);
     });
     
-    return Object.values(groups).map(group => {
-      const firstItem = group[0];
-      const displayAmount = group.map(it => `${Number(it.amount.toFixed(2))} ${it.unit}`).join(' + ');
+    return Object.entries(groupsByName).map(([normalizedName, nameGroupItems]) => {
+      const firstItemInGroup = nameGroupItems[0];
       
-      let representativeRecipeName = firstItem.recipeName;
-      const uniqueRecipeNames = new Set(group.map(i => i.recipeName).filter(Boolean));
+      // Consolidate amounts by unit within this name group
+      const unitsMap: { [unitKey: string]: { totalAmount: number, originalUnitDisplay: string } } = {};
+      nameGroupItems.forEach(item => {
+        const unitKey = item.unit.trim().toLowerCase();
+        if (!unitsMap[unitKey]) {
+          // Store the first encountered original casing for the unit display
+          unitsMap[unitKey] = { totalAmount: 0, originalUnitDisplay: item.unit };
+        }
+        unitsMap[unitKey].totalAmount += item.amount;
+      });
+
+      const displayAmountParts = Object.values(unitsMap).map(unitData => 
+        `${Number(unitData.totalAmount.toFixed(2))} ${unitData.originalUnitDisplay}`
+      );
+      const displayAmount = displayAmountParts.join(' + ');
+      
+      let representativeRecipeName = firstItemInGroup.recipeName;
+      const uniqueRecipeNames = new Set(nameGroupItems.map(i => i.recipeName).filter(Boolean));
       if (uniqueRecipeNames.size > 1) {
         representativeRecipeName = "מתכונים שונים";
       } else if (uniqueRecipeNames.size === 1) {
@@ -56,8 +72,8 @@ export default function ShoppingListPage() {
       }
 
       return {
-        name: firstItem.name, // Use original casing from first item for display
-        items: group,
+        name: firstItemInGroup.name, // Use original casing from the first item for display
+        items: nameGroupItems, // Keep all original items for potential detailed view or other logic
         displayAmount,
         recipeName: representativeRecipeName,
       };
@@ -74,6 +90,7 @@ export default function ShoppingListPage() {
   };
 
   const handleRemoveGroup = (groupName: string) => {
+    // This function removes all items by name, regardless of unit consolidation for display
     removeItemsByNameFromShoppingList(groupName);
     toast({
       title: "הפריטים הוסרו",
@@ -170,7 +187,7 @@ export default function ShoppingListPage() {
         {groupedItems.length > 0 && (
           <CardFooter className="border-t pt-6 no-print">
             <p className="text-sm text-muted-foreground font-body">
-              סך הפריטים: {shoppingList.length}. סוגי פריטים: {groupedItems.length}.
+              סך הפריטים (לפני איחוד יחידות): {shoppingList.length}. סוגי פריטים (מאוחדים לפי שם): {groupedItems.length}.
             </p>
           </CardFooter>
         )}
