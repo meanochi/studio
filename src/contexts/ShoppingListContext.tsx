@@ -7,7 +7,8 @@ import { generateId } from '@/lib/utils';
 interface ShoppingListContextType {
   shoppingList: ShoppingListItem[];
   addIngredientsToShoppingList: (ingredients: Ingredient[], recipeId?: string, recipeName?: string) => void;
-  removeFromShoppingList: (itemId: string) => void;
+  removeFromShoppingList: (itemId: string) => void; // Removes a single item by its unique ID
+  removeItemsByNameFromShoppingList: (itemName: string) => void; // Removes all items matching a name
   clearShoppingList: () => void;
   updateItemAmount: (itemId: string, newAmount: number) => void;
   loading: boolean;
@@ -47,26 +48,30 @@ export const ShoppingListProvider: React.FC<{ children: ReactNode }> = ({ childr
       ingredients.forEach(ingredientFromRecipe => {
         const existingItemIndex = newList.findIndex(
           item => item.name.toLowerCase() === ingredientFromRecipe.name.toLowerCase() && 
-                  item.unit.toLowerCase() === ingredientFromRecipe.unit.toLowerCase()
+                  item.unit.toLowerCase() === ingredientFromRecipe.unit.toLowerCase() &&
+                  (item.recipeId === recipeId || !item.recipeId || !recipeId) // Try to consolidate better if recipeId matches or is generic
         );
 
         if (existingItemIndex > -1) {
           newList[existingItemIndex].amount += ingredientFromRecipe.amount;
-          // Consolidate recipeName: if multiple recipes contribute, show "Multiple Recipes"
+          // Consolidate recipeName
           if (recipeName && newList[existingItemIndex].recipeName && newList[existingItemIndex].recipeName !== recipeName && newList[existingItemIndex].recipeName !== "מתכונים שונים") {
             newList[existingItemIndex].recipeName = "מתכונים שונים";
           } else if (recipeName && !newList[existingItemIndex].recipeName) {
-            // If existing item has no recipe name, assign the current one
             newList[existingItemIndex].recipeName = recipeName;
           }
-          // Similarly, recipeId could be updated if needed, e.g., to store an array of source recipe IDs
+          // Update recipeId if it makes sense (e.g., if the existing one was generic)
+          if (recipeId && !newList[existingItemIndex].recipeId) {
+            newList[existingItemIndex].recipeId = recipeId;
+          }
+
         } else {
           newList.push({ 
-            id: generateId(), // Generate a new unique ID for the shopping list item
+            id: generateId(), 
             name: ingredientFromRecipe.name,
             amount: ingredientFromRecipe.amount,
             unit: ingredientFromRecipe.unit,
-            originalIngredientId: ingredientFromRecipe.id, // Keep track of one of the source ingredient ids
+            originalIngredientId: ingredientFromRecipe.id, 
             recipeId, 
             recipeName 
           });
@@ -80,6 +85,12 @@ export const ShoppingListProvider: React.FC<{ children: ReactNode }> = ({ childr
     setShoppingList(prevList => prevList.filter(item => item.id !== itemId));
   };
 
+  const removeItemsByNameFromShoppingList = (itemName: string) => {
+    setShoppingList(prevList =>
+      prevList.filter(item => item.name.toLowerCase() !== itemName.toLowerCase())
+    );
+  };
+
   const clearShoppingList = () => {
     setShoppingList([]);
   };
@@ -88,12 +99,12 @@ export const ShoppingListProvider: React.FC<{ children: ReactNode }> = ({ childr
     setShoppingList(prevList => 
       prevList.map(item => 
         item.id === itemId ? { ...item, amount: Math.max(0, newAmount) } : item
-      ).filter(item => item.amount > 0) 
+      ).filter(item => item.amount > 0) // Optionally remove item if amount becomes 0
     );
   };
 
   return (
-    <ShoppingListContext.Provider value={{ shoppingList, addIngredientsToShoppingList, removeFromShoppingList, clearShoppingList, updateItemAmount, loading }}>
+    <ShoppingListContext.Provider value={{ shoppingList, addIngredientsToShoppingList, removeFromShoppingList, removeItemsByNameFromShoppingList, clearShoppingList, updateItemAmount, loading }}>
       {children}
     </ShoppingListContext.Provider>
   );

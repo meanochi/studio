@@ -84,6 +84,10 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      if (file.size > 2 * 1024 * 1024) { // 2MB limit
+        form.setError('imageUrl', { type: 'manual', message: 'הקובץ גדול מדי (מקסימום 2MB)' });
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         const result = reader.result as string;
@@ -225,7 +229,7 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
                   name="imageUrl"
                   render={({ field }) => (
                     <FormItem className="mt-2">
-                      <FormLabel className="sr-only">כתובת URL של תמונה (למילוי אוטומטי)</FormLabel>
+                       <FormLabel className="sr-only">כתובת URL של תמונה (למילוי אוטומטי או כתובת קיימת)</FormLabel>
                       <FormControl>
                         <Input 
                           placeholder="או הדבק כתובת URL של תמונה" 
@@ -290,7 +294,7 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
                     render={({ field: f }) => (
                       <FormItem>
                         {index === 0 && <FormLabel>יחידה</FormLabel>}
-                        <FormControl><Input placeholder="לדוגמה, כוסות" {...f} /></FormControl>
+                        <FormControl><Input placeholder="לדוגמה, כוסות, גרמים" {...f} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}

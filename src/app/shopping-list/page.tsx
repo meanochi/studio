@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
+import type { ShoppingListItem } from '@/types';
 import { useShoppingList } from '@/contexts/ShoppingListContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Trash2, ShoppingBasket, XCircle, Loader2, Printer } from 'lucide-react';
 import {
   AlertDialog,
@@ -20,10 +20,49 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 
+interface GroupedShoppingItem {
+  name: string;
+  items: ShoppingListItem[];
+  displayAmount: string;
+  recipeName?: string; // Representative recipe name for the group
+}
+
 export default function ShoppingListPage() {
-  const { shoppingList, removeFromShoppingList, clearShoppingList, updateItemAmount, loading } = useShoppingList();
+  const { shoppingList, removeItemsByNameFromShoppingList, clearShoppingList, loading } = useShoppingList();
   const { toast } = useToast();
   const printRef = useRef<HTMLDivElement>(null);
+
+  const groupedItems = useMemo(() => {
+    if (loading) return [];
+    const groups: { [key: string]: ShoppingListItem[] } = {};
+    shoppingList.forEach(item => {
+      const normalizedName = item.name.trim().toLowerCase();
+      if (!groups[normalizedName]) {
+        groups[normalizedName] = [];
+      }
+      groups[normalizedName].push(item);
+    });
+    
+    return Object.values(groups).map(group => {
+      const firstItem = group[0];
+      const displayAmount = group.map(it => `${Number(it.amount.toFixed(2))} ${it.unit}`).join(' + ');
+      
+      let representativeRecipeName = firstItem.recipeName;
+      const uniqueRecipeNames = new Set(group.map(i => i.recipeName).filter(Boolean));
+      if (uniqueRecipeNames.size > 1) {
+        representativeRecipeName = "מתכונים שונים";
+      } else if (uniqueRecipeNames.size === 1) {
+        representativeRecipeName = uniqueRecipeNames.values().next().value;
+      }
+
+      return {
+        name: firstItem.name, // Use original casing from first item for display
+        items: group,
+        displayAmount,
+        recipeName: representativeRecipeName,
+      };
+    }).sort((a, b) => a.name.localeCompare(b.name, 'he')); // Sort groups by name
+  }, [shoppingList, loading]);
 
   const handleClearList = () => {
     clearShoppingList();
@@ -34,22 +73,15 @@ export default function ShoppingListPage() {
     });
   };
 
-  const handleRemoveItem = (itemId: string, itemName: string) => {
-    removeFromShoppingList(itemId);
+  const handleRemoveGroup = (groupName: string) => {
+    removeItemsByNameFromShoppingList(groupName);
     toast({
-      title: "הפריט הוסר",
-      description: `"${itemName}" הוסר מרשימת הקניות שלך.`,
+      title: "הפריטים הוסרו",
+      description: `כל הפריטים עבור "${groupName}" הוסרו מרשימת הקניות שלך.`,
       variant: 'destructive',
     });
   };
-
-  const handleAmountChange = (itemId: string, newAmount: string) => {
-    const amount = parseFloat(newAmount);
-    if (!isNaN(amount)) {
-      updateItemAmount(itemId, amount);
-    }
-  };
-
+  
   const handlePrint = () => {
     window.print();
   };
@@ -63,7 +95,6 @@ export default function ShoppingListPage() {
     );
   }
 
-
   return (
     <div className="max-w-2xl mx-auto shopping-list-print-container" ref={printRef}>
       <Card className="shadow-xl">
@@ -72,12 +103,12 @@ export default function ShoppingListPage() {
             <ShoppingBasket size={32} /> רשימת קניות
           </CardTitle>
           <div className="flex items-center gap-2 no-print">
-            {shoppingList.length > 0 && (
+            {groupedItems.length > 0 && (
               <Button variant="outline" size="sm" onClick={handlePrint} className="flex items-center gap-1.5">
                 <Printer size={16} /> הדפס רשימה
               </Button>
             )}
-            {shoppingList.length > 0 && (
+            {groupedItems.length > 0 && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="destructive" size="sm" className="flex items-center gap-1.5">
@@ -101,7 +132,7 @@ export default function ShoppingListPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {shoppingList.length === 0 ? (
+          {groupedItems.length === 0 ? (
             <div className="text-center py-10">
               <p className="text-xl text-muted-foreground font-body">רשימת הקניות שלך ריקה.</p>
               <Button asChild variant="link" className="mt-4 text-lg no-print">
@@ -110,27 +141,24 @@ export default function ShoppingListPage() {
             </div>
           ) : (
             <ul className="space-y-3 font-body">
-              {shoppingList.map(item => (
-                <li key={item.id} className="flex items-center justify-between p-3 bg-secondary/20 rounded-md shadow-sm hover:bg-secondary/40 transition-colors">
+              {groupedItems.map(group => (
+                <li key={group.name} className="flex items-center justify-between p-3 bg-secondary/20 rounded-md shadow-sm hover:bg-secondary/40 transition-colors">
                   <div className="flex-grow">
-                    <span className="font-semibold text-lg text-primary-foreground item-name-print">{item.name}</span>
-                    <div className="print-only item-amount-unit-print">
-                      {item.amount} {item.unit}
+                    <span className="font-semibold text-lg text-primary-foreground item-name-print">{group.name}</span>
+                    <div className="text-sm text-muted-foreground item-amount-unit-print">
+                      {group.displayAmount}
                     </div>
-                    {item.recipeName && <span className="text-xs text-muted-foreground block italic item-recipe-print"> (עבור {item.recipeName})</span>}
+                    {group.recipeName && <span className="text-xs text-muted-foreground/80 block italic item-recipe-print"> (עבור {group.recipeName})</span>}
                   </div>
-                  <div className="flex items-center gap-2 no-print">
-                    <Input
-                      type="number"
-                      value={item.amount}
-                      onChange={(e) => handleAmountChange(item.id, e.target.value)}
-                      className="w-20 h-8 text-sm text-center"
-                      min="0.01"
-                      step="0.01"
-                      aria-label={`כמות עבור ${item.name}`}
-                    />
-                    <span className="text-sm text-muted-foreground w-16 truncate" title={item.unit}>{item.unit}</span>
-                    <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.id, item.name)} aria-label={`הסר את ${item.name}`} className="text-destructive hover:bg-destructive/10">
+                  <div className="no-print">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => handleRemoveGroup(group.name)} 
+                      aria-label={`הסר את כל הפריטים של ${group.name}`} 
+                      className="text-destructive hover:bg-destructive/10"
+                      title={`הסר את ${group.name}`}
+                    >
                       <Trash2 size={18} />
                     </Button>
                   </div>
@@ -139,10 +167,10 @@ export default function ShoppingListPage() {
             </ul>
           )}
         </CardContent>
-        {shoppingList.length > 0 && (
+        {groupedItems.length > 0 && (
           <CardFooter className="border-t pt-6 no-print">
             <p className="text-sm text-muted-foreground font-body">
-              יש לך {shoppingList.length} פריט(ים) ברשימת הקניות.
+              סך הפריטים: {shoppingList.length}. סוגי פריטים: {groupedItems.length}.
             </p>
           </CardFooter>
         )}
