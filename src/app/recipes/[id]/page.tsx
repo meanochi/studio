@@ -60,6 +60,14 @@ export default function RecipeDetailPage() {
     }));
   }, [recipe, multiplier]);
 
+  const servingsDisplay = useMemo(() => {
+    if (!recipe) return '';
+    const calculatedServings = recipe.servings * multiplier;
+    // Handle potential floating point inaccuracies for display
+    const displayServings = Number(calculatedServings.toFixed(2));
+    return `${displayServings} ${recipe.servingUnit}`;
+  }, [recipe, multiplier]);
+
   const handleMultiplierChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newMultiplier = parseFloat(e.target.value);
     if (!isNaN(newMultiplier) && newMultiplier > 0) {
@@ -120,18 +128,10 @@ export default function RecipeDetailPage() {
   }
 
   const totalTime = () => {
+    // recipe is guaranteed to be non-null here due to the checks above
     return `${recipe.prepTime}${recipe.cookTime ? `, ${recipe.cookTime}` : ''}`;
   }
   
-  const servingsDisplay = useMemo(() => {
-    if (!recipe) return '';
-    const calculatedServings = recipe.servings * multiplier;
-    // Handle potential floating point inaccuracies for display
-    const displayServings = Number(calculatedServings.toFixed(2));
-    return `${displayServings} ${recipe.servingUnit}`;
-  }, [recipe, multiplier]);
-
-
   return (
     <div ref={printRef}>
       <Card className="overflow-hidden shadow-xl recipe-detail-print">
