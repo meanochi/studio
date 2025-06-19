@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A Genkit flow to parse recipe details from raw text.
@@ -20,7 +21,7 @@ const IngredientOutputSchema = z.object({
 
 // Define Zod schema for the output, matching RecipeFormData
 // This schema guides the LLM on the desired output structure.
-export const ParseRecipeFromTextOutputSchema = z.object({
+const ParseRecipeFromTextOutputSchema = z.object({
   name: z.string().min(1).describe("The name or title of the recipe. Typically found on the first line of the PDF, often in a larger font."),
   source: z.string().optional().describe("The source of the recipe (e.g., cookbook name, website, person's name). Typically found on the second line of the PDF. If not present, omit this field."),
   prepTime: z.string().optional().describe("Preparation time, e.g., '20 minutes', '1 hour'. If not explicitly found in the text, omit this field."),
@@ -35,7 +36,7 @@ export const ParseRecipeFromTextOutputSchema = z.object({
 });
 export type ParseRecipeFromTextOutput = z.infer<typeof ParseRecipeFromTextOutputSchema>;
 
-export const ParseRecipeFromTextInputSchema = z.object({
+const ParseRecipeFromTextInputSchema = z.object({
   recipeText: z.string().min(10).describe('The full raw text extracted from a recipe document (e.g., PDF).'),
 });
 export type ParseRecipeFromTextInput = z.infer<typeof ParseRecipeFromTextInputSchema>;
