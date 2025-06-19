@@ -11,13 +11,13 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { PlusCircle, Trash2, Save, Image as ImageIcon, UploadCloud, X, FileText, StickyNote, Loader2 } from 'lucide-react';
+import { PlusCircle, Trash2, Save, Image as ImageIcon, UploadCloud, X, FileText, StickyNote, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import NextImage from 'next/image';
 import { generateId } from '@/lib/utils';
 import React, { useState, useEffect, useRef } from 'react';
 
 interface RecipeFormProps {
-  initialData?: RecipeFormData; // Use RecipeFormData for consistency
+  initialData?: RecipeFormData; 
   onSubmit: (data: RecipeFormData) => void;
   isEditing?: boolean;
 }
@@ -51,7 +51,7 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
         servings: 1,
         servingUnit: 'מנה',
         freezable: false,
-        ingredients: [{ id: generateId(), name: '', amount: 1, unit: '', isOptional: false, notes: '' }],
+        ingredients: [{ id: generateId(), name: '', amount: 1, unit: 'יחידות', isOptional: false, notes: '' }],
         instructions: [{ id: generateId(), text: '', imageUrl: '' }],
         imageUrl: '',
         tags: [],
@@ -81,23 +81,36 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
   const [recipeImagePreview, setRecipeImagePreview] = useState<string | null>(null);
   const recipeFileInputRef = useRef<HTMLInputElement>(null);
   
-  // State for instruction image previews
   const [instructionImagePreviews, setInstructionImagePreviews] = useState<(string | null)[]>([]);
   const instructionFileInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const [visibleInstructionImageInputs, setVisibleInstructionImageInputs] = useState<Record<string, boolean>>({});
+
 
   useEffect(() => {
     if (initialData?.imageUrl) {
       setRecipeImagePreview(initialData.imageUrl);
     }
-    if (initialData?.instructions) {
-        setInstructionImagePreviews(initialData.instructions.map(instr => instr.imageUrl || null));
-        instructionFileInputRefs.current = initialData.instructions.map(() => null);
-    } else {
-        setInstructionImagePreviews(defaultValues.instructions.map(instr => instr.imageUrl || null));
-        instructionFileInputRefs.current = defaultValues.instructions.map(() => null);
-    }
-  }, [initialData]);
+    const initialVisibleStates: Record<string, boolean> = {};
+    const initialPreviews: (string | null)[] = [];
 
+    (initialData?.instructions || defaultValues.instructions).forEach(instr => {
+        initialVisibleStates[instr.id || ''] = false; // Keep image inputs collapsed initially
+        initialPreviews.push(instr.imageUrl || null);
+    });
+    
+    setInstructionImagePreviews(initialPreviews);
+    setVisibleInstructionImageInputs(initialVisibleStates);
+    instructionFileInputRefs.current = (initialData?.instructions || defaultValues.instructions).map(() => null);
+
+  }, [initialData, defaultValues.instructions]);
+
+
+  const toggleInstructionImageInputVisibility = (instructionId: string) => {
+    setVisibleInstructionImageInputs(prev => ({
+      ...prev,
+      [instructionId]: !prev[instructionId]
+    }));
+  };
 
   const handleAddTag = () => {
     if (newTag.trim() !== '' && !(form.getValues('tags') || []).includes(newTag.trim())) {
@@ -162,16 +175,21 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
   };
   
   useEffect(() => {
-    // Ensure instructionImagePreviews array has the correct length
     const currentInstructionCount = form.getValues('instructions')?.length || 0;
     if (instructionImagePreviews.length !== currentInstructionCount) {
       const newPreviews = Array(currentInstructionCount).fill(null);
       const newRefs = Array(currentInstructionCount).fill(null);
+      const newVisibleStates = { ...visibleInstructionImageInputs };
+
       form.getValues('instructions').forEach((instr, i) => {
         newPreviews[i] = instr.imageUrl || null;
+        if (instr.id && !(instr.id in newVisibleStates)) {
+          newVisibleStates[instr.id] = false; // Default new steps to collapsed image input
+        }
       });
       setInstructionImagePreviews(newPreviews);
       instructionFileInputRefs.current = newRefs;
+      setVisibleInstructionImageInputs(newVisibleStates);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.watch('instructions')]);
@@ -263,7 +281,7 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
                         <FormItem>{index === 0 && <FormLabel>כמות</FormLabel>}<FormControl><Input type="number" step="0.01" placeholder="לדוגמה, 2.25" {...f} /></FormControl><FormMessage /></FormItem>
                     )}/>
                     <FormField control={form.control} name={`ingredients.${index}.unit`} render={({ field: f }) => (
-                        <FormItem>{index === 0 && <FormLabel>יחידה</FormLabel>}<FormControl><Input placeholder="כוסות, גרמים, כפיות" {...f} /></FormControl><FormMessage /></FormItem>
+                        <FormItem>{index === 0 && <FormLabel>יחידה</FormLabel>}<FormControl><Input placeholder="לדוגמה, כוסות, גרמים" {...f} /></FormControl><FormMessage /></FormItem>
                     )}/>
                     <Button type="button" variant="ghost" size="icon" onClick={() => removeIngredient(index)} aria-label="הסר רכיב" className="text-destructive hover:bg-destructive/10 self-center md:self-end"><Trash2 size={20} /></Button>
                   </div>
@@ -277,7 +295,7 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
                   </div>
                 </div>
               ))}
-              <Button type="button" variant="outline" onClick={() => appendIngredient({ id: generateId(), name: '', amount: 1, unit: '', isOptional: false, notes: '' })} className="flex items-center gap-2"><PlusCircle size={18} /> הוסף רכיב</Button>
+              <Button type="button" variant="outline" onClick={() => appendIngredient({ id: generateId(), name: '', amount: 1, unit: 'יחידות', isOptional: false, notes: '' })} className="flex items-center gap-2"><PlusCircle size={18} /> הוסף רכיב</Button>
             </div>
 
             {/* Instructions Section */}
@@ -293,25 +311,52 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
                     <Button type="button" variant="ghost" size="icon" onClick={() => removeInstruction(index)} aria-label="הסר הוראה" className="text-destructive hover:bg-destructive/10 mt-1.5"><Trash2 size={20} /></Button>
                   </div>
                   <div className="ms-6 space-y-2">
-                     <FormLabel className="text-xs flex items-center gap-1"><ImageIcon size={14}/> תמונת שלב (אופציונלי)</FormLabel>
-                    {instructionImagePreviews[index] ? (
-                      <div className="relative group w-48 h-32">
-                        <NextImage src={instructionImagePreviews[index]!} alt={`תצוגה מקדימה שלב ${index + 1}`} layout="fill" objectFit="cover" className="rounded-md border" data-ai-hint="cooking step" />
-                        <Button type="button" variant="destructive" size="icon" onClick={() => handleRemoveInstructionImage(index)} className="absolute top-1 right-1 opacity-70 group-hover:opacity-100 transition-opacity h-6 w-6"><X size={14} /></Button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-center w-48 h-24 border-2 border-dashed border-input rounded-md cursor-pointer hover:border-primary transition-colors text-xs p-2" onClick={() => instructionFileInputRefs.current[index]?.click()}>
-                        <UploadCloud size={24} className="text-muted-foreground me-2" /> לחץ להעלאת תמונה לשלב
-                      </div>
+                    <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => field.id && toggleInstructionImageInputVisibility(field.id)}
+                        className="flex items-center gap-1.5 text-xs"
+                    >
+                        <ImageIcon size={14}/>
+                        {visibleInstructionImageInputs[field.id || ''] ? 'הסתר אפשרויות תמונה' : 'הוסף/שנה תמונת שלב'}
+                        {visibleInstructionImageInputs[field.id || ''] ? <ChevronUp size={14}/> : <ChevronDown size={14}/>}
+                    </Button>
+
+                    {field.id && visibleInstructionImageInputs[field.id] && (
+                        <div className="border-t pt-3 mt-2 space-y-2">
+                            {instructionImagePreviews[index] ? (
+                            <div className="relative group w-48 h-32">
+                                <NextImage src={instructionImagePreviews[index]!} alt={`תצוגה מקדימה שלב ${index + 1}`} layout="fill" objectFit="cover" className="rounded-md border" data-ai-hint="cooking step" />
+                                <Button type="button" variant="destructive" size="icon" onClick={() => handleRemoveInstructionImage(index)} className="absolute top-1 right-1 opacity-70 group-hover:opacity-100 transition-opacity h-6 w-6"><X size={14} /></Button>
+                            </div>
+                            ) : (
+                            <div className="flex items-center justify-center w-48 h-24 border-2 border-dashed border-input rounded-md cursor-pointer hover:border-primary transition-colors text-xs p-2" onClick={() => instructionFileInputRefs.current[index]?.click()}>
+                                <UploadCloud size={24} className="text-muted-foreground me-2" /> לחץ להעלאת תמונה לשלב
+                            </div>
+                            )}
+                            <Input type="file" accept="image/*" onChange={(e) => handleInstructionImageUpload(index, e)} className="hidden" ref={el => instructionFileInputRefs.current[index] = el} />
+                            <FormField control={form.control} name={`instructions.${index}.imageUrl`} render={({ field: f }) => (
+                                <FormItem className="mt-1"><FormLabel className="sr-only">כתובת URL</FormLabel><FormControl><Input placeholder="או הדבק URL של תמונת שלב" {...f} value={f.value ?? ''} onChange={(e) => {f.onChange(e); const newPreviews = [...instructionImagePreviews]; newPreviews[index] = e.target.value; setInstructionImagePreviews(newPreviews); }} className="text-xs h-8" /></FormControl><FormMessage /></FormItem>
+                            )}/>
+                        </div>
                     )}
-                    <Input type="file" accept="image/*" onChange={(e) => handleInstructionImageUpload(index, e)} className="hidden" ref={el => instructionFileInputRefs.current[index] = el} />
-                    <FormField control={form.control} name={`instructions.${index}.imageUrl`} render={({ field: f }) => (
-                        <FormItem className="mt-1"><FormLabel className="sr-only">כתובת URL</FormLabel><FormControl><Input placeholder="או הדבק URL של תמונת שלב" {...f} value={f.value ?? ''} onChange={(e) => {f.onChange(e); const newPreviews = [...instructionImagePreviews]; newPreviews[index] = e.target.value; setInstructionImagePreviews(newPreviews); }} className="text-xs h-8" /></FormControl><FormMessage /></FormItem>
-                    )}/>
                   </div>
                 </div>
               ))}
-              <Button type="button" variant="outline" onClick={() => { appendInstruction({ id: generateId(), text: '', imageUrl: '' }); setInstructionImagePreviews(prev => [...prev, null]); }} className="flex items-center gap-2"><PlusCircle size={18} /> הוסף שלב</Button>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => { 
+                    const newId = generateId();
+                    appendInstruction({ id: newId, text: '', imageUrl: '' }); 
+                    setInstructionImagePreviews(prev => [...prev, null]); 
+                    setVisibleInstructionImageInputs(prev => ({...prev, [newId]: false }));
+                }} 
+                className="flex items-center gap-2"
+               >
+                <PlusCircle size={18} /> הוסף שלב
+              </Button>
             </div>
             
             {/* Tags Section */}
@@ -323,7 +368,7 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
               </div>
               <div className="flex flex-wrap gap-2">
                 {tagFields.map((field, index) => (
-                  <div key={field.id} className="flex items-center gap-1 bg-accent/30 text-accent-foreground ps-2 pe-1 py-1 rounded-md border border-accent/70">
+                  <div key={field.id} className="flex items-center gap-1 bg-accent text-accent-foreground ps-2 pe-1 py-1 rounded-md border border-accent hover:bg-accent/90">
                     <span>{form.getValues(`tags.${index}`)}</span>
                     <Button type="button" variant="ghost" size="icon" onClick={() => removeTag(index)} aria-label="הסר תגית" className="h-5 w-5 text-accent-foreground/70 hover:text-destructive"><Trash2 size={14} /></Button>
                   </div>
