@@ -72,7 +72,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
         {recipe.tags && recipe.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-2">
             {recipe.tags.slice(0, 3).map(tag => (
-              <Badge key={tag} variant="outline" className="font-body text-xs bg-accent/30 text-accent-foreground border-accent/70 hover:bg-accent/40">{tag}</Badge>
+              <Badge key={tag} variant="default" className="font-body text-xs bg-accent text-accent-foreground border border-accent hover:bg-accent/90">{tag}</Badge>
             ))}
           </div>
         )}

@@ -27,7 +27,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
-  Clock, Users, Edit3, Trash2, Printer, ShoppingCart, Utensils, Snowflake, Loader2, AlertTriangle, HomeIcon, RefreshCw, PlusSquare, Image as ImageIcon, Info
+  Clock, Users, Edit3, Trash2, Printer, ShoppingCart, Utensils, Snowflake, Loader2, AlertTriangle, HomeIcon, RefreshCw, PlusSquare, Image as ImageIcon, Info, EyeIcon, EyeOffIcon
 } from 'lucide-react';
 
 export default function RecipeDetailPage() {
@@ -40,6 +40,7 @@ export default function RecipeDetailPage() {
   const [recipe, setRecipe] = useState<Recipe | null | undefined>(undefined); 
   const [multiplier, setMultiplier] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [visibleStepImages, setVisibleStepImages] = useState<Record<string, boolean>>({});
 
   const recipeId = Array.isArray(params.id) ? params.id[0] : params.id;
   
@@ -68,6 +69,9 @@ export default function RecipeDetailPage() {
     }));
   }, [recipe, multiplier]);
 
+  const toggleStepImageVisibility = (stepId: string) => {
+    setVisibleStepImages(prev => ({ ...prev, [stepId]: !prev[stepId] }));
+  };
 
   const handleMultiplierChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newMultiplier = parseFloat(e.target.value);
@@ -92,8 +96,6 @@ export default function RecipeDetailPage() {
 
   const handleAddAllToShoppingList = () => {
     if (recipe) {
-      // Filter out optional ingredients before adding all to shopping list, unless user explicitly adds them.
-      // For now, "Add all" adds all non-optional ingredients.
       const nonOptionalIngredients = displayedIngredients.filter(ing => !ing.isOptional);
       addIngredientsToShoppingList(nonOptionalIngredients, recipe.id, recipe.name);
       toast({
@@ -105,7 +107,6 @@ export default function RecipeDetailPage() {
 
   const handleAddSingleIngredientToShoppingList = (ingredient: Ingredient) => {
     if (recipe) {
-      // The ingredient passed from displayedIngredients already has the multiplied amount
       addIngredientsToShoppingList([ingredient], recipe.id, recipe.name);
       toast({
         title: "נוסף לרשימת הקניות",
@@ -188,7 +189,7 @@ export default function RecipeDetailPage() {
           {recipe.tags && recipe.tags.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {recipe.tags.map(tag => (
-                <Badge key={tag} variant="outline" className="font-body text-sm bg-accent/30 text-accent-foreground border-accent/70 hover:bg-accent/40">{tag}</Badge>
+                <Badge key={tag} variant="default" className="font-body text-sm bg-accent text-accent-foreground border border-accent hover:bg-accent/90">{tag}</Badge>
               ))}
             </div>
           )}
@@ -259,15 +260,26 @@ export default function RecipeDetailPage() {
                 <li key={step.id} className="pe-2 border-r-2 border-primary/50 py-2 hover:bg-primary/5 transition-colors rounded-l-md space-y-2">
                   <span>{step.text}</span>
                   {step.imageUrl && (
-                    <div className="mt-2 ms-4">
-                      <Image 
-                        src={step.imageUrl} 
-                        alt={`תמונה עבור שלב ${index + 1}`} 
-                        width={400} 
-                        height={300} 
-                        className="rounded-md object-cover border shadow-sm"
-                        data-ai-hint="cooking instruction photo"
-                      />
+                    <div className="mt-2 ms-4 space-y-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => toggleStepImageVisibility(step.id)} 
+                        className="flex items-center gap-1.5 text-xs no-print"
+                      >
+                        {visibleStepImages[step.id] ? <EyeOffIcon size={14}/> : <EyeIcon size={14}/>}
+                        {visibleStepImages[step.id] ? 'הסתר תמונה' : 'הצג תמונה'}
+                      </Button>
+                      {visibleStepImages[step.id] && (
+                        <Image 
+                          src={step.imageUrl} 
+                          alt={`תמונה עבור שלב ${index + 1}`} 
+                          width={300} 
+                          height={225} 
+                          className="rounded-md object-cover border shadow-sm"
+                          data-ai-hint="cooking instruction photo"
+                        />
+                      )}
                     </div>
                   )}
                 </li>

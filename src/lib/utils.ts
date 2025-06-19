@@ -10,21 +10,20 @@ export function generateId(): string {
 }
 
 export function getDisplayUnit(amount: number, unit: string): string {
-  if (amount <= 1) {
-    if (unit === 'כוסות') return 'כוס';
-    if (unit === 'כפיות') return 'כפית';
-    if (unit === 'כפות') return 'כף';
-    if (unit === 'גרמים') return 'גרם';
+  const lowerUnit = unit.toLowerCase();
+  if (amount === 1 || (amount > 0 && amount < 1) || (amount < 0 && amount > -1) ) { // Handle singular for 1, 0.x, -0.x
+    if (lowerUnit === 'כוסות') return 'כוס';
+    if (lowerUnit === 'כפיות') return 'כפית';
+    if (lowerUnit === 'כפות') return 'כף';
+    if (lowerUnit === 'גרמים') return 'גרם';
+    if (lowerUnit === 'שקיות') return 'שקית';
     // Add more singularization rules as needed
-    // For units like ק"ג or מ"ל, they often don't change or singularization is complex
-    // So, we'll return the original unit if no simple rule applies
+  } else { // amount > 1, amount = 0, amount < -1
+    if (lowerUnit === 'כוס') return 'כוסות';
+    if (lowerUnit === 'כפית') return 'כפיות';
+    if (lowerUnit === 'כף') return 'כפות';
+    if (lowerUnit === 'גרם') return 'גרמים';
+    if (lowerUnit === 'שקית') return 'שקיות';
   }
-  // Ensure common units are plural if amount > 1 and user entered singular
-  if (amount > 1) {
-    if (unit === 'כוס') return 'כוסות';
-    if (unit === 'כפית') return 'כפיות';
-    if (unit === 'כף') return 'כפות';
-    if (unit === 'גרם') return 'גרמים';
-  }
-  return unit;
+  return unit; // Return original unit if no rule applies or already correct
 }
