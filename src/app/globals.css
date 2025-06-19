@@ -2,31 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: Arial, Helvetica, sans-serif;
-}
-
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 36 43% 96%; /* Light beige #F8F5F1 */
     --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
+    --card: 36 43% 96%; /* Same as background for a flatter design or 0 0% 100% for distinct cards */
     --card-foreground: 0 0% 3.9%;
-    --popover: 0 0% 100%;
+    --popover: 36 43% 96%;
     --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
+    --primary: 15 69% 62%; /* Soft terracotta #E07A5F */
+    --primary-foreground: 0 0% 100%; /* White for good contrast on terracotta */
+    --secondary: 280 27% 77%; /* Lighter Dusty Rose for secondary elements */
+    --secondary-foreground: 0 0% 3.9%;
+    --muted: 280 27% 85%; /* Even Lighter Dusty Rose or a grey */
     --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
+    --accent: 280 27% 67%; /* Dusty rose #BE95C4 */
+    --accent-foreground: 0 0% 100%; /* White for good contrast on dusty rose */
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
+    --border: 15 30% 80%; /* Lighter terracotta for borders */
+    --input: 15 30% 88%; /* Even lighter terracotta/beige for input backgrounds */
+    --ring: 15 69% 58%; /* Slightly darker terracotta for focus rings */
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
@@ -43,31 +39,31 @@ body {
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
   .dark {
-    --background: 0 0% 3.9%;
+    --background: 0 0% 10%; /* Darker background for dark mode */
     --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
+    --card: 0 0% 12%;
     --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
+    --popover: 0 0% 10%;
     --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
+    --primary: 15 69% 62%; /* Terracotta can work in dark mode too */
+    --primary-foreground: 0 0% 98%;
+    --secondary: 280 27% 50%; /* Darker Dusty Rose for secondary */
     --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
+    --muted: 280 27% 30%;
     --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
+    --accent: 280 27% 67%; /* Dusty rose can work in dark mode */
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
+    --border: 15 30% 50%;
+    --input: 15 30% 25%;
+    --ring: 15 69% 58%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
+     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
@@ -83,6 +79,51 @@ body {
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-body;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-headline;
+  }
+}
+
+@media print {
+  body {
+    background-color: white !important;
+    color: black !important;
+    font-family: 'Alegreya', serif !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  header, footer, nav, aside {
+    display: none !important;
+  }
+  main {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  a {
+    text-decoration: none !important;
+    color: black !important;
+  }
+  a[href^="http"]:after {
+    content: " (" attr(href) ")";
+    font-size: 0.8em;
+  }
+  img {
+    max-width: 100% !important;
+    page-break-inside: avoid;
+  }
+   /* Ensure recipe cards/details are not split across pages */
+  .recipe-card-print, .recipe-detail-print {
+    page-break-inside: avoid;
+  }
+  /* Hide buttons in print view */
+  button, .btn {
+    display: none !important;
   }
 }
