@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Recipe, Ingredient, InstructionStep } from '@/types';
@@ -13,7 +14,7 @@ import {
   deleteDoc, 
   query,
   orderBy,
-  Timestamp // Optional: if you want to use server timestamps
+  // Timestamp // Optional: if you want to use server timestamps
 } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
@@ -40,18 +41,38 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   useEffect(() => {
     setLoading(true);
     const recipesCollectionRef = collection(db, 'recipes');
-    // Consider adding orderBy if you want consistent ordering, e.g., by name or a timestamp
     const q = query(recipesCollectionRef, orderBy('name', 'asc')); 
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const recipesData = querySnapshot.docs.map(doc => {
-        const data = doc.data();
+      const recipesData = querySnapshot.docs.map(docSnapshot => { // Renamed doc to docSnapshot to avoid conflict
+        const data = docSnapshot.data();
         return {
-          id: doc.id,
+          id: docSnapshot.id,
           ...data,
-          // Ensure ingredients and instructions arrays exist and map them
-          ingredients: (data.ingredients || []).map((ing: Ingredient) => ({ ...ing, id: ing.id || generateId() })),
-          instructions: (data.instructions || []).map((instr: InstructionStep) => ({ ...instr, id: instr.id || generateId() })),
+          name: data.name || "Unnamed Recipe",
+          prepTime: data.prepTime || "N/A",
+          servings: data.servings || 1,
+          servingUnit: data.servingUnit || "unit",
+          freezable: data.freezable || false,
+          source: data.source || null,
+          cookTime: data.cookTime || null,
+          imageUrl: data.imageUrl || null,
+          tags: data.tags || [],
+          ingredients: (data.ingredients || []).map((ing: any) => ({ 
+            id: ing.id || generateId(),
+            name: ing.name || "",
+            isHeading: ing.isHeading || false,
+            amount: ing.isHeading ? null : (typeof ing.amount === 'number' ? ing.amount : 0),
+            unit: ing.isHeading ? null : (ing.unit || ""),
+            isOptional: ing.isHeading ? null : (ing.isOptional || false),
+            notes: ing.isHeading ? null : (ing.notes || null),
+          })),
+          instructions: (data.instructions || []).map((instr: any) => ({ 
+            id: instr.id || generateId(),
+            text: instr.text || "",
+            isHeading: instr.isHeading || false,
+            imageUrl: instr.isHeading ? null : (instr.imageUrl || null),
+          })),
         } as Recipe;
       });
       setRecipes(recipesData);
@@ -66,7 +87,6 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       setLoading(false);
     });
 
-    // Cleanup subscription on unmount
     return () => unsubscribe();
   }, [toast]);
 
@@ -76,15 +96,35 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     instructions: Omit<InstructionStep, 'id'>[] 
   }): Promise<Recipe | null> => {
     try {
-      const newRecipeData = {
-        ...recipeData,
-        ingredients: recipeData.ingredients.map(ing => ({ ...ing, id: ing.id || generateId(), isHeading: ing.isHeading || false })),
-        instructions: recipeData.instructions.map(instr => ({ ...instr, id: instr.id || generateId(), isHeading: instr.isHeading || false })),
-        // Optional: add createdAt timestamp
+      const recipeForFirestore = {
+        name: recipeData.name,
+        source: recipeData.source || null,
+        prepTime: recipeData.prepTime,
+        cookTime: recipeData.cookTime || null,
+        servings: recipeData.servings,
+        servingUnit: recipeData.servingUnit,
+        freezable: recipeData.freezable || false,
+        imageUrl: recipeData.imageUrl || null,
+        tags: recipeData.tags || [],
+        ingredients: (recipeData.ingredients || []).map(ing => ({
+          id: ing.id || generateId(),
+          name: ing.name || "",
+          isHeading: ing.isHeading || false,
+          amount: ing.isHeading ? null : (typeof ing.amount === 'number' ? ing.amount : 0),
+          unit: ing.isHeading ? null : (ing.unit || ""),
+          isOptional: ing.isHeading ? null : (ing.isOptional || false),
+          notes: ing.isHeading ? null : (ing.notes || null),
+        })),
+        instructions: (recipeData.instructions || []).map(instr => ({
+          id: instr.id || generateId(),
+          text: instr.text || "",
+          isHeading: instr.isHeading || false,
+          imageUrl: instr.isHeading ? null : (instr.imageUrl || null),
+        })),
         // createdAt: Timestamp.now(), 
       };
-      const docRef = await addDoc(collection(db, 'recipes'), newRecipeData);
-      return { ...newRecipeData, id: docRef.id } as Recipe;
+      const docRef = await addDoc(collection(db, 'recipes'), recipeForFirestore);
+      return { ...recipeForFirestore, id: docRef.id } as Recipe;
     } catch (error) {
       console.error("Error adding recipe to Firestore: ", error);
       toast({
@@ -99,13 +139,32 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const updateRecipe = async (updatedRecipe: Recipe) => {
     try {
       const recipeRef = doc(db, 'recipes', updatedRecipe.id);
-      // Prepare data for Firestore, ensuring sub-objects are plain JS objects
       const dataToUpdate = {
-        ...updatedRecipe,
-        ingredients: updatedRecipe.ingredients.map(ing => ({ ...ing, id: ing.id || generateId(), isHeading: ing.isHeading || false })),
-        instructions: updatedRecipe.instructions.map(instr => ({ ...instr, id: instr.id || generateId(), isHeading: instr.isHeading || false })),
+        name: updatedRecipe.name,
+        source: updatedRecipe.source || null,
+        prepTime: updatedRecipe.prepTime,
+        cookTime: updatedRecipe.cookTime || null,
+        servings: updatedRecipe.servings,
+        servingUnit: updatedRecipe.servingUnit,
+        freezable: updatedRecipe.freezable || false,
+        imageUrl: updatedRecipe.imageUrl || null,
+        tags: updatedRecipe.tags || [],
+        ingredients: (updatedRecipe.ingredients || []).map(ing => ({
+          id: ing.id || generateId(),
+          name: ing.name || "",
+          isHeading: ing.isHeading || false,
+          amount: ing.isHeading ? null : (typeof ing.amount === 'number' ? ing.amount : 0),
+          unit: ing.isHeading ? null : (ing.unit || ""),
+          isOptional: ing.isHeading ? null : (ing.isOptional || false),
+          notes: ing.isHeading ? null : (ing.notes || null),
+        })),
+        instructions: (updatedRecipe.instructions || []).map(instr => ({
+          id: instr.id || generateId(),
+          text: instr.text || "",
+          isHeading: instr.isHeading || false,
+          imageUrl: instr.isHeading ? null : (instr.imageUrl || null),
+        })),
       };
-      delete (dataToUpdate as any).id; // Don't store the id field within the document itself if it's the doc id
       
       await updateDoc(recipeRef, dataToUpdate);
     } catch (error) {
@@ -150,3 +209,4 @@ export const useRecipes = (): RecipeContextType => {
   }
   return context;
 };
+
