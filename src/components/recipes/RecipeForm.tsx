@@ -67,6 +67,11 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
     defaultValues: defaultFormValues,
   });
 
+  useEffect(() => {
+    form.reset(defaultFormValues);
+  }, [defaultFormValues, form]);
+
+
   const { fields: ingredientFields, append: appendIngredient, remove: removeIngredient } = useFieldArray({
     control: form.control,
     name: "ingredients",
@@ -87,7 +92,7 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
   const recipeFileInputRef = useRef<HTMLInputElement>(null);
 
   const [instructionImagePreviews, setInstructionImagePreviews] = useState<(string | null)[]>([]);
-  const instructionFileInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const instructionFileInputRefs = useRef<(HTMLInputElement | null)[]>(new Array(instructionFields.length).fill(null));
   const [visibleInstructionImageInputs, setVisibleInstructionImageInputs] = useState<Record<string, boolean>>({});
 
 
@@ -99,15 +104,14 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
     const initialPreviews: (string | null)[] = [];
 
     defaultFormValues.instructions.forEach(instr => {
-        initialVisibleStates[instr.id || ''] = !!instr.imageUrl; // Show if URL exists
+        initialVisibleStates[instr.id || ''] = false; // Start with image inputs hidden
         initialPreviews.push(instr.imageUrl || null);
     });
 
     setInstructionImagePreviews(initialPreviews);
     setVisibleInstructionImageInputs(initialVisibleStates);
     instructionFileInputRefs.current = defaultFormValues.instructions.map(() => null);
-    form.reset(defaultFormValues);
-  }, [defaultFormValues, form]);
+  }, [defaultFormValues]);
 
 
   const toggleInstructionImageInputVisibility = (instructionId: string) => {
@@ -194,32 +198,27 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
   const handleAddInstruction = (isHeading = false) => {
     const newId = generateId();
     appendInstruction({ id: newId, text: '', imageUrl: '', isHeading });
+    
+    setInstructionImagePreviews(prev => [...prev, null]);
+    instructionFileInputRefs.current = [...instructionFileInputRefs.current, null];
     if (!isHeading) {
-        setInstructionImagePreviews(prev => [...prev, null]);
         setVisibleInstructionImageInputs(prev => ({...prev, [newId]: false }));
-        instructionFileInputRefs.current = [...instructionFileInputRefs.current, null];
-    } else {
-        // For headings, no preview/visibility state needed for image
-        setInstructionImagePreviews(prev => [...prev, null]); // Maintain array length
-        instructionFileInputRefs.current = [...instructionFileInputRefs.current, null]; // Maintain array length
     }
   };
 
   const handleRemoveInstruction = (index: number) => {
     const instructionIdToRemove = instructionFields[index]?.id;
-
-    const newPreviews = instructionImagePreviews.filter((_, i) => i !== index);
-    const newRefs = instructionFileInputRefs.current.filter((_, i) => i !== index);
-    let newVisibleStates = { ...visibleInstructionImageInputs };
-    if (instructionIdToRemove) {
-      delete newVisibleStates[instructionIdToRemove];
-    }
-    
     removeInstruction(index); 
 
-    setInstructionImagePreviews(newPreviews);
-    setVisibleInstructionImageInputs(newVisibleStates);
-    instructionFileInputRefs.current = newRefs;
+    setInstructionImagePreviews(prev => prev.filter((_, i) => i !== index));
+    instructionFileInputRefs.current = instructionFileInputRefs.current.filter((_, i) => i !== index);
+    if (instructionIdToRemove) {
+      setVisibleInstructionImageInputs(prev => {
+        const newState = {...prev};
+        delete newState[instructionIdToRemove];
+        return newState;
+      });
+    }
   };
 
 
@@ -231,8 +230,8 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
             ...ing,
             id: ing.id || generateId(),
             notes: ing.isHeading ? undefined : (ing.notes?.trim() === '' ? undefined : ing.notes),
-            amount: ing.isHeading ? 0 : Number(ing.amount), // Store 0 for amount if heading, or actual if not
-            unit: ing.isHeading ? '' : ing.unit, // Store empty string for unit if heading
+            amount: ing.isHeading ? 0 : Number(ing.amount), 
+            unit: ing.isHeading ? '' : ing.unit, 
             isOptional: ing.isHeading ? undefined : ing.isOptional,
         })),
         instructions: data.instructions.map(instr => ({
@@ -305,50 +304,55 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
               {ingredientFields.map((item, index) => {
                 const isHeading = form.watch(`ingredients.${index}.isHeading`);
                 return (
-                <div key={item.id} className="p-4 border rounded-md shadow-sm space-y-3 bg-secondary/10">
-                  <div className="flex justify-between items-start">
+                <div key={item.id} className="p-4 border rounded-md shadow-sm bg-secondary/10 space-y-3">
+                  <div className="flex justify-between items-center">
                     <FormField 
                       control={form.control}
                       name={`ingredients.${index}.isHeading`}
                       render={({ field }) => (
-                        <FormItem className="flex flex-row items-center space-x-2 rtl:space-x-reverse">
+                        <FormItem className="flex flex-row items-center space-x-2 rtl:space-x-reverse py-0 my-0">
                           <FormControl>
                             <Checkbox
                               checked={field.value}
                               onCheckedChange={(checked) => {
                                 field.onChange(checked);
-                                // Optionally reset/clear other fields if switching to heading
                                 if (checked) {
                                   form.setValue(`ingredients.${index}.amount`, undefined);
                                   form.setValue(`ingredients.${index}.unit`, undefined);
                                   form.setValue(`ingredients.${index}.notes`, '');
                                   form.setValue(`ingredients.${index}.isOptional`, false);
+                                } else {
+                                   if (form.getValues(`ingredients.${index}.amount`) === undefined) form.setValue(`ingredients.${index}.amount`, 1);
+                                   if (form.getValues(`ingredients.${index}.unit`) === undefined) form.setValue(`ingredients.${index}.unit`, 'יחידות');
                                 }
                               }}
                             />
                           </FormControl>
-                          <FormLabel className="font-normal text-sm">כותרת משנה?</FormLabel>
+                          <FormLabel className="font-normal text-xs text-muted-foreground hover:cursor-pointer">כותרת?</FormLabel>
                         </FormItem>
                       )}
                     />
-                    <Button type="button" variant="ghost" size="icon" onClick={() => removeIngredient(index)} aria-label="הסר פריט" className="text-destructive hover:bg-destructive/10"><Trash2 size={20} /></Button>
+                    <Button type="button" variant="ghost" size="icon" onClick={() => removeIngredient(index)} aria-label="הסר פריט" className="text-destructive hover:bg-destructive/10 w-8 h-8"><Trash2 size={18} /></Button>
                   </div>
 
-                  <FormField control={form.control} name={`ingredients.${index}.name`} render={({ field: f }) => (
-                      <FormItem><FormLabel>{isHeading ? 'טקסט כותרת' : 'שם הרכיב'}</FormLabel><FormControl><Input placeholder={isHeading ? "לדוגמה, לבצק" : "לדוגמה, קמח"} {...f} /></FormControl><FormMessage /></FormItem>
-                  )}/>
-                  
-                  {!isHeading && (
+                  {isHeading ? (
+                     <FormField control={form.control} name={`ingredients.${index}.name`} render={({ field: f }) => (
+                        <FormItem><FormLabel className="sr-only">טקסט כותרת</FormLabel><FormControl><Input placeholder="טקסט כותרת (לדוגמה, לבצק)" {...f} /></FormControl><FormMessage /></FormItem>
+                    )}/>
+                  ) : (
                     <>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-3 gap-y-2 items-end">
+                      <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr] gap-x-4 gap-y-3 items-end">
+                        <FormField control={form.control} name={`ingredients.${index}.name`} render={({ field: f }) => (
+                            <FormItem><FormLabel>שם הרכיב</FormLabel><FormControl><Input placeholder="לדוגמה, קמח" {...f} /></FormControl><FormMessage /></FormItem>
+                        )}/>
                         <FormField control={form.control} name={`ingredients.${index}.amount`} render={({ field: f }) => (
-                            <FormItem><FormLabel>כמות</FormLabel><FormControl><Input type="number" step="0.01" placeholder="לדוגמה, 2.25" {...f} onChange={e => f.onChange(parseFloat(e.target.value) || '')} /></FormControl><FormMessage /></FormItem>
+                            <FormItem><FormLabel>כמות</FormLabel><FormControl><Input type="number" step="0.5" placeholder="לדוגמה, 2.5" {...f} onChange={e => f.onChange(parseFloat(e.target.value) || '')} /></FormControl><FormMessage /></FormItem>
                         )}/>
                         <FormField control={form.control} name={`ingredients.${index}.unit`} render={({ field: f }) => (
                             <FormItem><FormLabel>יחידה</FormLabel><FormControl><Input placeholder="לדוגמה, כוסות" {...f} /></FormControl><FormMessage /></FormItem>
                         )}/>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-center">
+                      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-center pt-2">
                         <FormField control={form.control} name={`ingredients.${index}.notes`} render={({ field: f }) => (
                             <FormItem><FormLabel className="text-xs flex items-center gap-1"><StickyNote size={14}/> הערות/אלטרנטיבה (אופציונלי)</FormLabel><FormControl><Input placeholder="לדוגמה, אפשר לוותר או להחליף ב..." {...f} /></FormControl><FormMessage /></FormItem>
                         )}/>
@@ -371,58 +375,59 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
               <h3 className="text-xl font-headline text-primary">הוראות הכנה</h3>
               {instructionFields.map((item, index) => {
                 const isHeading = form.watch(`instructions.${index}.isHeading`);
+                const instructionId = item.id || '';
                 return (
                 <div key={item.id} className="flex flex-col gap-3 p-4 border rounded-md shadow-sm bg-secondary/10">
-                  <div className="flex justify-between items-start">
+                  <div className="flex justify-between items-center">
                      <FormField 
                       control={form.control}
                       name={`instructions.${index}.isHeading`}
                       render={({ field }) => (
-                        <FormItem className="flex flex-row items-center space-x-2 rtl:space-x-reverse">
+                        <FormItem className="flex flex-row items-center space-x-2 rtl:space-x-reverse py-0 my-0">
                           <FormControl>
                             <Checkbox
                               checked={field.value}
                               onCheckedChange={(checked) => {
                                 field.onChange(checked);
-                                if (checked && item.id) { // If becoming a heading, hide image input
+                                if (checked && item.id) { 
                                    setVisibleInstructionImageInputs(prev => ({...prev, [item.id!]: false}));
                                 }
                               }}
                             />
                           </FormControl>
-                          <FormLabel className="font-normal text-sm">כותרת משנה?</FormLabel>
+                          <FormLabel className="font-normal text-xs text-muted-foreground hover:cursor-pointer">כותרת?</FormLabel>
                         </FormItem>
                       )}
                     />
-                    <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveInstruction(index)} aria-label="הסר הוראה" className="text-destructive hover:bg-destructive/10 mt-1.5"><Trash2 size={20} /></Button>
+                    <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveInstruction(index)} aria-label="הסר הוראה" className="text-destructive hover:bg-destructive/10 w-8 h-8"><Trash2 size={18} /></Button>
                   </div>
                   
                   <div className="flex items-start gap-2">
                     {!isHeading && <span className="font-headline text-lg text-primary pt-2">{instructionFields.filter(f => !form.getValues(`instructions.${instructionFields.indexOf(f)}.isHeading`)).indexOf(item) + 1}.</span>}
                     <FormField control={form.control} name={`instructions.${index}.text`} render={({ field: f }) => (
-                        <FormItem className="flex-grow"><FormLabel className="sr-only">{isHeading ? 'טקסט כותרת' : 'תיאור השלב'}</FormLabel><FormControl><Textarea placeholder={isHeading ? "לדוגמה, הכנת הציפוי" :`שלב ${index + 1}`} {...f} rows={isHeading ? 1:3} /></FormControl><FormMessage /></FormItem>
+                        <FormItem className="flex-grow"><FormLabel className="sr-only">{isHeading ? 'טקסט כותרת' : 'תיאור השלב'}</FormLabel><FormControl><Textarea placeholder={isHeading ? "טקסט כותרת (לדוגמה, הכנת הציפוי)" :`תיאור השלב`} {...f} rows={isHeading ? 1:3} /></FormControl><FormMessage /></FormItem>
                     )}/>
                   </div>
 
-                  {!isHeading && item.id && (
+                  {!isHeading && instructionId && (
                     <div className="ms-6 space-y-2">
                       <Button
                           type="button"
                           variant="outline"
                           size="sm"
-                          onClick={() => toggleInstructionImageInputVisibility(item.id!)}
+                          onClick={() => toggleInstructionImageInputVisibility(instructionId)}
                           className="flex items-center gap-1.5 text-xs"
                       >
                           <ImageIcon size={14}/>
-                          {visibleInstructionImageInputs[item.id!] ? 'הסתר אפשרויות תמונה' : 'הוסף/שנה תמונת שלב'}
-                          {visibleInstructionImageInputs[item.id!] ? <ChevronUp size={14}/> : <ChevronDown size={14}/>}
+                          {visibleInstructionImageInputs[instructionId] ? 'הסתר אפשרויות תמונה' : 'הוסף/שנה תמונת שלב'}
+                          {visibleInstructionImageInputs[instructionId] ? <ChevronUp size={14}/> : <ChevronDown size={14}/>}
                       </Button>
 
-                      {visibleInstructionImageInputs[item.id!] && (
+                      {visibleInstructionImageInputs[instructionId] && (
                           <div className="border-t pt-3 mt-2 space-y-2">
                               {instructionImagePreviews[index] ? (
                               <div className="relative group w-48 h-32">
-                                  <NextImage src={instructionImagePreviews[index]!} alt={`תצוגה מקדימה שלב ${index + 1}`} layout="fill" objectFit="cover" className="rounded-md border" data-ai-hint="cooking step" />
+                                  <NextImage src={instructionImagePreviews[index]!} alt={`תצוגה מקדימה שלב`} layout="fill" objectFit="cover" className="rounded-md border" data-ai-hint="cooking step" />
                                   <Button type="button" variant="destructive" size="icon" onClick={() => handleRemoveInstructionImage(index)} className="absolute top-1 right-1 opacity-70 group-hover:opacity-100 transition-opacity h-6 w-6"><X size={14} /></Button>
                               </div>
                               ) : (
@@ -474,3 +479,4 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
     </Form>
   );
 }
+
