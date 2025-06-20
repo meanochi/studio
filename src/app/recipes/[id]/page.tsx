@@ -27,7 +27,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
-  Clock, Users, Edit3, Trash2, Printer, ShoppingCart, Utensils, Snowflake, Loader2, AlertTriangle, HomeIcon, RefreshCw, PlusSquare, Image as ImageIcon, Info, EyeIcon, EyeOffIcon
+  Clock, Users, Edit3, Trash2, Printer, ShoppingCart, Utensils, Snowflake, Loader2, AlertTriangle, HomeIcon, RefreshCw, PlusSquare, ImageIcon, Info, EyeIcon, EyeOffIcon, Heading2
 } from 'lucide-react';
 
 export default function RecipeDetailPage() {
@@ -65,7 +65,7 @@ export default function RecipeDetailPage() {
     if (!recipe) return [];
     return recipe.ingredients.map(ing => ({
       ...ing,
-      amount: ing.amount * multiplier,
+      amount: ing.isHeading ? 0 : ing.amount * multiplier, // Don't multiply amount for headings
     }));
   }, [recipe, multiplier]);
 
@@ -96,17 +96,17 @@ export default function RecipeDetailPage() {
 
   const handleAddAllToShoppingList = () => {
     if (recipe) {
-      const nonOptionalIngredients = displayedIngredients.filter(ing => !ing.isOptional);
-      addIngredientsToShoppingList(nonOptionalIngredients, recipe.id, recipe.name);
+      const nonOptionalAndNonHeadingIngredients = displayedIngredients.filter(ing => !ing.isOptional && !ing.isHeading);
+      addIngredientsToShoppingList(nonOptionalAndNonHeadingIngredients, recipe.id, recipe.name);
       toast({
         title: "נוסף לרשימת הקניות",
-        description: `רכיבים (לא אופציונליים) עבור "${recipe.name}" (מוכפלות פי ${multiplier}) נוספו.`,
+        description: `רכיבים (לא אופציונליים או כותרות) עבור "${recipe.name}" (מוכפלות פי ${multiplier}) נוספו.`,
       });
     }
   };
 
   const handleAddSingleIngredientToShoppingList = (ingredient: Ingredient) => {
-    if (recipe) {
+    if (recipe && !ingredient.isHeading) {
       addIngredientsToShoppingList([ingredient], recipe.id, recipe.name);
       toast({
         title: "נוסף לרשימת הקניות",
@@ -146,6 +146,8 @@ export default function RecipeDetailPage() {
   const totalTime = () => {
     return `${recipe.prepTime}${recipe.cookTime ? `, ${recipe.cookTime}` : ''}`;
   }
+
+  let instructionStepCounter = 0;
   
   return (
     <div ref={printRef}>
@@ -215,75 +217,96 @@ export default function RecipeDetailPage() {
                  </Button>
               </div>
             </div>
-            <ul className="list-none space-y-3 font-body ps-0">
+            <div className="space-y-1 font-body"> {/* Changed ul to div, and removed list-none */}
               {displayedIngredients.map(ingredient => (
-                <li key={ingredient.id} className="flex flex-col p-3 bg-background rounded-md shadow-sm hover:bg-secondary/20 transition-colors">
-                  <div className="flex items-center w-full">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="me-2 no-print text-green-600 hover:text-green-700 hover:bg-green-500/10 h-8 w-8" 
-                      onClick={() => handleAddSingleIngredientToShoppingList(ingredient)}
-                      aria-label={`הוסף ${ingredient.name} לרשימת הקניות`}
-                      title={`הוסף ${ingredient.name} לרשימת הקניות`}
-                    >
-                      <PlusSquare size={20} />
-                    </Button>
-                    <span className="font-semibold text-primary flex-1">
-                        {ingredient.name}
-                        {ingredient.isOptional && <span className="text-xs text-muted-foreground ms-1">(אופציונלי)</span>}
-                    </span>
-                    <span className="text-muted-foreground flex-1 text-center">
-                      {Number((ingredient.amount).toFixed(2))} {getDisplayUnit(ingredient.amount, ingredient.unit)}
-                    </span>
-                    <span className="text-xs text-gray-400 flex-1 text-left italic no-print">
-                      {multiplier !== 1 && `(מקורי: ${Number((ingredient.amount / multiplier).toFixed(2))} ${getDisplayUnit(ingredient.amount/multiplier, ingredient.unit)})`}
-                    </span>
-                  </div>
-                  {ingredient.notes && (
-                    <div className="ps-10 pt-1 text-xs text-muted-foreground/80 flex items-center">
-                        <Info size={12} className="me-1.5 text-accent"/>
-                        <span>{ingredient.notes}</span>
+                ingredient.isHeading ? (
+                  <h4 key={ingredient.id} className="text-lg font-semibold text-accent mt-4 mb-2 pt-2 border-t border-dashed">
+                    <Heading2 size={18} className="inline-block me-2 align-middle" />
+                    {ingredient.name}
+                  </h4>
+                ) : (
+                  <div key={ingredient.id} className="flex flex-col p-3 bg-background rounded-md shadow-sm hover:bg-secondary/20 transition-colors">
+                    <div className="flex items-center w-full">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="me-2 no-print text-green-600 hover:text-green-700 hover:bg-green-500/10 h-8 w-8" 
+                        onClick={() => handleAddSingleIngredientToShoppingList(ingredient)}
+                        aria-label={`הוסף ${ingredient.name} לרשימת הקניות`}
+                        title={`הוסף ${ingredient.name} לרשימת הקניות`}
+                      >
+                        <PlusSquare size={20} />
+                      </Button>
+                      <span className="font-semibold text-primary flex-1">
+                          {ingredient.name}
+                          {ingredient.isOptional && <span className="text-xs text-muted-foreground ms-1">(אופציונלי)</span>}
+                      </span>
+                      <span className="text-muted-foreground flex-1 text-center">
+                        {Number((ingredient.amount).toFixed(2))} {getDisplayUnit(ingredient.amount, ingredient.unit)}
+                      </span>
+                      <span className="text-xs text-gray-400 flex-1 text-left italic no-print">
+                        {multiplier !== 1 && `(מקורי: ${Number((ingredient.amount / multiplier).toFixed(2))} ${getDisplayUnit(ingredient.amount/multiplier, ingredient.unit)})`}
+                      </span>
                     </div>
-                  )}
-                </li>
+                    {ingredient.notes && (
+                      <div className="ps-10 pt-1 text-xs text-muted-foreground/80 flex items-center">
+                          <Info size={12} className="me-1.5 text-accent"/>
+                          <span>{ingredient.notes}</span>
+                      </div>
+                    )}
+                  </div>
+                )
               ))}
-            </ul>
+            </div>
           </div>
 
           <Separator />
 
           <div>
             <h3 className="text-2xl font-headline text-primary mb-3">הוראות</h3>
-            <ol className="list-decimal list-inside space-y-4 font-body text-base md:text-lg leading-relaxed">
-              {recipe.instructions.map((step, index) => (
-                <li key={step.id} className="pe-2 border-r-2 border-primary/50 py-2 hover:bg-primary/5 transition-colors rounded-l-md space-y-2">
-                  <span>{step.text}</span>
-                  {step.imageUrl && (
-                    <div className="mt-2 ms-4 space-y-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => toggleStepImageVisibility(step.id)} 
-                        className="flex items-center gap-1.5 text-xs no-print"
-                      >
-                        {visibleStepImages[step.id] ? <EyeOffIcon size={14}/> : <EyeIcon size={14}/>}
-                        {visibleStepImages[step.id] ? 'הסתר תמונה' : 'הצג תמונה'}
-                      </Button>
-                      {visibleStepImages[step.id] && (
-                        <Image 
-                          src={step.imageUrl} 
-                          alt={`תמונה עבור שלב ${index + 1}`} 
-                          width={300} 
-                          height={225} 
-                          className="rounded-md object-cover border shadow-sm"
-                          data-ai-hint="cooking instruction photo"
-                        />
-                      )}
+            <ol className="list-none space-y-4 font-body text-base md:text-lg leading-relaxed ps-0"> {/* list-decimal removed, ps-0 added */}
+              {recipe.instructions.map((step) => {
+                if (step.isHeading) {
+                  return (
+                    <h4 key={step.id} className="text-lg font-semibold text-accent mt-4 mb-2 pt-2 border-t border-dashed">
+                      <Heading2 size={18} className="inline-block me-2 align-middle" />
+                      {step.text}
+                    </h4>
+                  );
+                }
+                instructionStepCounter++;
+                return (
+                  <li key={step.id} className="pe-2 border-r-2 border-primary/50 py-2 hover:bg-primary/5 transition-colors rounded-l-md space-y-2">
+                    <div className="flex">
+                      <span className="font-headline text-xl text-primary me-3">{instructionStepCounter}.</span>
+                      <span>{step.text}</span>
                     </div>
-                  )}
-                </li>
-              ))}
+                    {step.imageUrl && (
+                      <div className="mt-2 ms-10 space-y-2"> {/* ms increased to align with number */}
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => toggleStepImageVisibility(step.id)} 
+                          className="flex items-center gap-1.5 text-xs no-print"
+                        >
+                          {visibleStepImages[step.id] ? <EyeOffIcon size={14}/> : <EyeIcon size={14}/>}
+                          {visibleStepImages[step.id] ? 'הסתר תמונה' : 'הצג תמונה'}
+                        </Button>
+                        {visibleStepImages[step.id] && (
+                          <Image 
+                            src={step.imageUrl} 
+                            alt={`תמונה עבור שלב ${instructionStepCounter}`} 
+                            width={300} 
+                            height={225} 
+                            className="rounded-md object-cover border shadow-sm"
+                            data-ai-hint="cooking instruction photo"
+                          />
+                        )}
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
             </ol>
           </div>
         </CardContent>

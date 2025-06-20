@@ -1,16 +1,18 @@
 export interface Ingredient {
   id: string;
   name: string;
-  amount: number;
-  unit: string;
+  amount: number; // Kept as number, but will be optional in form for headings
+  unit: string;   // Kept as string, but will be optional in form for headings
   isOptional?: boolean;
   notes?: string;
+  isHeading?: boolean;
 }
 
 export interface InstructionStep {
   id: string;
   text: string;
   imageUrl?: string;
+  isHeading?: boolean;
 }
 
 export interface Recipe {

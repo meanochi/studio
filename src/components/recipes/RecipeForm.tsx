@@ -1,10 +1,10 @@
 
 'use client';
 
-import type { Recipe, Ingredient, InstructionStep } from '@/types';
+import type { Recipe } from '@/types';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { recipeSchema, RecipeFormData, IngredientFormData, InstructionStepFormData } from './RecipeSchema';
+import { recipeSchema, RecipeFormData } from './RecipeSchema';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,7 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { PlusCircle, Trash2, Save, Image as ImageIcon, UploadCloud, X, FileText, StickyNote, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { PlusCircle, Trash2, Save, Image as ImageIcon, UploadCloud, X, FileText, StickyNote, Loader2, ChevronDown, ChevronUp, Heading2 } from 'lucide-react';
 import NextImage from 'next/image';
 import { generateId } from '@/lib/utils';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -35,12 +35,14 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
               amount: Number(ing.amount),
               isOptional: ing.isOptional || false,
               notes: ing.notes || '',
+              isHeading: ing.isHeading || false,
           })),
           instructions: initialData.instructions.map(instr => ({
               ...instr,
               id: instr.id || generateId(),
               text: instr.text || '',
               imageUrl: instr.imageUrl || '',
+              isHeading: instr.isHeading || false,
           })),
           tags: initialData.tags || [],
           imageUrl: initialData.imageUrl || '',
@@ -53,8 +55,8 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
           servings: 1,
           servingUnit: 'מנה',
           freezable: false,
-          ingredients: [{ id: generateId(), name: '', amount: 1, unit: 'יחידות', isOptional: false, notes: '' }],
-          instructions: [{ id: generateId(), text: '', imageUrl: '' }],
+          ingredients: [{ id: generateId(), name: '', amount: 1, unit: 'יחידות', isOptional: false, notes: '', isHeading: false }],
+          instructions: [{ id: generateId(), text: '', imageUrl: '', isHeading: false }],
           imageUrl: '',
           tags: [],
         };
@@ -97,15 +99,15 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
     const initialPreviews: (string | null)[] = [];
 
     defaultFormValues.instructions.forEach(instr => {
-        initialVisibleStates[instr.id || ''] = false;
+        initialVisibleStates[instr.id || ''] = !!instr.imageUrl; // Show if URL exists
         initialPreviews.push(instr.imageUrl || null);
     });
 
     setInstructionImagePreviews(initialPreviews);
     setVisibleInstructionImageInputs(initialVisibleStates);
     instructionFileInputRefs.current = defaultFormValues.instructions.map(() => null);
-
-  }, [defaultFormValues]);
+    form.reset(defaultFormValues);
+  }, [defaultFormValues, form]);
 
 
   const toggleInstructionImageInputVisibility = (instructionId: string) => {
@@ -176,13 +178,31 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
       currentRef.value = '';
     }
   };
+  
+  const handleAddIngredient = (isHeading = false) => {
+    appendIngredient({ 
+      id: generateId(), 
+      name: '', 
+      amount: isHeading ? undefined : 1, 
+      unit: isHeading ? undefined : 'יחידות', 
+      isOptional: false, 
+      notes: '', 
+      isHeading 
+    });
+  };
 
-  const handleAddInstruction = () => {
+  const handleAddInstruction = (isHeading = false) => {
     const newId = generateId();
-    appendInstruction({ id: newId, text: '', imageUrl: '' });
-    setInstructionImagePreviews(prev => [...prev, null]);
-    setVisibleInstructionImageInputs(prev => ({...prev, [newId]: false }));
-    instructionFileInputRefs.current = [...instructionFileInputRefs.current, null];
+    appendInstruction({ id: newId, text: '', imageUrl: '', isHeading });
+    if (!isHeading) {
+        setInstructionImagePreviews(prev => [...prev, null]);
+        setVisibleInstructionImageInputs(prev => ({...prev, [newId]: false }));
+        instructionFileInputRefs.current = [...instructionFileInputRefs.current, null];
+    } else {
+        // For headings, no preview/visibility state needed for image
+        setInstructionImagePreviews(prev => [...prev, null]); // Maintain array length
+        instructionFileInputRefs.current = [...instructionFileInputRefs.current, null]; // Maintain array length
+    }
   };
 
   const handleRemoveInstruction = (index: number) => {
@@ -195,7 +215,7 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
       delete newVisibleStates[instructionIdToRemove];
     }
     
-    removeInstruction(index); // Update RHF state
+    removeInstruction(index); 
 
     setInstructionImagePreviews(newPreviews);
     setVisibleInstructionImageInputs(newVisibleStates);
@@ -210,23 +230,20 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
         ingredients: data.ingredients.map(ing => ({
             ...ing,
             id: ing.id || generateId(),
-            notes: ing.notes?.trim() === '' ? undefined : ing.notes,
+            notes: ing.isHeading ? undefined : (ing.notes?.trim() === '' ? undefined : ing.notes),
+            amount: ing.isHeading ? 0 : Number(ing.amount), // Store 0 for amount if heading, or actual if not
+            unit: ing.isHeading ? '' : ing.unit, // Store empty string for unit if heading
+            isOptional: ing.isHeading ? undefined : ing.isOptional,
         })),
         instructions: data.instructions.map(instr => ({
             ...instr,
             id: instr.id || generateId(),
-            imageUrl: instr.imageUrl?.trim() === '' ? undefined : instr.imageUrl,
+            imageUrl: instr.isHeading ? undefined : (instr.imageUrl?.trim() === '' ? undefined : instr.imageUrl),
         })),
     };
     onSubmit(processedData);
   };
-
-  // Reset form if initialData changes (e.g. navigating between edit pages)
-  useEffect(() => {
-    form.reset(defaultFormValues);
-  }, [defaultFormValues, form]);
-
-
+  
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmitForm)} className="space-y-8">
@@ -285,87 +302,148 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
             {/* Ingredients Section */}
             <div className="space-y-4">
               <h3 className="text-xl font-headline text-primary">רכיבים</h3>
-              {ingredientFields.map((field, index) => (
-                <div key={field.id} className="p-4 border rounded-md shadow-sm space-y-3 bg-secondary/10">
-                  <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_auto] gap-x-3 gap-y-2 items-end">
-                    <FormField control={form.control} name={`ingredients.${index}.name`} render={({ field: f }) => (
-                        <FormItem>{index === 0 && <FormLabel>שם הרכיב</FormLabel>}<FormControl><Input placeholder="לדוגמה, קמח" {...f} /></FormControl><FormMessage /></FormItem>
-                    )}/>
-                    <FormField control={form.control} name={`ingredients.${index}.amount`} render={({ field: f }) => (
-                        <FormItem>{index === 0 && <FormLabel>כמות</FormLabel>}<FormControl><Input type="number" step="0.01" placeholder="לדוגמה, 2.25" {...f} onChange={e => f.onChange(parseFloat(e.target.value) || 0)} /></FormControl><FormMessage /></FormItem>
-                    )}/>
-                    <FormField control={form.control} name={`ingredients.${index}.unit`} render={({ field: f }) => (
-                        <FormItem>{index === 0 && <FormLabel>יחידה</FormLabel>}<FormControl><Input placeholder="לדוגמה, כוסות, גרמים" {...f} /></FormControl><FormMessage /></FormItem>
-                    )}/>
-                    <Button type="button" variant="ghost" size="icon" onClick={() => removeIngredient(index)} aria-label="הסר רכיב" className="text-destructive hover:bg-destructive/10 self-center md:self-end"><Trash2 size={20} /></Button>
+              {ingredientFields.map((item, index) => {
+                const isHeading = form.watch(`ingredients.${index}.isHeading`);
+                return (
+                <div key={item.id} className="p-4 border rounded-md shadow-sm space-y-3 bg-secondary/10">
+                  <div className="flex justify-between items-start">
+                    <FormField 
+                      control={form.control}
+                      name={`ingredients.${index}.isHeading`}
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center space-x-2 rtl:space-x-reverse">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={(checked) => {
+                                field.onChange(checked);
+                                // Optionally reset/clear other fields if switching to heading
+                                if (checked) {
+                                  form.setValue(`ingredients.${index}.amount`, undefined);
+                                  form.setValue(`ingredients.${index}.unit`, undefined);
+                                  form.setValue(`ingredients.${index}.notes`, '');
+                                  form.setValue(`ingredients.${index}.isOptional`, false);
+                                }
+                              }}
+                            />
+                          </FormControl>
+                          <FormLabel className="font-normal text-sm">כותרת משנה?</FormLabel>
+                        </FormItem>
+                      )}
+                    />
+                    <Button type="button" variant="ghost" size="icon" onClick={() => removeIngredient(index)} aria-label="הסר פריט" className="text-destructive hover:bg-destructive/10"><Trash2 size={20} /></Button>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-center">
-                    <FormField control={form.control} name={`ingredients.${index}.notes`} render={({ field: f }) => (
-                        <FormItem><FormLabel className="text-xs flex items-center gap-1"><StickyNote size={14}/> הערות/אלטרנטיבה (אופציונלי)</FormLabel><FormControl><Input placeholder="לדוגמה, אפשר לוותר או להחליף ב..." {...f} /></FormControl><FormMessage /></FormItem>
-                    )}/>
-                    <FormField control={form.control} name={`ingredients.${index}.isOptional`} render={({ field: f }) => (
-                        <FormItem className="flex flex-row items-center space-x-2 rtl:space-x-reverse pt-5"><FormControl><Checkbox checked={f.value} onCheckedChange={f.onChange} /></FormControl><FormLabel className="font-normal">רכיב אופציונלי</FormLabel></FormItem>
-                    )}/>
-                  </div>
+
+                  <FormField control={form.control} name={`ingredients.${index}.name`} render={({ field: f }) => (
+                      <FormItem><FormLabel>{isHeading ? 'טקסט כותרת' : 'שם הרכיב'}</FormLabel><FormControl><Input placeholder={isHeading ? "לדוגמה, לבצק" : "לדוגמה, קמח"} {...f} /></FormControl><FormMessage /></FormItem>
+                  )}/>
+                  
+                  {!isHeading && (
+                    <>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-3 gap-y-2 items-end">
+                        <FormField control={form.control} name={`ingredients.${index}.amount`} render={({ field: f }) => (
+                            <FormItem><FormLabel>כמות</FormLabel><FormControl><Input type="number" step="0.01" placeholder="לדוגמה, 2.25" {...f} onChange={e => f.onChange(parseFloat(e.target.value) || '')} /></FormControl><FormMessage /></FormItem>
+                        )}/>
+                        <FormField control={form.control} name={`ingredients.${index}.unit`} render={({ field: f }) => (
+                            <FormItem><FormLabel>יחידה</FormLabel><FormControl><Input placeholder="לדוגמה, כוסות" {...f} /></FormControl><FormMessage /></FormItem>
+                        )}/>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-center">
+                        <FormField control={form.control} name={`ingredients.${index}.notes`} render={({ field: f }) => (
+                            <FormItem><FormLabel className="text-xs flex items-center gap-1"><StickyNote size={14}/> הערות/אלטרנטיבה (אופציונלי)</FormLabel><FormControl><Input placeholder="לדוגמה, אפשר לוותר או להחליף ב..." {...f} /></FormControl><FormMessage /></FormItem>
+                        )}/>
+                        <FormField control={form.control} name={`ingredients.${index}.isOptional`} render={({ field: f }) => (
+                            <FormItem className="flex flex-row items-center space-x-2 rtl:space-x-reverse pt-5"><FormControl><Checkbox checked={f.value} onCheckedChange={f.onChange} /></FormControl><FormLabel className="font-normal">רכיב אופציונלי</FormLabel></FormItem>
+                        )}/>
+                      </div>
+                    </>
+                  )}
                 </div>
-              ))}
-              <Button type="button" variant="outline" onClick={() => appendIngredient({ id: generateId(), name: '', amount: 1, unit: 'יחידות', isOptional: false, notes: '' })} className="flex items-center gap-2"><PlusCircle size={18} /> הוסף רכיב</Button>
+              )})}
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={() => handleAddIngredient(false)} className="flex items-center gap-2"><PlusCircle size={18} /> הוסף רכיב</Button>
+                <Button type="button" variant="outline" onClick={() => handleAddIngredient(true)} className="flex items-center gap-2"><Heading2 size={18} /> הוסף כותרת רכיבים</Button>
+              </div>
             </div>
 
             {/* Instructions Section */}
             <div className="space-y-4">
               <h3 className="text-xl font-headline text-primary">הוראות הכנה</h3>
-              {instructionFields.map((field, index) => (
-                <div key={field.id} className="flex flex-col gap-3 p-4 border rounded-md shadow-sm bg-secondary/10">
-                  <div className="flex items-start gap-2">
-                    <span className="font-headline text-lg text-primary pt-2">{index + 1}.</span>
-                    <FormField control={form.control} name={`instructions.${index}.text`} render={({ field: f }) => (
-                        <FormItem className="flex-grow"><FormLabel className="sr-only">תיאור השלב</FormLabel><FormControl><Textarea placeholder={`שלב ${index + 1}`} {...f} rows={3} /></FormControl><FormMessage /></FormItem>
-                    )}/>
+              {instructionFields.map((item, index) => {
+                const isHeading = form.watch(`instructions.${index}.isHeading`);
+                return (
+                <div key={item.id} className="flex flex-col gap-3 p-4 border rounded-md shadow-sm bg-secondary/10">
+                  <div className="flex justify-between items-start">
+                     <FormField 
+                      control={form.control}
+                      name={`instructions.${index}.isHeading`}
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center space-x-2 rtl:space-x-reverse">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={(checked) => {
+                                field.onChange(checked);
+                                if (checked && item.id) { // If becoming a heading, hide image input
+                                   setVisibleInstructionImageInputs(prev => ({...prev, [item.id!]: false}));
+                                }
+                              }}
+                            />
+                          </FormControl>
+                          <FormLabel className="font-normal text-sm">כותרת משנה?</FormLabel>
+                        </FormItem>
+                      )}
+                    />
                     <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveInstruction(index)} aria-label="הסר הוראה" className="text-destructive hover:bg-destructive/10 mt-1.5"><Trash2 size={20} /></Button>
                   </div>
-                  <div className="ms-6 space-y-2">
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => field.id && toggleInstructionImageInputVisibility(field.id)}
-                        className="flex items-center gap-1.5 text-xs"
-                    >
-                        <ImageIcon size={14}/>
-                        {field.id && visibleInstructionImageInputs[field.id] ? 'הסתר אפשרויות תמונה' : 'הוסף/שנה תמונת שלב'}
-                        {field.id && visibleInstructionImageInputs[field.id] ? <ChevronUp size={14}/> : <ChevronDown size={14}/>}
-                    </Button>
-
-                    {field.id && visibleInstructionImageInputs[field.id] && (
-                        <div className="border-t pt-3 mt-2 space-y-2">
-                            {instructionImagePreviews[index] ? (
-                            <div className="relative group w-48 h-32">
-                                <NextImage src={instructionImagePreviews[index]!} alt={`תצוגה מקדימה שלב ${index + 1}`} layout="fill" objectFit="cover" className="rounded-md border" data-ai-hint="cooking step" />
-                                <Button type="button" variant="destructive" size="icon" onClick={() => handleRemoveInstructionImage(index)} className="absolute top-1 right-1 opacity-70 group-hover:opacity-100 transition-opacity h-6 w-6"><X size={14} /></Button>
-                            </div>
-                            ) : (
-                            <div className="flex items-center justify-center w-48 h-24 border-2 border-dashed border-input rounded-md cursor-pointer hover:border-primary transition-colors text-xs p-2" onClick={() => instructionFileInputRefs.current[index]?.click()}>
-                                <UploadCloud size={24} className="text-muted-foreground me-2" /> לחץ להעלאת תמונה לשלב
-                            </div>
-                            )}
-                            <Input type="file" accept="image/*" onChange={(e) => handleInstructionImageUpload(index, e)} className="hidden" ref={el => { if(instructionFileInputRefs.current) instructionFileInputRefs.current[index] = el; }} />
-                            <FormField control={form.control} name={`instructions.${index}.imageUrl`} render={({ field: f }) => (
-                                <FormItem className="mt-1"><FormLabel className="sr-only">כתובת URL</FormLabel><FormControl><Input placeholder="או הדבק URL של תמונת שלב" {...f} value={f.value ?? ''} onChange={(e) => {f.onChange(e); const newPreviews = [...instructionImagePreviews]; newPreviews[index] = e.target.value; setInstructionImagePreviews(newPreviews); }} className="text-xs h-8" /></FormControl><FormMessage /></FormItem>
-                            )}/>
-                        </div>
-                    )}
+                  
+                  <div className="flex items-start gap-2">
+                    {!isHeading && <span className="font-headline text-lg text-primary pt-2">{instructionFields.filter(f => !form.getValues(`instructions.${instructionFields.indexOf(f)}.isHeading`)).indexOf(item) + 1}.</span>}
+                    <FormField control={form.control} name={`instructions.${index}.text`} render={({ field: f }) => (
+                        <FormItem className="flex-grow"><FormLabel className="sr-only">{isHeading ? 'טקסט כותרת' : 'תיאור השלב'}</FormLabel><FormControl><Textarea placeholder={isHeading ? "לדוגמה, הכנת הציפוי" :`שלב ${index + 1}`} {...f} rows={isHeading ? 1:3} /></FormControl><FormMessage /></FormItem>
+                    )}/>
                   </div>
+
+                  {!isHeading && item.id && (
+                    <div className="ms-6 space-y-2">
+                      <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => toggleInstructionImageInputVisibility(item.id!)}
+                          className="flex items-center gap-1.5 text-xs"
+                      >
+                          <ImageIcon size={14}/>
+                          {visibleInstructionImageInputs[item.id!] ? 'הסתר אפשרויות תמונה' : 'הוסף/שנה תמונת שלב'}
+                          {visibleInstructionImageInputs[item.id!] ? <ChevronUp size={14}/> : <ChevronDown size={14}/>}
+                      </Button>
+
+                      {visibleInstructionImageInputs[item.id!] && (
+                          <div className="border-t pt-3 mt-2 space-y-2">
+                              {instructionImagePreviews[index] ? (
+                              <div className="relative group w-48 h-32">
+                                  <NextImage src={instructionImagePreviews[index]!} alt={`תצוגה מקדימה שלב ${index + 1}`} layout="fill" objectFit="cover" className="rounded-md border" data-ai-hint="cooking step" />
+                                  <Button type="button" variant="destructive" size="icon" onClick={() => handleRemoveInstructionImage(index)} className="absolute top-1 right-1 opacity-70 group-hover:opacity-100 transition-opacity h-6 w-6"><X size={14} /></Button>
+                              </div>
+                              ) : (
+                              <div className="flex items-center justify-center w-48 h-24 border-2 border-dashed border-input rounded-md cursor-pointer hover:border-primary transition-colors text-xs p-2" onClick={() => instructionFileInputRefs.current[index]?.click()}>
+                                  <UploadCloud size={24} className="text-muted-foreground me-2" /> לחץ להעלאת תמונה לשלב
+                              </div>
+                              )}
+                              <Input type="file" accept="image/*" onChange={(e) => handleInstructionImageUpload(index, e)} className="hidden" ref={el => { if(instructionFileInputRefs.current) instructionFileInputRefs.current[index] = el; }} />
+                              <FormField control={form.control} name={`instructions.${index}.imageUrl`} render={({ field: f }) => (
+                                  <FormItem className="mt-1"><FormLabel className="sr-only">כתובת URL</FormLabel><FormControl><Input placeholder="או הדבק URL של תמונת שלב" {...f} value={f.value ?? ''} onChange={(e) => {f.onChange(e); const newPreviews = [...instructionImagePreviews]; newPreviews[index] = e.target.value; setInstructionImagePreviews(newPreviews); }} className="text-xs h-8" /></FormControl><FormMessage /></FormItem>
+                              )}/>
+                          </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-              ))}
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleAddInstruction}
-                className="flex items-center gap-2"
-               >
-                <PlusCircle size={18} /> הוסף שלב
-              </Button>
+              )})}
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={() => handleAddInstruction(false)} className="flex items-center gap-2"><PlusCircle size={18} /> הוסף שלב</Button>
+                <Button type="button" variant="outline" onClick={() => handleAddInstruction(true)} className="flex items-center gap-2"><Heading2 size={18} /> הוסף כותרת הוראות</Button>
+              </div>
             </div>
 
             {/* Tags Section */}
@@ -396,5 +474,3 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
     </Form>
   );
 }
-
-

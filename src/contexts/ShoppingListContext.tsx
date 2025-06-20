@@ -46,21 +46,24 @@ export const ShoppingListProvider: React.FC<{ children: ReactNode }> = ({ childr
     setShoppingList(prevList => {
       const newList = [...prevList];
       ingredients.forEach(ingredientFromRecipe => {
+        // Only add if not a heading
+        if (ingredientFromRecipe.isHeading) {
+          return;
+        }
+
         const existingItemIndex = newList.findIndex(
           item => item.name.toLowerCase() === ingredientFromRecipe.name.toLowerCase() && 
                   item.unit.toLowerCase() === ingredientFromRecipe.unit.toLowerCase() &&
-                  (item.recipeId === recipeId || !item.recipeId || !recipeId) // Try to consolidate better if recipeId matches or is generic
+                  (item.recipeId === recipeId || !item.recipeId || !recipeId) 
         );
 
         if (existingItemIndex > -1) {
           newList[existingItemIndex].amount += ingredientFromRecipe.amount;
-          // Consolidate recipeName
           if (recipeName && newList[existingItemIndex].recipeName && newList[existingItemIndex].recipeName !== recipeName && newList[existingItemIndex].recipeName !== "מתכונים שונים") {
             newList[existingItemIndex].recipeName = "מתכונים שונים";
           } else if (recipeName && !newList[existingItemIndex].recipeName) {
             newList[existingItemIndex].recipeName = recipeName;
           }
-          // Update recipeId if it makes sense (e.g., if the existing one was generic)
           if (recipeId && !newList[existingItemIndex].recipeId) {
             newList[existingItemIndex].recipeId = recipeId;
           }
@@ -99,7 +102,7 @@ export const ShoppingListProvider: React.FC<{ children: ReactNode }> = ({ childr
     setShoppingList(prevList => 
       prevList.map(item => 
         item.id === itemId ? { ...item, amount: Math.max(0, newAmount) } : item
-      ).filter(item => item.amount > 0) // Optionally remove item if amount becomes 0
+      ).filter(item => item.amount > 0) 
     );
   };
 
