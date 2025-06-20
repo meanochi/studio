@@ -44,34 +44,33 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const q = query(recipesCollectionRef, orderBy('name', 'asc')); 
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const recipesData = querySnapshot.docs.map(docSnapshot => { // Renamed doc to docSnapshot to avoid conflict
+      const recipesData = querySnapshot.docs.map(docSnapshot => {
         const data = docSnapshot.data();
         return {
           id: docSnapshot.id,
-          ...data,
           name: data.name || "Unnamed Recipe",
+          source: data.source ?? null,
           prepTime: data.prepTime || "N/A",
-          servings: data.servings || 1,
+          cookTime: data.cookTime ?? null,
+          servings: typeof data.servings === 'number' ? data.servings : 1,
           servingUnit: data.servingUnit || "unit",
-          freezable: data.freezable || false,
-          source: data.source || null,
-          cookTime: data.cookTime || null,
-          imageUrl: data.imageUrl || null,
-          tags: data.tags || [],
-          ingredients: (data.ingredients || []).map((ing: any) => ({ 
+          freezable: typeof data.freezable === 'boolean' ? data.freezable : false,
+          imageUrl: data.imageUrl ?? null,
+          tags: Array.isArray(data.tags) ? data.tags : [],
+          ingredients: (Array.isArray(data.ingredients) ? data.ingredients : []).map((ing: any): Ingredient => ({
             id: ing.id || generateId(),
             name: ing.name || "",
-            isHeading: ing.isHeading || false,
-            amount: ing.isHeading ? null : (typeof ing.amount === 'number' ? ing.amount : 0),
-            unit: ing.isHeading ? null : (ing.unit || ""),
-            isOptional: ing.isHeading ? null : (ing.isOptional || false),
-            notes: ing.isHeading ? null : (ing.notes || null),
+            isHeading: typeof ing.isHeading === 'boolean' ? ing.isHeading : false,
+            amount: (typeof ing.isHeading === 'boolean' && ing.isHeading) ? 0 : (typeof ing.amount === 'number' ? ing.amount : 0), // Amount is 0 for heading
+            unit: (typeof ing.isHeading === 'boolean' && ing.isHeading) ? "" : (ing.unit || ""), // Unit is "" for heading
+            isOptional: (typeof ing.isHeading === 'boolean' && ing.isHeading) ? null : (typeof ing.isOptional === 'boolean' ? ing.isOptional : false),
+            notes: (typeof ing.isHeading === 'boolean' && ing.isHeading) ? null : (ing.notes ?? null),
           })),
-          instructions: (data.instructions || []).map((instr: any) => ({ 
+          instructions: (Array.isArray(data.instructions) ? data.instructions : []).map((instr: any): InstructionStep => ({
             id: instr.id || generateId(),
             text: instr.text || "",
-            isHeading: instr.isHeading || false,
-            imageUrl: instr.isHeading ? null : (instr.imageUrl || null),
+            isHeading: typeof instr.isHeading === 'boolean' ? instr.isHeading : false,
+            imageUrl: (typeof instr.isHeading === 'boolean' && instr.isHeading) ? null : (instr.imageUrl ?? null),
           })),
         } as Recipe;
       });
@@ -98,13 +97,13 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     try {
       const recipeForFirestore = {
         name: recipeData.name,
-        source: recipeData.source || null,
+        source: recipeData.source ?? null,
         prepTime: recipeData.prepTime,
-        cookTime: recipeData.cookTime || null,
+        cookTime: recipeData.cookTime ?? null,
         servings: recipeData.servings,
         servingUnit: recipeData.servingUnit,
-        freezable: recipeData.freezable || false,
-        imageUrl: recipeData.imageUrl || null,
+        freezable: recipeData.freezable ?? false,
+        imageUrl: recipeData.imageUrl ?? null,
         tags: recipeData.tags || [],
         ingredients: (recipeData.ingredients || []).map(ing => ({
           id: ing.id || generateId(),
@@ -113,18 +112,32 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
           amount: ing.isHeading ? null : (typeof ing.amount === 'number' ? ing.amount : 0),
           unit: ing.isHeading ? null : (ing.unit || ""),
           isOptional: ing.isHeading ? null : (ing.isOptional || false),
-          notes: ing.isHeading ? null : (ing.notes || null),
+          notes: ing.isHeading ? null : (ing.notes ?? null),
         })),
         instructions: (recipeData.instructions || []).map(instr => ({
           id: instr.id || generateId(),
           text: instr.text || "",
           isHeading: instr.isHeading || false,
-          imageUrl: instr.isHeading ? null : (instr.imageUrl || null),
+          imageUrl: instr.isHeading ? null : (instr.imageUrl ?? null),
         })),
-        // createdAt: Timestamp.now(), 
       };
       const docRef = await addDoc(collection(db, 'recipes'), recipeForFirestore);
-      return { ...recipeForFirestore, id: docRef.id } as Recipe;
+      // Make sure the returned recipe matches the Recipe type structure precisely
+      const newRecipe: Recipe = {
+        id: docRef.id,
+        name: recipeForFirestore.name,
+        source: recipeForFirestore.source,
+        prepTime: recipeForFirestore.prepTime,
+        cookTime: recipeForFirestore.cookTime,
+        servings: recipeForFirestore.servings,
+        servingUnit: recipeForFirestore.servingUnit,
+        freezable: recipeForFirestore.freezable,
+        imageUrl: recipeForFirestore.imageUrl,
+        tags: recipeForFirestore.tags,
+        ingredients: recipeForFirestore.ingredients.map(ing => ({...ing, id: ing.id || generateId()}) as Ingredient), // ensure IDs and cast
+        instructions: recipeForFirestore.instructions.map(instr => ({...instr, id: instr.id || generateId()}) as InstructionStep), // ensure IDs and cast
+      };
+      return newRecipe;
     } catch (error) {
       console.error("Error adding recipe to Firestore: ", error);
       toast({
@@ -141,13 +154,13 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       const recipeRef = doc(db, 'recipes', updatedRecipe.id);
       const dataToUpdate = {
         name: updatedRecipe.name,
-        source: updatedRecipe.source || null,
+        source: updatedRecipe.source ?? null,
         prepTime: updatedRecipe.prepTime,
-        cookTime: updatedRecipe.cookTime || null,
+        cookTime: updatedRecipe.cookTime ?? null,
         servings: updatedRecipe.servings,
         servingUnit: updatedRecipe.servingUnit,
-        freezable: updatedRecipe.freezable || false,
-        imageUrl: updatedRecipe.imageUrl || null,
+        freezable: updatedRecipe.freezable ?? false,
+        imageUrl: updatedRecipe.imageUrl ?? null,
         tags: updatedRecipe.tags || [],
         ingredients: (updatedRecipe.ingredients || []).map(ing => ({
           id: ing.id || generateId(),
@@ -156,13 +169,13 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
           amount: ing.isHeading ? null : (typeof ing.amount === 'number' ? ing.amount : 0),
           unit: ing.isHeading ? null : (ing.unit || ""),
           isOptional: ing.isHeading ? null : (ing.isOptional || false),
-          notes: ing.isHeading ? null : (ing.notes || null),
+          notes: ing.isHeading ? null : (ing.notes ?? null),
         })),
         instructions: (updatedRecipe.instructions || []).map(instr => ({
           id: instr.id || generateId(),
           text: instr.text || "",
           isHeading: instr.isHeading || false,
-          imageUrl: instr.isHeading ? null : (instr.imageUrl || null),
+          imageUrl: instr.isHeading ? null : (instr.imageUrl ?? null),
         })),
       };
       
@@ -181,7 +194,8 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     try {
       const recipeRef = doc(db, 'recipes', recipeId);
       await deleteDoc(recipeRef);
-    } catch (error) {
+    } catch (error)
+       {
       console.error("Error deleting recipe from Firestore: ", error);
        toast({
         title: "שגיאה במחיקת מתכון",
