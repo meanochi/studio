@@ -19,10 +19,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  webpack: (config, { isServer }) => {
-    // Webpack configurations can be added here if needed in the future.
-    return config;
-  },
+  // Webpack configuration removed to avoid conflict with Turbopack
 };
 
 export default nextConfig;
