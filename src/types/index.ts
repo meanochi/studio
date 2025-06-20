@@ -1,3 +1,4 @@
+
 export interface Ingredient {
   id: string;
   name: string;
@@ -31,7 +32,7 @@ export interface Recipe {
 }
 
 export interface ShoppingListItem {
-  id: string; // Unique ID for the shopping list entry
+  id: string; // Unique ID for the shopping list entry - this will be the Firestore document ID
   name: string;
   amount: number;
   unit: string;
@@ -39,3 +40,4 @@ export interface ShoppingListItem {
   recipeId?: string; 
   recipeName?: string; 
 }
+

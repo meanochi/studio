@@ -1,16 +1,31 @@
+
 'use client';
 
 import type { ShoppingListItem, Ingredient } from '@/types';
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { generateId } from '@/lib/utils';
+import { db } from '@/lib/firebase';
+import {
+  collection,
+  onSnapshot,
+  addDoc,
+  doc,
+  deleteDoc,
+  updateDoc,
+  query,
+  where,
+  getDocs,
+  writeBatch,
+} from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 interface ShoppingListContextType {
   shoppingList: ShoppingListItem[];
-  addIngredientsToShoppingList: (ingredients: Ingredient[], recipeId?: string, recipeName?: string) => void;
-  removeFromShoppingList: (itemId: string) => void; // Removes a single item by its unique ID
-  removeItemsByNameFromShoppingList: (itemName: string) => void; // Removes all items matching a name
-  clearShoppingList: () => void;
-  updateItemAmount: (itemId: string, newAmount: number) => void;
+  addIngredientsToShoppingList: (ingredients: Ingredient[], recipeId?: string, recipeName?: string) => Promise<void>;
+  removeFromShoppingList: (itemId: string) => Promise<void>;
+  removeItemsByNameFromShoppingList: (itemName: string) => Promise<void>;
+  clearShoppingList: () => Promise<void>;
+  updateItemAmount: (itemId: string, newAmount: number) => Promise<void>;
   loading: boolean;
 }
 
@@ -19,91 +34,134 @@ const ShoppingListContext = createContext<ShoppingListContextType | undefined>(u
 export const ShoppingListProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [shoppingList, setShoppingList] = useState<ShoppingListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
-    try {
-      const storedShoppingList = localStorage.getItem('familyCookbookShoppingList');
-      if (storedShoppingList) {
-        setShoppingList(JSON.parse(storedShoppingList));
-      }
-    } catch (error) {
-      console.error("Failed to load shopping list from localStorage", error);
-    }
-    setLoading(false);
-  }, []);
+    setLoading(true);
+    const shoppingListCollectionRef = collection(db, 'shoppingListItems');
+    // Optional: Add orderBy if needed, e.g., by name or a timestamp
+    // const q = query(shoppingListCollectionRef, orderBy('name', 'asc'));
 
-  useEffect(() => {
-    if (!loading) {
-      try {
-        localStorage.setItem('familyCookbookShoppingList', JSON.stringify(shoppingList));
-      } catch (error) {
-        console.error("Failed to save shopping list to localStorage", error);
-      }
-    }
-  }, [shoppingList, loading]);
-
-  const addIngredientsToShoppingList = (ingredients: Ingredient[], recipeId?: string, recipeName?: string) => {
-    setShoppingList(prevList => {
-      const newList = [...prevList];
-      ingredients.forEach(ingredientFromRecipe => {
-        // Only add if not a heading
-        if (ingredientFromRecipe.isHeading) {
-          return;
-        }
-
-        const existingItemIndex = newList.findIndex(
-          item => item.name.toLowerCase() === ingredientFromRecipe.name.toLowerCase() && 
-                  item.unit.toLowerCase() === ingredientFromRecipe.unit.toLowerCase() &&
-                  (item.recipeId === recipeId || !item.recipeId || !recipeId) 
-        );
-
-        if (existingItemIndex > -1) {
-          newList[existingItemIndex].amount += ingredientFromRecipe.amount;
-          if (recipeName && newList[existingItemIndex].recipeName && newList[existingItemIndex].recipeName !== recipeName && newList[existingItemIndex].recipeName !== "מתכונים שונים") {
-            newList[existingItemIndex].recipeName = "מתכונים שונים";
-          } else if (recipeName && !newList[existingItemIndex].recipeName) {
-            newList[existingItemIndex].recipeName = recipeName;
-          }
-          if (recipeId && !newList[existingItemIndex].recipeId) {
-            newList[existingItemIndex].recipeId = recipeId;
-          }
-
-        } else {
-          newList.push({ 
-            id: generateId(), 
-            name: ingredientFromRecipe.name,
-            amount: ingredientFromRecipe.amount,
-            unit: ingredientFromRecipe.unit,
-            originalIngredientId: ingredientFromRecipe.id, 
-            recipeId, 
-            recipeName 
-          });
-        }
+    const unsubscribe = onSnapshot(shoppingListCollectionRef, (querySnapshot) => {
+      const listData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      } as ShoppingListItem));
+      setShoppingList(listData);
+      setLoading(false);
+    }, (error) => {
+      console.error("Error fetching shopping list from Firestore: ", error);
+      toast({
+        title: "שגיאה בטעינת רשימת הקניות",
+        description: "לא ניתן היה לטעון את רשימת הקניות. נסה שוב מאוחר יותר.",
+        variant: "destructive",
       });
-      return newList;
+      setLoading(false);
     });
+
+    return () => unsubscribe();
+  }, [toast]);
+
+  const addIngredientsToShoppingList = async (ingredients: Ingredient[], recipeId?: string, recipeName?: string) => {
+    const batch = writeBatch(db);
+    ingredients.forEach(ingredient => {
+      if (ingredient.isHeading) {
+        return; // Skip headings
+      }
+      const newItem: Omit<ShoppingListItem, 'id'> = {
+        name: ingredient.name,
+        amount: ingredient.amount,
+        unit: ingredient.unit,
+        originalIngredientId: ingredient.id,
+        recipeId,
+        recipeName,
+        // We let Firestore generate the ID, so we don't add `id: generateId()` here
+      };
+      const docRef = doc(collection(db, 'shoppingListItems')); // Firestore will generate ID
+      batch.set(docRef, newItem);
+    });
+
+    try {
+      await batch.commit();
+    } catch (error) {
+      console.error("Error adding ingredients to shopping list in Firestore: ", error);
+      toast({
+        title: "שגיאה בהוספת פריטים לרשימה",
+        description: "לא ניתן היה להוסיף פריטים לרשימת הקניות. נסה שוב מאוחר יותר.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const removeFromShoppingList = (itemId: string) => {
-    setShoppingList(prevList => prevList.filter(item => item.id !== itemId));
+  const removeFromShoppingList = async (itemId: string) => {
+    try {
+      const itemRef = doc(db, 'shoppingListItems', itemId);
+      await deleteDoc(itemRef);
+    } catch (error) {
+      console.error("Error removing item from shopping list in Firestore: ", error);
+      toast({
+        title: "שגיאה בהסרת פריט",
+        description: "לא ניתן היה להסיר את הפריט מרשימת הקניות. נסה שוב מאוחר יותר.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const removeItemsByNameFromShoppingList = (itemName: string) => {
-    setShoppingList(prevList =>
-      prevList.filter(item => item.name.toLowerCase() !== itemName.toLowerCase())
-    );
+  const removeItemsByNameFromShoppingList = async (itemName: string) => {
+    const q = query(collection(db, 'shoppingListItems'), where('name', '==', itemName));
+    try {
+      const querySnapshot = await getDocs(q);
+      const batch = writeBatch(db);
+      querySnapshot.forEach((docSnapshot) => {
+        batch.delete(docSnapshot.ref);
+      });
+      await batch.commit();
+    } catch (error) {
+      console.error(`Error removing items by name "${itemName}" from Firestore: `, error);
+      toast({
+        title: "שגיאה בהסרת פריטים",
+        description: `לא ניתן היה להסיר פריטים עם השם "${itemName}". נסה שוב מאוחר יותר.`,
+        variant: "destructive",
+      });
+    }
   };
 
-  const clearShoppingList = () => {
-    setShoppingList([]);
+  const clearShoppingList = async () => {
+    try {
+      const shoppingListCollectionRef = collection(db, 'shoppingListItems');
+      const querySnapshot = await getDocs(shoppingListCollectionRef);
+      const batch = writeBatch(db);
+      querySnapshot.forEach((docSnapshot) => {
+        batch.delete(docSnapshot.ref);
+      });
+      await batch.commit();
+    } catch (error) {
+      console.error("Error clearing shopping list in Firestore: ", error);
+      toast({
+        title: "שגיאה בניקוי הרשימה",
+        description: "לא ניתן היה לנקות את רשימת הקניות. נסה שוב מאוחר יותר.",
+        variant: "destructive",
+      });
+    }
   };
   
-  const updateItemAmount = (itemId: string, newAmount: number) => {
-    setShoppingList(prevList => 
-      prevList.map(item => 
-        item.id === itemId ? { ...item, amount: Math.max(0, newAmount) } : item
-      ).filter(item => item.amount > 0) 
-    );
+  const updateItemAmount = async (itemId: string, newAmount: number) => {
+    if (newAmount <= 0) {
+      // If new amount is zero or less, remove the item
+      await removeFromShoppingList(itemId);
+      return;
+    }
+    try {
+      const itemRef = doc(db, 'shoppingListItems', itemId);
+      await updateDoc(itemRef, { amount: newAmount });
+    } catch (error) {
+      console.error("Error updating item amount in Firestore: ", error);
+      toast({
+        title: "שגיאה בעדכון כמות",
+        description: "לא ניתן היה לעדכן את כמות הפריט. נסה שוב מאוחר יותר.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -120,3 +178,4 @@ export const useShoppingList = (): ShoppingListContextType => {
   }
   return context;
 };
+
