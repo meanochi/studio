@@ -3,7 +3,6 @@
 
 import type { ShoppingListItem, Ingredient } from '@/types';
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { generateId } from '@/lib/utils';
 import { db } from '@/lib/firebase';
 import {
   collection,
@@ -43,10 +42,18 @@ export const ShoppingListProvider: React.FC<{ children: ReactNode }> = ({ childr
     // const q = query(shoppingListCollectionRef, orderBy('name', 'asc'));
 
     const unsubscribe = onSnapshot(shoppingListCollectionRef, (querySnapshot) => {
-      const listData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      } as ShoppingListItem));
+      const listData = querySnapshot.docs.map(docSnapshot => { // Renamed doc to docSnapshot
+        const data = docSnapshot.data();
+        return { // Explicitly constructing the ShoppingListItem
+          id: docSnapshot.id,
+          name: data.name || "Unknown Item",
+          amount: typeof data.amount === 'number' ? data.amount : 0,
+          unit: data.unit || "",
+          originalIngredientId: data.originalIngredientId || null,
+          recipeId: data.recipeId || null,
+          recipeName: data.recipeName || null,
+        } as ShoppingListItem;
+      });
       setShoppingList(listData);
       setLoading(false);
     }, (error) => {
@@ -72,10 +79,9 @@ export const ShoppingListProvider: React.FC<{ children: ReactNode }> = ({ childr
         name: ingredient.name,
         amount: ingredient.amount,
         unit: ingredient.unit,
-        originalIngredientId: ingredient.id,
-        recipeId,
-        recipeName,
-        // We let Firestore generate the ID, so we don't add `id: generateId()` here
+        originalIngredientId: ingredient.id || null,
+        recipeId: recipeId || null,
+        recipeName: recipeName || null,
       };
       const docRef = doc(collection(db, 'shoppingListItems')); // Firestore will generate ID
       batch.set(docRef, newItem);

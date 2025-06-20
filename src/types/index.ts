@@ -2,18 +2,18 @@
 export interface Ingredient {
   id: string;
   name: string;
-  amount: number; // Kept as number, but will be optional in form for headings
-  unit: string;   // Kept as string, but will be optional in form for headings
-  isOptional?: boolean;
-  notes?: string;
-  isHeading?: boolean;
+  amount: number; 
+  unit: string;   
+  isOptional?: boolean | null;
+  notes?: string | null;
+  isHeading?: boolean | null;
 }
 
 export interface InstructionStep {
   id: string;
   text: string;
-  imageUrl?: string;
-  isHeading?: boolean;
+  imageUrl?: string | null;
+  isHeading?: boolean | null;
 }
 
 export interface Recipe {
@@ -27,16 +27,16 @@ export interface Recipe {
   freezable: boolean;
   ingredients: Ingredient[];
   instructions: InstructionStep[];
-  imageUrl?: string;
-  tags?: string[];
+  imageUrl?: string | null;
+  tags?: string[] | null;
 }
 
 export interface ShoppingListItem {
-  id: string; // Unique ID for the shopping list entry - this will be the Firestore document ID
+  id: string; 
   name: string;
   amount: number;
   unit: string;
-  originalIngredientId?: string; // Optional: to trace back to an original ingredient if needed
-  recipeId?: string; 
-  recipeName?: string; 
+  originalIngredientId?: string | null; 
+  recipeId?: string | null; 
+  recipeName?: string | null; 
 }
