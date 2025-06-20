@@ -19,9 +19,9 @@ export interface InstructionStep {
 export interface Recipe {
   id: string;
   name: string;
-  source: string;
+  source: string | null;
   prepTime: string;
-  cookTime: string;
+  cookTime: string | null;
   servings: number;
   servingUnit: string;
   freezable: boolean;
@@ -40,4 +40,3 @@ export interface ShoppingListItem {
   recipeId?: string; 
   recipeName?: string; 
 }
-
