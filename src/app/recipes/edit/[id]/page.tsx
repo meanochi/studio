@@ -5,7 +5,7 @@ import { useRecipes } from '@/contexts/RecipeContext';
 import { useParams, useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState } from 'react';
-import type { Recipe, Ingredient, InstructionStep } from '@/types';
+import type { Recipe } from '@/types'; // Removed Ingredient, InstructionStep as they are part of Recipe
 import type { RecipeFormData } from '@/components/recipes/RecipeSchema';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
@@ -18,7 +18,7 @@ export default function EditRecipePage() {
   const params = useParams();
   const { toast } = useToast();
   const [recipe, setRecipe] = useState<Recipe | undefined>(undefined);
-  const [loading, setLoading] = useState(true);
+  const [loadingInitial, setLoadingInitial] = useState(true); // Renamed to avoid conflict
 
   const recipeId = Array.isArray(params.id) ? params.id[0] : params.id;
 
@@ -26,46 +26,44 @@ export default function EditRecipePage() {
     if (!recipesLoading && recipeId) {
       const foundRecipe = getRecipeById(recipeId);
       setRecipe(foundRecipe);
-      setLoading(false);
+      setLoadingInitial(false);
+    } else if (recipesLoading) {
+      setLoadingInitial(true);
     }
   }, [recipeId, getRecipeById, recipesLoading]);
 
-  const handleSubmit = (data: RecipeFormData) => {
+  const handleSubmit = async (data: RecipeFormData) => {
     if (!recipe) return;
 
     // Ensure all ingredients and instructions have IDs, mapping from form data
-    const processedIngredients = data.ingredients.map(ing => {
-      const existingIng = recipe.ingredients.find(origIng => origIng.id === ing.id || (origIng.name === ing.name && origIng.unit === ing.unit));
-      return {
-        ...ing,
-        id: ing.id || existingIng?.id || generateId(),
-      };
-    });
+    const processedIngredients = data.ingredients.map(ing => ({
+      ...ing,
+      id: ing.id || generateId(), // Ensure ID exists
+    }));
 
-    const processedInstructions = data.instructions.map(instr => {
-      const existingInstr = recipe.instructions.find(origInstr => origInstr.id === instr.id || origInstr.text === instr.text);
-      return {
-        ...instr,
-        id: instr.id || existingInstr?.id || generateId(),
-      };
-    });
+    const processedInstructions = data.instructions.map(instr => ({
+      ...instr,
+      id: instr.id || generateId(), // Ensure ID exists
+    }));
     
     const updatedRecipeData: Recipe = {
       ...recipe, 
       ...data,
+      id: recipe.id, // Ensure the original ID is preserved
       ingredients: processedIngredients,
       instructions: processedInstructions,
     };
 
-    updateRecipe(updatedRecipeData);
+    await updateRecipe(updatedRecipeData);
     toast({
       title: "המתכון עודכן!",
       description: `"${updatedRecipeData.name}" עודכן בהצלחה.`,
     });
     router.push(`/recipes/${updatedRecipeData.id}`);
+     // Error toast is handled within updateRecipe
   };
 
-  if (loading || recipesLoading) {
+  if (loadingInitial || recipesLoading) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -86,19 +84,21 @@ export default function EditRecipePage() {
     );
   }
   
-  // Ensure initialData for form has instruction steps with IDs
   const initialDataForForm: RecipeFormData = {
     ...recipe,
     ingredients: recipe.ingredients.map(ing => ({
         ...ing,
+        id: ing.id || generateId(),
         amount: Number(ing.amount),
         isOptional: ing.isOptional || false,
         notes: ing.notes || '',
+        isHeading: ing.isHeading || false,
     })),
     instructions: recipe.instructions.map(instr => ({
         id: instr.id || generateId(), 
         text: instr.text,
         imageUrl: instr.imageUrl || '',
+        isHeading: instr.isHeading || false,
     })),
     tags: recipe.tags || [],
   };

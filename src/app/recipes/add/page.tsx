@@ -11,13 +11,16 @@ export default function AddRecipePage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  const handleSubmit = (data: RecipeFormData) => {
-    const newRecipe = addRecipe(data);
-    toast({
-      title: "המתכון נוסף!",
-      description: `"${newRecipe.name}" נוסף בהצלחה לספר המתכונים שלך.`,
-    });
-    router.push(`/recipes/${newRecipe.id}`);
+  const handleSubmit = async (data: RecipeFormData) => {
+    const newRecipe = await addRecipe(data);
+    if (newRecipe) {
+      toast({
+        title: "המתכון נוסף!",
+        description: `"${newRecipe.name}" נוסף בהצלחה לספר המתכונים שלך.`,
+      });
+      router.push(`/recipes/${newRecipe.id}`);
+    }
+    // Error toast is handled within addRecipe
   };
 
   return (
