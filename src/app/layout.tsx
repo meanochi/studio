@@ -8,9 +8,12 @@ import { ChefHat } from 'lucide-react';
 export const metadata: Metadata = {
   title: 'Family Cookbook',
   description: 'מקום לכל המתכונים המשפחתיים שלך',
+  manifest: '/manifest.json',
+  themeColor: '#E07A5F',
   icons: {
-    icon: '/favicon.ico', 
-  }
+    icon: '/favicon.ico',
+    apple: '/icons/icon-192x192.png',
+  },
 };
 
 export default function RootLayout({
