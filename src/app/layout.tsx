@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import AppProviders from '@/contexts/AppProviders';
 import Header from '@/components/layout/Header';
-import { ChefHat } from 'lucide-react';
+import Footer from '@/components/layout/Footer';
 
 export const metadata: Metadata = {
   title: 'Family Cookbook',
@@ -35,12 +35,7 @@ export default function RootLayout({
           <main className="flex-grow container mx-auto px-4 py-8">
             {children}
           </main>
-          <footer className="bg-primary/10 text-primary py-6 text-center no-print">
-            <div className="container mx-auto flex justify-center items-center gap-2">
-              <ChefHat size={20} />
-              <p className="text-sm font-body">&copy; {new Date().getFullYear()} Family Cookbook. נצרו את המורשת הקולינרית שלכם.</p>
-            </div>
-          </footer>
+          <Footer />
           <Toaster />
         </AppProviders>
       </body>
