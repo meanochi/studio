@@ -6,7 +6,7 @@ const withPWA = withPWAInit({
   dest: 'public',
   register: true,
   skipWaiting: true,
-  disable: false, // Enabled for development
+  disable: process.env.NODE_ENV === 'development',
 });
 
 const nextConfig: NextConfig = {
