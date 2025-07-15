@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   themeColor: '#E07A5F',
   icons: {
     icon: '/favicon.ico',
-    apple: '/icons/offline_18359565.png',
+    apple: '/icons/iconi.png',
   },
 };
 

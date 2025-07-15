@@ -1,0 +1,17 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Allow anyone to read, create, update, and delete recipes.
+    // This is suitable for a public cookbook app without user accounts.
+    match /recipes/{recipeId} {
+      allow read, write: if true;
+    }
+
+    // Allow anyone to read, create, update, and delete shopping list items.
+    match /shoppingListItems/{itemId} {
+      allow read, write: if true;
+    }
+  }
+}
