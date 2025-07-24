@@ -421,6 +421,9 @@ export default function RecipeDetailPage() {
              <Button variant="outline" onClick={handleAddAllToShoppingList} className="w-full sm:w-auto flex items-center gap-2">
                <ShoppingCart size={18} /> הוסף הכל לרשימת קניות
              </Button>
+             <Button variant="outline" onClick={handlePrint} className="flex items-center gap-2">
+               <Printer size={18} /> הדפס
+             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="icon">
@@ -444,9 +447,6 @@ export default function RecipeDetailPage() {
                 <DropdownMenuItem onClick={handleDownloadPdf} disabled={isGeneratingPdf} className="flex items-center gap-2 cursor-pointer">
                   {isGeneratingPdf ? <Loader2 size={18} className="animate-spin" /> : <FileDown size={18} />}
                   {isGeneratingPdf ? 'מייצא...' : 'הורד כ-PDF'}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handlePrint} className="flex items-center gap-2 cursor-pointer">
-                  <Printer size={18} /> הדפס
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
