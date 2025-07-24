@@ -16,6 +16,12 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { getDisplayUnit } from '@/lib/utils';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -27,19 +33,23 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
-  Clock, Users, Edit3, Trash2, Printer, ShoppingCart, Utensils, Snowflake, Loader2, AlertTriangle, HomeIcon, RefreshCw, PlusSquare, ImageIcon, Info, EyeIcon, EyeOffIcon, Heading2
+  Clock, Users, Edit3, Trash2, Printer, ShoppingCart, Utensils, Snowflake, Loader2, AlertTriangle, HomeIcon, RefreshCw, PlusSquare, ImageIcon, Info, EyeIcon, EyeOffIcon, Heading2, Share2, FileDown, MoreVertical
 } from 'lucide-react';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+
 
 export default function RecipeDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { getRecipeById, deleteRecipe, loading: recipesLoading } = useRecipes();
+  const { getRecipeById, deleteRecipe, loading: recipesLoading, addRecentlyViewed } = useRecipes();
   const { addIngredientsToShoppingList } = useShoppingList();
   const { toast } = useToast();
 
   const [recipe, setRecipe] = useState<Recipe | null | undefined>(undefined); 
   const [multiplier, setMultiplier] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [visibleStepImages, setVisibleStepImages] = useState<Record<string, boolean>>({});
 
   const recipeId = Array.isArray(params.id) ? params.id[0] : params.id;
@@ -50,9 +60,12 @@ export default function RecipeDetailPage() {
     if (!recipesLoading && recipeId) {
       const foundRecipe = getRecipeById(recipeId as string);
       setRecipe(foundRecipe); 
+      if (foundRecipe) {
+        addRecentlyViewed(recipeId as string);
+      }
       setIsLoading(false);
     }
-  }, [recipeId, getRecipeById, recipesLoading]);
+  }, [recipeId, getRecipeById, recipesLoading, addRecentlyViewed]);
   
   const servingsDisplay = useMemo(() => {
     if (!recipe) return '';
@@ -119,6 +132,67 @@ export default function RecipeDetailPage() {
     window.print();
   };
 
+  const handleDownloadPdf = async () => {
+    if (!printRef.current) return;
+    setIsGeneratingPdf(true);
+
+    // Temporarily make all step images visible for the PDF
+    const allVisible = Object.fromEntries(recipe?.instructions.map(i => [i.id, true]) || []);
+    setVisibleStepImages(allVisible);
+    
+    // Allow images time to render
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    const canvas = await html2canvas(printRef.current, {
+      scale: 2, // Higher scale for better quality
+      useCORS: true, // For external images
+      onclone: (document) => {
+        // In the cloned document, remove elements we don't want in the PDF
+        document.querySelectorAll('.no-print').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.print-only').forEach(el => el.classList.remove('hidden'));
+      }
+    });
+
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF({
+      orientation: 'p',
+      unit: 'mm',
+      format: 'a4',
+    });
+
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    const imgWidth = canvas.width;
+    const imgHeight = canvas.height;
+    const ratio = imgWidth / imgHeight;
+    const canvasHeightInPdf = pdfWidth / ratio;
+
+    let heightLeft = canvasHeightInPdf;
+    let position = 0;
+
+    pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, canvasHeightInPdf);
+    heightLeft -= pdfHeight;
+
+    while (heightLeft >= 0) {
+      position = heightLeft - canvasHeightInPdf;
+      pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, canvasHeightInPdf);
+      heightLeft -= pdfHeight;
+    }
+    
+    pdf.save(`${recipe?.name || 'recipe'}.pdf`);
+
+    // Revert visibility to user's state
+    const originalVisibility = Object.fromEntries(
+        recipe?.instructions
+        .filter(i => i.imageUrl)
+        .map(i => [i.id, !!visibleStepImages[i.id]]) || []
+    );
+    setVisibleStepImages(originalVisibility);
+    setIsGeneratingPdf(false);
+  };
+
+
   if (isLoading || recipesLoading) {
      return (
       <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
@@ -142,6 +216,12 @@ export default function RecipeDetailPage() {
       </div>
     );
   }
+  
+  const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
+  const shareText = `בדוק את המתכון הזה: ${recipe.name}`;
+  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(`${shareText}\n${shareUrl}`)}`;
+  const emailUrl = `mailto:?subject=${encodeURIComponent(recipe.name)}&body=${encodeURIComponent(`${shareText}\n\n${shareUrl}`)}`;
+
 
   const totalTime = () => {
     return `${recipe.prepTime}${recipe.cookTime ? `, ${recipe.cookTime}` : ''}`;
@@ -150,7 +230,7 @@ export default function RecipeDetailPage() {
   let instructionStepCounter = 0;
   
   return (
-    <div ref={printRef}>
+    <div ref={printRef} className="bg-background">
       <Card className="overflow-hidden shadow-xl recipe-detail-print">
         <CardHeader className="p-0 relative">
           {recipe.imageUrl && (
@@ -312,12 +392,6 @@ export default function RecipeDetailPage() {
         </CardContent>
 
         <CardFooter className="p-6 flex flex-col sm:flex-row justify-start items-center gap-3 border-t no-print">
-          <Button variant="outline" onClick={handleAddAllToShoppingList} className="w-full sm:w-auto flex items-center gap-2">
-            <ShoppingCart size={18} /> הוסף הכל לרשימת קניות
-          </Button>
-          <Button variant="outline" onClick={handlePrint} className="w-full sm:w-auto flex items-center gap-2">
-            <Printer size={18} /> הדפס מתכון
-          </Button>
           <Button asChild variant="outline" className="w-full sm:w-auto flex items-center gap-2">
             <Link href={`/recipes/edit/${recipe.id}`}>
               <Edit3 size={18} /> ערוך
@@ -342,6 +416,41 @@ export default function RecipeDetailPage() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+
+          <div className="ms-auto flex gap-2">
+             <Button variant="outline" onClick={handleAddAllToShoppingList} className="w-full sm:w-auto flex items-center gap-2">
+               <ShoppingCart size={18} /> הוסף הכל לרשימת קניות
+             </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <MoreVertical size={18} />
+                  <span className="sr-only">אפשרויות נוספות</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                   <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                    שתף ב-WhatsApp
+                  </a>
+                </DropdownMenuItem>
+                 <DropdownMenuItem asChild>
+                   <a href={emailUrl} className="flex items-center gap-2 cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>
+                    שתף באימייל
+                  </a>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleDownloadPdf} disabled={isGeneratingPdf} className="flex items-center gap-2 cursor-pointer">
+                  {isGeneratingPdf ? <Loader2 size={18} className="animate-spin" /> : <FileDown size={18} />}
+                  {isGeneratingPdf ? 'מייצא...' : 'הורד כ-PDF'}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handlePrint} className="flex items-center gap-2 cursor-pointer">
+                  <Printer size={18} /> הדפס
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </CardFooter>
       </Card>
     </div>

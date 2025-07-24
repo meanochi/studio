@@ -2,7 +2,7 @@
 'use client';
 
 import type { Recipe, Ingredient, InstructionStep } from '@/types';
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { generateId } from '@/lib/utils';
 import { db } from '@/lib/firebase'; // Import Firestore instance
 import { 
@@ -29,14 +29,58 @@ interface RecipeContextType {
   deleteRecipe: (recipeId: string) => Promise<void>; // Return type changed to Promise
   getRecipeById: (recipeId: string) => Recipe | undefined;
   loading: boolean;
+  recentlyViewed: Recipe[];
+  addRecentlyViewed: (recipeId: string) => void;
 }
 
 const RecipeContext = createContext<RecipeContextType | undefined>(undefined);
+
+const RECENTLY_VIEWED_KEY = 'recentlyViewedRecipeIds';
+const MAX_RECENTLY_VIEWED = 5;
 
 export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const [recentlyViewed, setRecentlyViewed] = useState<Recipe[]>([]);
+  const [recentlyViewedIds, setRecentlyViewedIds] = useState<string[]>([]);
+
+  // Load recently viewed from localStorage on initial load
+  useEffect(() => {
+    try {
+      const storedIds = localStorage.getItem(RECENTLY_VIEWED_KEY);
+      if (storedIds) {
+        setRecentlyViewedIds(JSON.parse(storedIds));
+      }
+    } catch (error) {
+      console.error("Failed to parse recently viewed recipes from localStorage", error);
+    }
+  }, []);
+
+  // Update recently viewed recipes when IDs or the main recipes list change
+  useEffect(() => {
+    if (recipes.length > 0) {
+      const viewedRecipes = recentlyViewedIds
+        .map(id => recipes.find(recipe => recipe.id === id))
+        .filter((recipe): recipe is Recipe => !!recipe);
+      setRecentlyViewed(viewedRecipes);
+    }
+  }, [recentlyViewedIds, recipes]);
+
+
+  const addRecentlyViewed = useCallback((recipeId: string) => {
+    setRecentlyViewedIds(prevIds => {
+      const newIds = [recipeId, ...prevIds.filter(id => id !== recipeId)];
+      const trimmedIds = newIds.slice(0, MAX_RECENTLY_VIEWED);
+      try {
+        localStorage.setItem(RECENTLY_VIEWED_KEY, JSON.stringify(trimmedIds));
+      } catch (error) {
+        console.error("Failed to save recently viewed recipes to localStorage", error);
+      }
+      return trimmedIds;
+    });
+  }, []);
+
 
   useEffect(() => {
     setLoading(true);
@@ -210,7 +254,7 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   };
 
   return (
-    <RecipeContext.Provider value={{ recipes, addRecipe, updateRecipe, deleteRecipe, getRecipeById, loading }}>
+    <RecipeContext.Provider value={{ recipes, addRecipe, updateRecipe, deleteRecipe, getRecipeById, loading, recentlyViewed, addRecentlyViewed }}>
       {children}
     </RecipeContext.Provider>
   );
@@ -223,4 +267,3 @@ export const useRecipes = (): RecipeContextType => {
   }
   return context;
 };
-

@@ -4,12 +4,13 @@ import RecipeCard from '@/components/recipes/RecipeCard';
 import { Button } from '@/components/ui/button';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { Input } from '@/components/ui/input';
-import { PlusCircle, Search, Loader2 } from 'lucide-react';
+import { PlusCircle, Search, Loader2, History } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useMemo } from 'react';
+import { Separator } from '@/components/ui/separator';
 
 export default function HomePage() {
-  const { recipes, loading } = useRecipes();
+  const { recipes, loading, recentlyViewed } = useRecipes();
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredRecipes = useMemo(() => {
@@ -53,11 +54,32 @@ export default function HomePage() {
         </Button>
       </div>
 
+      {recentlyViewed.length > 0 && !searchTerm && (
+        <div className="space-y-4">
+            <h3 className="text-2xl font-headline text-primary flex items-center gap-2">
+              <History size={24} />
+              נצפו לאחרונה
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {recentlyViewed.map(recipe => (
+                <RecipeCard key={`recent-${recipe.id}`} recipe={recipe} />
+              ))}
+            </div>
+            <Separator className="my-8" />
+        </div>
+      )}
+
+
       {filteredRecipes.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredRecipes.map(recipe => (
-            <RecipeCard key={recipe.id} recipe={recipe} />
-          ))}
+        <div className="space-y-4">
+          {recentlyViewed.length > 0 && !searchTerm && (
+             <h3 className="text-2xl font-headline text-primary">כל המתכונים</h3>
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredRecipes.map(recipe => (
+              <RecipeCard key={recipe.id} recipe={recipe} />
+            ))}
+          </div>
         </div>
       ) : (
         <div className="text-center py-10">
