@@ -129,7 +129,21 @@ export default function RecipeDetailPage() {
   };
   
   const handlePrint = () => {
-    window.print();
+    // Temporarily make all step images visible for printing
+    const allVisible = Object.fromEntries(recipe?.instructions.map(i => [i.id, true]) || []);
+    setVisibleStepImages(allVisible);
+
+    // Allow a moment for images to render before printing
+    setTimeout(() => {
+      window.print();
+       // Revert visibility to user's state after printing
+      const originalVisibility = Object.fromEntries(
+          recipe?.instructions
+          .filter(i => i.imageUrl)
+          .map(i => [i.id, !!visibleStepImages[i.id]]) || []
+      );
+      setVisibleStepImages(originalVisibility);
+    }, 500);
   };
 
   const handleDownloadPdf = async () => {
@@ -143,44 +157,72 @@ export default function RecipeDetailPage() {
     // Allow images time to render
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    const canvas = await html2canvas(printRef.current, {
-      scale: 2, // Higher scale for better quality
-      useCORS: true, // For external images
-      onclone: (document) => {
-        // In the cloned document, remove elements we don't want in the PDF
-        document.querySelectorAll('.no-print').forEach(el => el.classList.add('hidden'));
-        document.querySelectorAll('.print-only').forEach(el => el.classList.remove('hidden'));
+    try {
+      const canvas = await html2canvas(printRef.current, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: null, // Use element's background
+        onclone: (document) => {
+           // In the cloned document, apply print styles for consistency
+           const style = document.createElement('style');
+           style.innerHTML = `
+              @media print {
+                html, body {
+                  background-color: white !important;
+                  color: black !important;
+                  -webkit-print-color-adjust: exact !important;
+                  print-color-adjust: exact !important;
+                }
+                .no-print { display: none !important; }
+                .recipe-detail-print * { color: black !important; background-color: transparent !important; }
+                .recipe-detail-print .text-primary { color: #E07A5F !important; }
+                .recipe-detail-print .text-accent { color: #BE95C4 !important; }
+                .recipe-detail-print .text-muted-foreground { color: #71717a !important; }
+                .recipe-detail-print .bg-secondary\\/30 { background-color: rgba(224, 198, 236, 0.3) !important; }
+                .recipe-detail-print .border-primary\\/50 { border-color: rgba(224, 122, 95, 0.5) !important; }
+                .recipe-detail-print img { display: block !important; }
+              }
+            `;
+           document.head.appendChild(style);
+        }
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'p',
+        unit: 'mm',
+        format: 'a4',
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = imgWidth / imgHeight;
+      const canvasHeightInPdf = pdfWidth / ratio;
+      
+      let heightLeft = canvasHeightInPdf;
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, canvasHeightInPdf, undefined, 'FAST');
+      heightLeft -= pdf.internal.pageSize.getHeight();
+
+      while (heightLeft > 0) {
+        position = -heightLeft;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, canvasHeightInPdf, undefined, 'FAST');
+        heightLeft -= pdf.internal.pageSize.getHeight();
       }
-    });
-
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF({
-      orientation: 'p',
-      unit: 'mm',
-      format: 'a4',
-    });
-
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
-    const imgWidth = canvas.width;
-    const imgHeight = canvas.height;
-    const ratio = imgWidth / imgHeight;
-    const canvasHeightInPdf = pdfWidth / ratio;
-
-    let heightLeft = canvasHeightInPdf;
-    let position = 0;
-
-    pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, canvasHeightInPdf);
-    heightLeft -= pdfHeight;
-
-    while (heightLeft >= 0) {
-      position = heightLeft - canvasHeightInPdf;
-      pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, canvasHeightInPdf);
-      heightLeft -= pdfHeight;
+      
+      pdf.save(`${recipe?.name || 'recipe'}.pdf`);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast({
+        title: "שגיאה ביצירת PDF",
+        description: "לא ניתן היה ליצור את קובץ ה-PDF.",
+        variant: "destructive",
+      });
     }
-    
-    pdf.save(`${recipe?.name || 'recipe'}.pdf`);
 
     // Revert visibility to user's state
     const originalVisibility = Object.fromEntries(
@@ -230,19 +272,21 @@ export default function RecipeDetailPage() {
   let instructionStepCounter = 0;
   
   return (
-    <div ref={printRef} className="bg-background">
-      <Card className="overflow-hidden shadow-xl recipe-detail-print">
+    <div>
+      <Card ref={printRef} className="overflow-hidden shadow-xl recipe-detail-print">
         <CardHeader className="p-0 relative">
           {recipe.imageUrl && (
-            <Image
-              src={recipe.imageUrl}
-              alt={recipe.name}
-              width={1200}
-              height={600}
-              className="w-full h-64 md:h-96 object-cover"
-              priority
-              data-ai-hint="recipe food photography"
-            />
+            <div className="w-full h-64 md:h-96 relative">
+              <Image
+                src={recipe.imageUrl}
+                alt={recipe.name}
+                layout="fill"
+                className="object-cover"
+                priority
+                unoptimized
+                data-ai-hint="recipe food photography"
+              />
+            </div>
           )}
           <div className={recipe.imageUrl ? "absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-6 flex flex-col justify-end" : "p-6 bg-primary/10"}>
             <CardTitle className={`text-4xl md:text-5xl font-headline ${recipe.imageUrl ? 'text-white' : 'text-primary'}`}>{recipe.name}</CardTitle>
@@ -362,7 +406,7 @@ export default function RecipeDetailPage() {
                       <span>{step.text}</span>
                     </div>
                     {step.imageUrl && (
-                      <div className="mt-2 ms-10 space-y-2"> {/* ms increased to align with number */}
+                      <div className="mt-2 ms-10 space-y-2">
                         <Button 
                           variant="outline" 
                           size="sm" 
@@ -372,15 +416,17 @@ export default function RecipeDetailPage() {
                           {visibleStepImages[step.id] ? <EyeOffIcon size={14}/> : <EyeIcon size={14}/>}
                           {visibleStepImages[step.id] ? 'הסתר תמונה' : 'הצג תמונה'}
                         </Button>
-                        {visibleStepImages[step.id] && (
-                          <Image 
-                            src={step.imageUrl} 
-                            alt={`תמונה עבור שלב ${instructionStepCounter}`} 
-                            width={300} 
-                            height={225} 
-                            className="rounded-md object-cover border shadow-sm"
-                            data-ai-hint="cooking instruction photo"
-                          />
+                        {(visibleStepImages[step.id] || isGeneratingPdf) && (
+                          <div className="relative w-[300px] h-[225px]">
+                            <Image 
+                              src={step.imageUrl} 
+                              alt={`תמונה עבור שלב ${instructionStepCounter}`} 
+                              layout="fill"
+                              className="rounded-md object-cover border shadow-sm"
+                              unoptimized
+                              data-ai-hint="cooking instruction photo"
+                            />
+                          </div>
                         )}
                       </div>
                     )}
@@ -390,8 +436,9 @@ export default function RecipeDetailPage() {
             </ol>
           </div>
         </CardContent>
-
-        <CardFooter className="p-6 flex flex-col sm:flex-row justify-start items-center gap-3 border-t no-print">
+      </Card>
+      
+      <div className="p-6 flex flex-col sm:flex-row justify-start items-center gap-3 border-t no-print mt-4 rounded-b-lg bg-card">
           <Button asChild variant="outline" className="w-full sm:w-auto flex items-center gap-2">
             <Link href={`/recipes/edit/${recipe.id}`}>
               <Edit3 size={18} /> ערוך
@@ -417,31 +464,31 @@ export default function RecipeDetailPage() {
             </AlertDialogContent>
           </AlertDialog>
 
-          <div className="ms-auto flex gap-2">
-             <Button variant="outline" onClick={handleAddAllToShoppingList} className="w-full sm:w-auto flex items-center gap-2">
+          <div className="ms-auto flex flex-wrap justify-end gap-2">
+             <Button variant="outline" onClick={handleAddAllToShoppingList} className="flex-grow sm:flex-grow-0 flex items-center gap-2">
                <ShoppingCart size={18} /> הוסף הכל לרשימת קניות
              </Button>
-             <Button variant="outline" onClick={handlePrint} className="flex items-center gap-2">
+             <Button variant="outline" onClick={handlePrint} className="flex-grow sm:flex-grow-0 flex items-center gap-2">
                <Printer size={18} /> הדפס
              </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <MoreVertical size={18} />
-                  <span className="sr-only">אפשרויות נוספות</span>
+                <Button variant="outline">
+                  <Share2 size={18} />
+                  שתף / הורד
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem asChild>
                    <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
-                    שתף ב-WhatsApp
+                    שתף קישור ב-WhatsApp
                   </a>
                 </DropdownMenuItem>
                  <DropdownMenuItem asChild>
                    <a href={emailUrl} className="flex items-center gap-2 cursor-pointer">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>
-                    שתף באימייל
+                    שתף קישור באימייל
                   </a>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleDownloadPdf} disabled={isGeneratingPdf} className="flex items-center gap-2 cursor-pointer">
@@ -451,8 +498,7 @@ export default function RecipeDetailPage() {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-        </CardFooter>
-      </Card>
+        </div>
     </div>
   );
 }

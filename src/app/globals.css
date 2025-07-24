@@ -95,9 +95,11 @@
   body {
     background-color: white !important;
     color: black !important;
-    font-family: 'Rubik', sans-serif !important; /* Updated from Alegreya */
+    font-family: 'Rubik', sans-serif !important;
     margin: 0;
     padding: 0;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
   html[dir="rtl"] body {
     text-align: right !important; /* Ensure RTL for print */
@@ -129,20 +131,35 @@
   img {
     max-width: 100% !important;
     page-break-inside: avoid;
+    display: block !important;
   }
-   /* Ensure recipe cards/details are not split across pages */
-  .recipe-card-print, .recipe-detail-print {
+  .recipe-detail-print, .recipe-card-print {
     page-break-inside: avoid !important;
-    overflow: visible !important;
     box-shadow: none !important;
     border: 1px solid #ccc !important;
-    background-color: white !important; /* Ensure background is white for print */
-    color: black !important; /* Ensure text is black for print */
+    background-color: white !important;
+    color: black !important;
   }
-  .recipe-card-print *, .recipe-detail-print * {
-     color: black !important; /* Ensure all child text is black */
+  .recipe-detail-print *, .recipe-card-print * {
+     color: black !important;
+     background-color: transparent !important;
   }
-  /* Hide buttons in print view */
+  .recipe-detail-print .text-primary {
+    color: #E07A5F !important;
+  }
+  .recipe-detail-print .text-accent {
+    color: #BE95C4 !important;
+  }
+  .recipe-detail-print .text-muted-foreground {
+    color: #71717a !important;
+  }
+  .recipe-detail-print .bg-secondary\/30 {
+    background-color: rgba(224, 198, 236, 0.3) !important;
+  }
+  .recipe-detail-print .border-primary\/50 {
+    border-color: rgba(224, 122, 95, 0.5) !important;
+  }
+
   button, .btn {
     display: none !important;
   }
