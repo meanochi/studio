@@ -249,9 +249,9 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
   };
 
-  const getRecipeById = (recipeId: string): Recipe | undefined => {
+  const getRecipeById = useCallback((recipeId: string): Recipe | undefined => {
     return recipes.find(recipe => recipe.id === recipeId);
-  };
+  }, [recipes]);
 
   return (
     <RecipeContext.Provider value={{ recipes, addRecipe, updateRecipe, deleteRecipe, getRecipeById, loading, recentlyViewed, addRecentlyViewed }}>
