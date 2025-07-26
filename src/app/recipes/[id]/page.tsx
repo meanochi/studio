@@ -149,6 +149,7 @@ export default function RecipeDetailPage() {
 
     let textToCopy = `*${recipe.name}*\n`;
     if(recipe.source) textToCopy += `_מקור: ${recipe.source}_\n`;
+    if(recipe.imageUrl) textToCopy = `תמונה: ${recipe.imageUrl}\n${textToCopy}`;
     textToCopy += '\n*רכיבים*\n';
     displayedIngredients.forEach(ing => {
       if(ing.isHeading) {
@@ -172,71 +173,55 @@ export default function RecipeDetailPage() {
     });
 
     try {
-      if (navigator.clipboard?.write) {
-        let clipboardItems: ClipboardItem[] = [];
+      if (navigator.clipboard?.write && recipe.imageUrl) {
+          const response = await fetch(recipe.imageUrl);
+          const imageBlob = await response.blob();
+          
+          const reader = new FileReader();
+          reader.readAsDataURL(imageBlob);
+          const dataUrl = await new Promise<string>(resolve => {
+              reader.onloadend = () => resolve(reader.result as string);
+          });
 
-        // 1. Generate Plain Text Content
-        const textBlob = new Blob([textToCopy], { type: 'text/plain' });
+          let htmlToCopy = `<h1>${recipe.name}</h1>`;
+          if (recipe.source) htmlToCopy += `<em>מקור: ${recipe.source}</em>`;
+          htmlToCopy += `<br><img src="${dataUrl}" alt="${recipe.name}" style="max-width: 500px; height: auto;" />`;
+          htmlToCopy += `<h2>רכיבים</h2><ul>`;
+          displayedIngredients.forEach(ing => {
+              if(ing.isHeading) {
+                  htmlToCopy += `</ul><h3>${ing.name}</h3><ul>`;
+              } else {
+                  const amount = Number(ing.amount.toFixed(2));
+                  const unit = getDisplayUnit(ing.amount, ing.unit);
+                  htmlToCopy += `<li><b>${ing.name}</b>: ${amount} ${unit}${ing.isOptional ? ' (אופציונלי)' : ''}${ing.notes ? ` <em>(${ing.notes})</em>` : ''}</li>`;
+              }
+          });
+          htmlToCopy += `</ul><h2>הוראות</h2><ol>`;
+          recipe.instructions.forEach(instr => {
+              if (instr.isHeading) {
+                htmlToCopy += `</ol><h3>${instr.text}</h3><ol>`;
+              } else {
+                htmlToCopy += `<li>${instr.text}</li>`;
+              }
+          });
+          htmlToCopy += '</ol>';
 
-        // 2. Fetch Image and create HTML content if available
-        if (recipe.imageUrl) {
-            const response = await fetch(recipe.imageUrl);
-            const imageBlob = await response.blob();
-            
-            const reader = new FileReader();
-            reader.readAsDataURL(imageBlob);
-            const dataUrl = await new Promise<string>(resolve => {
-                reader.onloadend = () => resolve(reader.result as string);
-            });
+          const htmlBlob = new Blob([htmlToCopy], { type: 'text/html' });
+          const textBlob = new Blob([textToCopy], {type: 'text/plain' });
 
-            let htmlToCopy = `<h1>${recipe.name}</h1>`;
-            if (recipe.source) htmlToCopy += `<em>מקור: ${recipe.source}</em>`;
-            htmlToCopy += `<br><img src="${dataUrl}" alt="${recipe.name}" style="max-width: 500px; height: auto;" />`;
-            htmlToCopy += `<h2>רכיבים</h2><ul>`;
-            displayedIngredients.forEach(ing => {
-                if(ing.isHeading) {
-                    htmlToCopy += `</ul><h3>${ing.name}</h3><ul>`;
-                } else {
-                    const amount = Number(ing.amount.toFixed(2));
-                    const unit = getDisplayUnit(ing.amount, ing.unit);
-                    htmlToCopy += `<li><b>${ing.name}</b>: ${amount} ${unit}${ing.isOptional ? ' (אופציונלי)' : ''}${ing.notes ? ` <em>(${ing.notes})</em>` : ''}</li>`;
-                }
-            });
-            htmlToCopy += `</ul><h2>הוראות</h2><ol>`;
-            recipe.instructions.forEach(instr => {
-                if (instr.isHeading) {
-                  htmlToCopy += `</ol><h3>${instr.text}</h3><ol>`;
-                } else {
-                  htmlToCopy += `<li>${instr.text}</li>`;
-                }
-            });
-            htmlToCopy += '</ol>';
-
-            const htmlBlob = new Blob([htmlToCopy], { type: 'text/html' });
-            clipboardItems.push(new ClipboardItem({
-                'text/plain': textBlob,
-                'text/html': htmlBlob,
-                [imageBlob.type]: imageBlob,
-            }));
-        } else {
-           // If no image, just copy text
-           clipboardItems.push(new ClipboardItem({ 'text/plain': textBlob }));
-        }
-        
-        await navigator.clipboard.write(clipboardItems);
-        toast({ title: 'המתכון הועתק!', description: 'המתכון והתמונה (אם קיימת) הועתקו.' });
+          await navigator.clipboard.write([new ClipboardItem({
+              'text/html': htmlBlob,
+              'text/plain': textBlob,
+          })]);
+          toast({ title: 'המתכון הועתק!', description: 'המתכון והתמונה הועתקו ללוח.' });
       } else {
-         // Fallback for older browsers or non-secure contexts
-         if(recipe.imageUrl) textToCopy = `תמונה: ${recipe.imageUrl}\n${textToCopy}`;
          await navigator.clipboard.writeText(textToCopy);
          toast({ title: 'המתכון הועתק (טקסט בלבד)!', description: 'הדפדפן שלך אינו תומך בהעתקת תמונות.' });
       }
     } catch (err) {
       console.error('Failed to copy rich content: ', err);
-      // Fallback to text-only copy if advanced API fails
-      if(recipe.imageUrl) textToCopy = `תמונה: ${recipe.imageUrl}\n${textToCopy}`;
       navigator.clipboard.writeText(textToCopy).then(() => {
-        toast({ title: 'המתכון הועתק (טקסט בלבד)!', description: 'הדפדפן שלך אינו תומך בהעתקת תמונות.' });
+        toast({ title: 'המתכון הועתק (טקסט בלבד)!', description: 'אירעה שגיאה בהעתקת התמונה.', variant: 'default' });
       }).catch(fallbackErr => {
         console.error('Fallback text copy failed: ', fallbackErr);
         toast({ title: 'שגיאת העתקה', description: 'לא ניתן היה להעתיק את המתכון.', variant: 'destructive' });
