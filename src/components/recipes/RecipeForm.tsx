@@ -12,10 +12,12 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { PlusCircle, Trash2, Save, Image as ImageIcon, UploadCloud, X, FileText, StickyNote, Loader2, ChevronDown, ChevronUp, Heading2 } from 'lucide-react';
+import { PlusCircle, Trash2, Save, Image as ImageIcon, UploadCloud, X, FileText, StickyNote, Loader2, ChevronDown, ChevronUp, Heading2, Wand2, Edit } from 'lucide-react';
 import NextImage from 'next/image';
 import { generateId } from '@/lib/utils';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { parseIngredient } from '@/ai/flows/parse-ingredient-flow';
+import { useToast } from '@/hooks/use-toast';
 
 interface RecipeFormProps {
   initialData?: RecipeFormData;
@@ -95,6 +97,11 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
   const [instructionImagePreviews, setInstructionImagePreviews] = useState<(string | null)[]>([]);
   const instructionFileInputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [visibleInstructionImageInputs, setVisibleInstructionImageInputs] = useState<Record<string, boolean>>({});
+
+  const { toast } = useToast();
+  const [smartAddIngredient, setSmartAddIngredient] = useState('');
+  const [isParsing, setIsParsing] = useState(false);
+  const [addMode, setAddMode] = useState<'smart' | 'manual'>('smart');
 
 
   useEffect(() => {
@@ -194,6 +201,33 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
       notes: '', 
       isHeading 
     });
+  };
+
+  const handleSmartAddIngredient = async () => {
+    if (!smartAddIngredient.trim()) return;
+    setIsParsing(true);
+    try {
+      const result = await parseIngredient({ ingredientLine: smartAddIngredient });
+      appendIngredient({
+        id: generateId(),
+        name: result.name.replace(/-/g, ' '), // Replace hyphens back to spaces for display
+        amount: result.amount,
+        unit: result.unit,
+        isOptional: false,
+        notes: '',
+        isHeading: false,
+      });
+      setSmartAddIngredient('');
+    } catch (error) {
+      console.error('Failed to parse ingredient:', error);
+      toast({
+        title: 'שגיאת פיענוח',
+        description: 'לא הצלחתי להבין את הרכיב. אנא נסה להוסיף אותו ידנית.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsParsing(false);
+    }
   };
 
   const handleAddInstruction = (isHeading = false) => {
@@ -365,10 +399,43 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
                   </div>
                 </div>
               )})}
-              <div className="flex gap-2">
-                <Button type="button" variant="outline" onClick={() => handleAddIngredient(false)} className="flex items-center gap-2"><PlusCircle size={18} /> הוסף רכיב</Button>
-                <Button type="button" variant="outline" onClick={() => handleAddIngredient(true)} className="flex items-center gap-2"><Heading2 size={18} /> הוסף כותרת רכיבים</Button>
-              </div>
+
+              {addMode === 'smart' ? (
+                <div className="p-4 border-2 border-dashed rounded-md bg-secondary/10 space-y-3">
+                    <div className="flex justify-between items-center">
+                        <Label htmlFor="smart-add-ingredient" className="flex items-center gap-2 text-accent font-semibold">
+                            <Wand2 size={18} /> הוספה חכמה
+                        </Label>
+                        <Button variant="link" size="sm" onClick={() => setAddMode('manual')} className="text-xs h-auto p-0">
+                          <Edit size={12} className="me-1"/> עבור להוספה ידנית
+                        </Button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Input 
+                            id="smart-add-ingredient"
+                            placeholder="הכנס רכיב בשורה אחת, לדוגמה: 2.5 כוסות קמח"
+                            value={smartAddIngredient}
+                            onChange={(e) => setSmartAddIngredient(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSmartAddIngredient();}}}
+                            disabled={isParsing}
+                        />
+                        <Button type="button" onClick={handleSmartAddIngredient} disabled={isParsing || !smartAddIngredient.trim()}>
+                            {isParsing ? <Loader2 className="animate-spin" /> : 'הוסף'}
+                        </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                        תבנית: כמות, יחידה, שם. לשמות עם רווחים, השתמש במקף. לדוגמה: 1 ק"ג אבקת-סוכר.
+                    </p>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" onClick={() => handleAddIngredient(false)} className="flex items-center gap-2"><PlusCircle size={18} /> הוסף רכיב</Button>
+                  <Button type="button" variant="outline" onClick={() => handleAddIngredient(true)} className="flex items-center gap-2"><Heading2 size={18} /> הוסף כותרת רכיבים</Button>
+                  <Button variant="link" size="sm" onClick={() => setAddMode('smart')} className="text-xs h-auto p-0">
+                    <Wand2 size={12} className="me-1" /> עבור להוספה חכמה
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* Instructions Section */}
