@@ -1,19 +1,19 @@
 {
   "name": "Family Cookbook",
   "short_name": "Cookbook",
-  "description": "Your family's cookbook, always available.",
+  "description": "A place for all your family recipes",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#F8F5F1",
   "theme_color": "#E07A5F",
   "icons": [
     {
-      "src": "/icons/iconi.png",
+      "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/icons/iconi.png",
+      "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
