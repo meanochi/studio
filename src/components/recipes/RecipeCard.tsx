@@ -43,17 +43,20 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
     return `${recipe.prepTime}${recipe.cookTime ? `, ${recipe.cookTime}` : ''}`;
   }
 
+  const hasImage = !!recipe.imageUrl;
+
   return (
     <Card className="flex flex-col h-full overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 recipe-card-print group">
       <CardHeader className="p-0 relative">
         <Link href={`/recipes/${recipe.id}`} aria-label={`הצג מתכון: ${recipe.name}`} className="block w-full h-48 relative">
-          <Image
-            src={recipe.imageUrl || 'https://storage.googleapis.com/project-spark-b2489c64/codestudio/Baking-Mixer-and-Ingredients-on-a-Wooden-Table-in-a-Modern-Kitchen.png'}
-            alt={recipe.name}
-            fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
-            data-ai-hint="baking cooking"
-          />
+          {hasImage && (
+            <Image
+              src={recipe.imageUrl!}
+              alt={recipe.name}
+              fill
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+          )}
         </Link>
       </CardHeader>
       <CardContent className="p-4 flex-grow">

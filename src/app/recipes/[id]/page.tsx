@@ -150,8 +150,8 @@ export default function RecipeDetailPage() {
 
     let textToCopy = `*${recipe.name}*\n`;
     if(recipe.source) textToCopy += `_מקור: ${recipe.source}_\n`;
-    const imageUrl = recipe.imageUrl || 'https://storage.googleapis.com/project-spark-b2489c64/codestudio/Baking-Mixer-and-Ingredients-on-a-Wooden-Table-in-a-Modern-Kitchen.png';
-    textToCopy = `תמונה: ${imageUrl}\n${textToCopy}`;
+    const imageUrl = recipe.imageUrl;
+    if(imageUrl) textToCopy = `תמונה: ${imageUrl}\n${textToCopy}`;
     textToCopy += '\n*רכיבים*\n';
     displayedIngredients.forEach(ing => {
       if(ing.isHeading) {
@@ -274,16 +274,17 @@ export default function RecipeDetailPage() {
       <div ref={printRef}>
         <Card className="overflow-hidden shadow-xl recipe-detail-print">
           <CardHeader className="p-0 relative">
-            <div className="w-full h-64 md:h-96 relative print-image-container">
-              <Image
-                src={recipe.imageUrl || 'https://storage.googleapis.com/project-spark-b2489c64/codestudio/Baking-Mixer-and-Ingredients-on-a-Wooden-Table-in-a-Modern-Kitchen.png'}
-                alt={recipe.name}
-                fill
-                className="object-cover"
-                priority
-                data-ai-hint="baking cooking"
-              />
-            </div>
+            {hasImage && (
+              <div className="w-full h-64 md:h-96 relative print-image-container">
+                <Image
+                  src={recipe.imageUrl!}
+                  alt={recipe.name}
+                  fill
+                  className="object-cover"
+                  priority
+                />
+              </div>
+            )}
             <div className={`print-header-overlay ${hasImage ? "absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-6 flex flex-col justify-end" : "p-6 bg-primary/10"}`}>
               <CardTitle className={`text-4xl md:text-5xl font-headline print-title ${hasImage ? 'text-white' : 'text-primary'}`}>{recipe.name}</CardTitle>
               {recipe.source && <CardDescription className={`mt-1 text-lg print-source ${hasImage ? 'text-gray-200' : 'text-muted-foreground'} font-body italic`}>מקור: {recipe.source}</CardDescription>}
