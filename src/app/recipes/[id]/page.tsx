@@ -278,7 +278,7 @@ export default function RecipeDetailPage() {
               <Image
                 src={recipe.imageUrl || 'https://storage.googleapis.com/project-spark-b2489c64/codestudio/Baking-Mixer-and-Ingredients-on-a-Wooden-Table-in-a-Modern-Kitchen.png'}
                 alt={recipe.name}
-                layout="fill"
+                fill
                 className="object-cover"
                 priority
                 data-ai-hint="baking cooking"
