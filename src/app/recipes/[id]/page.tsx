@@ -150,7 +150,7 @@ export default function RecipeDetailPage() {
 
     let textToCopy = `*${recipe.name}*\n`;
     if(recipe.source) textToCopy += `_מקור: ${recipe.source}_\n`;
-    const imageUrl = recipe.imageUrl || 'https://images.unsplash.com/photo-1556911220-e15b29be8c9f?w=600&h=400&fit=crop&q=80';
+    const imageUrl = recipe.imageUrl || 'https://storage.googleapis.com/project-spark-b2489c64/codestudio/Baking-Mixer-and-Ingredients-on-a-Wooden-Table-in-a-Modern-Kitchen.png';
     textToCopy = `תמונה: ${imageUrl}\n${textToCopy}`;
     textToCopy += '\n*רכיבים*\n';
     displayedIngredients.forEach(ing => {
@@ -276,12 +276,12 @@ export default function RecipeDetailPage() {
           <CardHeader className="p-0 relative">
             <div className="w-full h-64 md:h-96 relative print-image-container">
               <Image
-                src={recipe.imageUrl || 'https://images.unsplash.com/photo-1556911220-e15b29be8c9f?w=600&h=400&fit=crop&q=80'}
+                src={recipe.imageUrl || 'https://storage.googleapis.com/project-spark-b2489c64/codestudio/Baking-Mixer-and-Ingredients-on-a-Wooden-Table-in-a-Modern-Kitchen.png'}
                 alt={recipe.name}
                 layout="fill"
                 className="object-cover"
                 priority
-                data-ai-hint="cooking baking"
+                data-ai-hint="baking cooking"
               />
             </div>
             <div className={`print-header-overlay ${hasImage ? "absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-6 flex flex-col justify-end" : "p-6 bg-primary/10"}`}>
@@ -419,7 +419,6 @@ export default function RecipeDetailPage() {
                                 alt={`תמונה עבור שלב ${instructionStepCounter}`} 
                                 layout="fill"
                                 className="rounded-md object-cover border shadow-sm"
-                                unoptimized
                                 data-ai-hint="cooking instruction photo"
                               />
                             </div>
