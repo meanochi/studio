@@ -417,7 +417,7 @@ export default function RecipeDetailPage() {
                               <Image 
                                 src={step.imageUrl} 
                                 alt={`תמונה עבור שלב ${instructionStepCounter}`} 
-                                layout="fill"
+                                fill
                                 className="rounded-md object-cover border shadow-sm"
                                 data-ai-hint="cooking instruction photo"
                               />
