@@ -48,7 +48,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
       <CardHeader className="p-0 relative">
         <Link href={`/recipes/${recipe.id}`} aria-label={`הצג מתכון: ${recipe.name}`}>
           <Image
-            src={recipe.imageUrl || 'https://placehold.co/600x400/E07A5F/FFFFFF.png'}
+            src={recipe.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&h=400&fit=crop&q=80'}
             alt={recipe.name}
             width={600}
             height={400}
@@ -115,4 +115,5 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
   );
 }
 
+    
     

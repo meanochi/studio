@@ -150,7 +150,7 @@ export default function RecipeDetailPage() {
 
     let textToCopy = `*${recipe.name}*\n`;
     if(recipe.source) textToCopy += `_מקור: ${recipe.source}_\n`;
-    const imageUrl = recipe.imageUrl || 'https://placehold.co/600x400.png';
+    const imageUrl = recipe.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&h=400&fit=crop&q=80';
     textToCopy = `תמונה: ${imageUrl}\n${textToCopy}`;
     textToCopy += '\n*רכיבים*\n';
     displayedIngredients.forEach(ing => {
@@ -276,7 +276,7 @@ export default function RecipeDetailPage() {
           <CardHeader className="p-0 relative">
             <div className="w-full h-64 md:h-96 relative print-image-container">
               <Image
-                src={recipe.imageUrl || 'https://placehold.co/600x400/E07A5F/FFFFFF.png'}
+                src={recipe.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&h=400&fit=crop&q=80'}
                 alt={recipe.name}
                 layout="fill"
                 className="object-cover"
@@ -501,4 +501,5 @@ export default function RecipeDetailPage() {
   );
 }
 
+    
     
