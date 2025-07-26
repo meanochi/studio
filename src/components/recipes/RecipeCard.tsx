@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Recipe } from '@/types';
@@ -52,7 +53,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
             width={600}
             height={400}
             className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
-            data-ai-hint="food photography"
+            data-ai-hint="recipe food"
           />
         </Link>
       </CardHeader>

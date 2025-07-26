@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useRef, useMemo } from 'react';
@@ -149,7 +150,8 @@ export default function RecipeDetailPage() {
 
     let textToCopy = `*${recipe.name}*\n`;
     if(recipe.source) textToCopy += `_מקור: ${recipe.source}_\n`;
-    if(recipe.imageUrl) textToCopy = `תמונה: ${recipe.imageUrl}\n${textToCopy}`;
+    const imageUrl = recipe.imageUrl || 'https://placehold.co/600x400.png';
+    textToCopy = `תמונה: ${imageUrl}\n${textToCopy}`;
     textToCopy += '\n*רכיבים*\n';
     displayedIngredients.forEach(ing => {
       if(ing.isHeading) {
@@ -173,19 +175,20 @@ export default function RecipeDetailPage() {
     });
 
     try {
-      if (navigator.clipboard?.write && recipe.imageUrl) {
-          const response = await fetch(recipe.imageUrl);
+      if (navigator.clipboard?.write && imageUrl) {
+          const response = await fetch(imageUrl);
           const imageBlob = await response.blob();
+          
+          let htmlToCopy = `<h1>${recipe.name}</h1>`;
+          if (recipe.source) htmlToCopy += `<em>מקור: ${recipe.source}</em>`;
           
           const reader = new FileReader();
           reader.readAsDataURL(imageBlob);
           const dataUrl = await new Promise<string>(resolve => {
               reader.onloadend = () => resolve(reader.result as string);
           });
-
-          let htmlToCopy = `<h1>${recipe.name}</h1>`;
-          if (recipe.source) htmlToCopy += `<em>מקור: ${recipe.source}</em>`;
           htmlToCopy += `<br><img src="${dataUrl}" alt="${recipe.name}" style="max-width: 500px; height: auto;" />`;
+
           htmlToCopy += `<h2>רכיבים</h2><ul>`;
           displayedIngredients.forEach(ing => {
               if(ing.isHeading) {
@@ -205,7 +208,7 @@ export default function RecipeDetailPage() {
               }
           });
           htmlToCopy += '</ol>';
-
+          
           const htmlBlob = new Blob([htmlToCopy], { type: 'text/html' });
           const textBlob = new Blob([textToCopy], {type: 'text/plain' });
 
@@ -221,7 +224,7 @@ export default function RecipeDetailPage() {
     } catch (err) {
       console.error('Failed to copy rich content: ', err);
       navigator.clipboard.writeText(textToCopy).then(() => {
-        toast({ title: 'המתכון הועתק (טקסט בלבד)!', description: 'אירעה שגיאה בהעתקת התמונה.', variant: 'default' });
+        toast({ title: 'המתכון הועתק (טקסט וקישור לתמונה)!', description: 'אירעה שגיאה בהעתקת התמונה.', variant: 'default' });
       }).catch(fallbackErr => {
         console.error('Fallback text copy failed: ', fallbackErr);
         toast({ title: 'שגיאת העתקה', description: 'לא ניתן היה להעתיק את המתכון.', variant: 'destructive' });
@@ -258,7 +261,7 @@ export default function RecipeDetailPage() {
   const shareText = `בדוק את המתכון הזה: ${recipe.name}`;
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(`${shareText}\n${shareUrl}`)}`;
   const emailUrl = `mailto:?subject=${encodeURIComponent(recipe.name)}&body=${encodeURIComponent(`${shareText}\n\n${shareUrl}`)}`;
-
+  const hasImage = !!recipe.imageUrl;
 
   const totalTime = () => {
     return `${recipe.prepTime}${recipe.cookTime ? `, ${recipe.cookTime}` : ''}`;
@@ -271,22 +274,20 @@ export default function RecipeDetailPage() {
       <div ref={printRef}>
         <Card className="overflow-hidden shadow-xl recipe-detail-print">
           <CardHeader className="p-0 relative">
-            {recipe.imageUrl && (
-              <div className="w-full h-64 md:h-96 relative print-image-container">
-                <Image
-                  src={recipe.imageUrl}
-                  alt={recipe.name}
-                  layout="fill"
-                  className="object-cover"
-                  priority
-                  unoptimized
-                  data-ai-hint="recipe food photography"
-                />
-              </div>
-            )}
-            <div className={`print-header-overlay ${recipe.imageUrl ? "absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-6 flex flex-col justify-end" : "p-6 bg-primary/10"}`}>
-              <CardTitle className={`text-4xl md:text-5xl font-headline print-title ${recipe.imageUrl ? 'text-white' : 'text-primary'}`}>{recipe.name}</CardTitle>
-              {recipe.source && <CardDescription className={`mt-1 text-lg print-source ${recipe.imageUrl ? 'text-gray-200' : 'text-muted-foreground'} font-body italic`}>מקור: {recipe.source}</CardDescription>}
+            <div className="w-full h-64 md:h-96 relative print-image-container">
+              <Image
+                src={recipe.imageUrl || 'https://placehold.co/600x400.png'}
+                alt={recipe.name}
+                layout="fill"
+                className="object-cover"
+                priority
+                unoptimized
+                data-ai-hint="recipe food photography"
+              />
+            </div>
+            <div className={`print-header-overlay ${hasImage ? "absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-6 flex flex-col justify-end" : "p-6 bg-primary/10"}`}>
+              <CardTitle className={`text-4xl md:text-5xl font-headline print-title ${hasImage ? 'text-white' : 'text-primary'}`}>{recipe.name}</CardTitle>
+              {recipe.source && <CardDescription className={`mt-1 text-lg print-source ${hasImage ? 'text-gray-200' : 'text-muted-foreground'} font-body italic`}>מקור: {recipe.source}</CardDescription>}
             </div>
           </CardHeader>
           <CardContent className="p-6 space-y-6">
