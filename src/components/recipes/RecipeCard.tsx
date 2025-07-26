@@ -48,12 +48,12 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
       <CardHeader className="p-0 relative">
         <Link href={`/recipes/${recipe.id}`} aria-label={`הצג מתכון: ${recipe.name}`}>
           <Image
-            src={recipe.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&h=400&fit=crop&q=80'}
+            src={recipe.imageUrl || 'https://images.unsplash.com/photo-1556911220-e15b29be8c9f?w=600&h=400&fit=crop&q=80'}
             alt={recipe.name}
             width={600}
             height={400}
             className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
-            data-ai-hint="recipe food"
+            data-ai-hint="cooking baking"
           />
         </Link>
       </CardHeader>
@@ -114,6 +114,3 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
     </Card>
   );
 }
-
-    
-    

@@ -150,7 +150,7 @@ export default function RecipeDetailPage() {
 
     let textToCopy = `*${recipe.name}*\n`;
     if(recipe.source) textToCopy += `_מקור: ${recipe.source}_\n`;
-    const imageUrl = recipe.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&h=400&fit=crop&q=80';
+    const imageUrl = recipe.imageUrl || 'https://images.unsplash.com/photo-1556911220-e15b29be8c9f?w=600&h=400&fit=crop&q=80';
     textToCopy = `תמונה: ${imageUrl}\n${textToCopy}`;
     textToCopy += '\n*רכיבים*\n';
     displayedIngredients.forEach(ing => {
@@ -276,13 +276,13 @@ export default function RecipeDetailPage() {
           <CardHeader className="p-0 relative">
             <div className="w-full h-64 md:h-96 relative print-image-container">
               <Image
-                src={recipe.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&h=400&fit=crop&q=80'}
+                src={recipe.imageUrl || 'https://images.unsplash.com/photo-1556911220-e15b29be8c9f?w=600&h=400&fit=crop&q=80'}
                 alt={recipe.name}
                 layout="fill"
                 className="object-cover"
                 priority
                 unoptimized
-                data-ai-hint="recipe food photography"
+                data-ai-hint="cooking baking"
               />
             </div>
             <div className={`print-header-overlay ${hasImage ? "absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-6 flex flex-col justify-end" : "p-6 bg-primary/10"}`}>
@@ -500,6 +500,3 @@ export default function RecipeDetailPage() {
     </div>
   );
 }
-
-    
-    
