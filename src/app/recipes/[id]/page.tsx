@@ -276,7 +276,7 @@ export default function RecipeDetailPage() {
           <CardHeader className="p-0 relative">
             <div className="w-full h-64 md:h-96 relative print-image-container">
               <Image
-                src={recipe.imageUrl || 'https://placehold.co/600x400.png'}
+                src={recipe.imageUrl || 'https://placehold.co/600x400/E07A5F/FFFFFF.png'}
                 alt={recipe.name}
                 layout="fill"
                 className="object-cover"
@@ -500,3 +500,5 @@ export default function RecipeDetailPage() {
     </div>
   );
 }
+
+    
