@@ -44,7 +44,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
   }
 
   return (
-    <Card className="flex flex-col h-full overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 recipe-card-print">
+    <Card className="flex flex-col h-full overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 recipe-card-print group">
       <CardHeader className="p-0 relative">
         <Link href={`/recipes/${recipe.id}`} aria-label={`הצג מתכון: ${recipe.name}`} className="block w-full h-48 relative">
           <Image
@@ -113,3 +113,5 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
     </Card>
   );
 }
+
+    
