@@ -114,3 +114,5 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
     </Card>
   );
 }
+
+    
