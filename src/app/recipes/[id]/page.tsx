@@ -281,7 +281,6 @@ export default function RecipeDetailPage() {
                 layout="fill"
                 className="object-cover"
                 priority
-                unoptimized
                 data-ai-hint="cooking baking"
               />
             </div>
@@ -500,5 +499,3 @@ export default function RecipeDetailPage() {
     </div>
   );
 }
-
-    
