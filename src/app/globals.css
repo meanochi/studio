@@ -161,21 +161,21 @@
   
   .recipe-detail-print .print-title {
     color: black !important;
-    background-color: rgba(255, 255, 255, 0.7); /* Semi-transparent white background */
+    background-color: rgba(255, 255, 255, 0.7) !important; /* Semi-transparent white background */
     padding: 0.5rem;
     border-radius: 0.25rem;
     width: fit-content;
     position: relative;
     bottom: 2rem;
-    right: 2rem;
+    left: 2rem; /* Adjusted from 'right' for better rtl placement */
     box-decoration-break: clone;
     -webkit-box-decoration-break: clone;
   }
-   .recipe-detail-print.pdf-generation .print-title {
-     color: white !important;
-     text-shadow: 1px 1px 3px black;
-     background-color: transparent !important;
-   }
+
+  html[dir="rtl"] .recipe-detail-print .print-title {
+    right: 2rem;
+    left: auto;
+  }
   
   .recipe-detail-print .print-source {
     color: #333 !important;

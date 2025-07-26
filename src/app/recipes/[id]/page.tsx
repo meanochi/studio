@@ -161,13 +161,7 @@ export default function RecipeDetailPage() {
         scale: 2,
         useCORS: true,
         allowTaint: true,
-        backgroundColor: null,
-        onclone: (document) => {
-          const printElement = document.querySelector('.recipe-detail-print');
-          if (printElement) {
-            (printElement as HTMLElement).classList.add('pdf-generation');
-          }
-        }
+        backgroundColor: null, // Use element's background
       });
 
       const imgData = canvas.toDataURL('image/png');
@@ -220,6 +214,7 @@ export default function RecipeDetailPage() {
     if (!recipe) return;
 
     let textToCopy = `*${recipe.name}*\n`;
+    if(recipe.imageUrl) textToCopy += `תמונה: ${recipe.imageUrl}\n`;
     if(recipe.source) textToCopy += `_מקור: ${recipe.source}_\n`;
     textToCopy += '\n';
 
@@ -295,170 +290,172 @@ export default function RecipeDetailPage() {
   
   return (
     <div>
-      <Card ref={printRef} className="overflow-hidden shadow-xl recipe-detail-print">
-        <CardHeader className="p-0 relative">
-          {recipe.imageUrl && (
-            <div className="w-full h-64 md:h-96 relative print-image-container">
-              <Image
-                src={recipe.imageUrl}
-                alt={recipe.name}
-                layout="fill"
-                className="object-cover"
-                priority
-                unoptimized
-                data-ai-hint="recipe food photography"
-              />
-            </div>
-          )}
-          <div className={`print-header-overlay ${recipe.imageUrl ? "absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-6 flex flex-col justify-end" : "p-6 bg-primary/10"}`}>
-            <CardTitle className={`text-4xl md:text-5xl font-headline print-title ${recipe.imageUrl ? 'text-white' : 'text-primary'}`}>{recipe.name}</CardTitle>
-            {recipe.source && <CardDescription className={`mt-1 text-lg print-source ${recipe.imageUrl ? 'text-gray-200' : 'text-muted-foreground'} font-body italic`}>מקור: {recipe.source}</CardDescription>}
-          </div>
-        </CardHeader>
-        <CardContent className="p-6 space-y-6">
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-center bg-secondary/30 p-4 rounded-lg">
-            <div className="font-body">
-              <Clock size={24} className="mx-auto mb-1 text-primary" />
-              <p className="font-semibold">זמן</p>
-              <p className="text-sm text-muted-foreground">{totalTime()}</p>
-            </div>
-            <div className="font-body">
-              <Users size={24} className="mx-auto mb-1 text-primary" />
-              <p className="font-semibold">מנות</p>
-              <p className="text-sm text-muted-foreground">{servingsDisplay}</p>
-            </div>
-            <div className="font-body">
-              {recipe.freezable ? <Snowflake size={24} className="mx-auto mb-1 text-primary" /> : <Utensils size={24} className="mx-auto mb-1 text-muted-foreground" />}
-              <p className="font-semibold">ניתן להקפאה</p>
-              <p className="text-sm text-muted-foreground">{recipe.freezable ? 'כן' : 'לא'}</p>
-            </div>
-          </div>
-
-          {recipe.tags && recipe.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {recipe.tags.map(tag => (
-                <Badge key={tag} variant="default" className="font-body text-sm bg-accent text-accent-foreground border border-accent hover:bg-accent/90">{tag}</Badge>
-              ))}
-            </div>
-          )}
-
-          <Separator />
-
-          <div>
-            <div className="flex flex-col sm:flex-row justify-between items-center mb-3 gap-2 no-print">
-              <h3 className="text-2xl font-headline text-primary">רכיבים</h3>
-              <div className="flex items-center gap-2">
-                <Label htmlFor="multiplier" className="font-body">הכפל כמויות ב:</Label>
-                <Input
-                  id="multiplier"
-                  type="number"
-                  value={multiplier}
-                  onChange={handleMultiplierChange}
-                  min="0.1"
-                  step="0.1"
-                  className="w-20 h-9 text-center"
+      <div ref={printRef}>
+        <Card className="overflow-hidden shadow-xl recipe-detail-print">
+          <CardHeader className="p-0 relative">
+            {recipe.imageUrl && (
+              <div className="w-full h-64 md:h-96 relative print-image-container">
+                <Image
+                  src={recipe.imageUrl}
+                  alt={recipe.name}
+                  layout="fill"
+                  className="object-cover"
+                  priority
+                  unoptimized
+                  data-ai-hint="recipe food photography"
                 />
-                 <Button variant="outline" size="icon" onClick={() => setMultiplier(1)} title="אפס מכפיל" className="h-9 w-9">
-                   <RefreshCw size={16}/>
-                 </Button>
+              </div>
+            )}
+            <div className={`print-header-overlay ${recipe.imageUrl ? "absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-6 flex flex-col justify-end" : "p-6 bg-primary/10"}`}>
+              <CardTitle className={`text-4xl md:text-5xl font-headline print-title ${recipe.imageUrl ? 'text-white' : 'text-primary'}`}>{recipe.name}</CardTitle>
+              {recipe.source && <CardDescription className={`mt-1 text-lg print-source ${recipe.imageUrl ? 'text-gray-200' : 'text-muted-foreground'} font-body italic`}>מקור: {recipe.source}</CardDescription>}
+            </div>
+          </CardHeader>
+          <CardContent className="p-6 space-y-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-center bg-secondary/30 p-4 rounded-lg">
+              <div className="font-body">
+                <Clock size={24} className="mx-auto mb-1 text-primary" />
+                <p className="font-semibold">זמן</p>
+                <p className="text-sm text-muted-foreground">{totalTime()}</p>
+              </div>
+              <div className="font-body">
+                <Users size={24} className="mx-auto mb-1 text-primary" />
+                <p className="font-semibold">מנות</p>
+                <p className="text-sm text-muted-foreground">{servingsDisplay}</p>
+              </div>
+              <div className="font-body">
+                {recipe.freezable ? <Snowflake size={24} className="mx-auto mb-1 text-primary" /> : <Utensils size={24} className="mx-auto mb-1 text-muted-foreground" />}
+                <p className="font-semibold">ניתן להקפאה</p>
+                <p className="text-sm text-muted-foreground">{recipe.freezable ? 'כן' : 'לא'}</p>
               </div>
             </div>
-            <div className="space-y-1 font-body">
-              {displayedIngredients.map(ingredient => (
-                ingredient.isHeading ? (
-                  <h4 key={ingredient.id} className="text-lg font-semibold text-accent mt-4 mb-2 pt-2 border-t border-dashed">
-                    <Heading2 size={18} className="inline-block me-2 align-middle" />
-                    {ingredient.name}
-                  </h4>
-                ) : (
-                  <div key={ingredient.id} className="flex flex-col p-3 bg-background rounded-md shadow-sm hover:bg-secondary/20 transition-colors">
-                    <div className="flex items-center w-full">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="me-2 no-print text-green-600 hover:text-green-700 hover:bg-green-500/10 h-8 w-8" 
-                        onClick={() => handleAddSingleIngredientToShoppingList(ingredient)}
-                        aria-label={`הוסף ${ingredient.name} לרשימת הקניות`}
-                        title={`הוסף ${ingredient.name} לרשימת הקניות`}
-                      >
-                        <PlusSquare size={20} />
-                      </Button>
-                      <span className="font-semibold text-primary flex-1">
-                          {ingredient.name}
-                          {ingredient.isOptional && <span className="text-xs text-muted-foreground ms-1">(אופציונלי)</span>}
-                      </span>
-                      <span className="text-muted-foreground flex-1 text-center">
-                        {Number((ingredient.amount).toFixed(2))} {getDisplayUnit(ingredient.amount, ingredient.unit)}
-                      </span>
-                      <span className="text-xs text-gray-400 flex-1 text-left italic no-print">
-                        {multiplier !== 1 && `(מקורי: ${Number((ingredient.amount / multiplier).toFixed(2))} ${getDisplayUnit(ingredient.amount/multiplier, ingredient.unit)})`}
-                      </span>
-                    </div>
-                    {ingredient.notes && (
-                      <div className="ps-10 pt-1 text-xs text-muted-foreground/80 flex items-center">
-                          <Info size={12} className="me-1.5 text-accent"/>
-                          <span>{ingredient.notes}</span>
-                      </div>
-                    )}
-                  </div>
-                )
-              ))}
-            </div>
-          </div>
 
-          <Separator />
+            {recipe.tags && recipe.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {recipe.tags.map(tag => (
+                  <Badge key={tag} variant="default" className="font-body text-sm bg-accent text-accent-foreground border border-accent hover:bg-accent/90">{tag}</Badge>
+                ))}
+              </div>
+            )}
 
-          <div>
-            <h3 className="text-2xl font-headline text-primary mb-3">הוראות</h3>
-            <ol className="list-none space-y-4 font-body text-base md:text-lg leading-relaxed ps-0">
-              {recipe.instructions.map((step) => {
-                if (step.isHeading) {
-                  return (
-                    <h4 key={step.id} className="text-lg font-semibold text-accent mt-4 mb-2 pt-2 border-t border-dashed">
+            <Separator />
+
+            <div>
+              <div className="flex flex-col sm:flex-row justify-between items-center mb-3 gap-2 no-print">
+                <h3 className="text-2xl font-headline text-primary">רכיבים</h3>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="multiplier" className="font-body">הכפל כמויות ב:</Label>
+                  <Input
+                    id="multiplier"
+                    type="number"
+                    value={multiplier}
+                    onChange={handleMultiplierChange}
+                    min="0.1"
+                    step="0.1"
+                    className="w-20 h-9 text-center"
+                  />
+                  <Button variant="outline" size="icon" onClick={() => setMultiplier(1)} title="אפס מכפיל" className="h-9 w-9">
+                    <RefreshCw size={16}/>
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-1 font-body">
+                {displayedIngredients.map(ingredient => (
+                  ingredient.isHeading ? (
+                    <h4 key={ingredient.id} className="text-lg font-semibold text-accent mt-4 mb-2 pt-2 border-t border-dashed">
                       <Heading2 size={18} className="inline-block me-2 align-middle" />
-                      {step.text}
+                      {ingredient.name}
                     </h4>
-                  );
-                }
-                instructionStepCounter++;
-                return (
-                  <li key={step.id} className="pe-2 border-r-2 border-primary/50 py-2 hover:bg-primary/5 transition-colors rounded-l-md space-y-2">
-                    <div className="flex">
-                      <span className="font-headline text-xl text-primary me-3">{instructionStepCounter}.</span>
-                      <span>{step.text}</span>
-                    </div>
-                    {step.imageUrl && (
-                      <div className="mt-2 ms-10 space-y-2">
+                  ) : (
+                    <div key={ingredient.id} className="flex flex-col p-3 bg-background rounded-md shadow-sm hover:bg-secondary/20 transition-colors">
+                      <div className="flex items-center w-full">
                         <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => toggleStepImageVisibility(step.id)} 
-                          className="flex items-center gap-1.5 text-xs no-print"
+                          variant="ghost" 
+                          size="icon" 
+                          className="me-2 no-print text-green-600 hover:text-green-700 hover:bg-green-500/10 h-8 w-8" 
+                          onClick={() => handleAddSingleIngredientToShoppingList(ingredient)}
+                          aria-label={`הוסף ${ingredient.name} לרשימת הקניות`}
+                          title={`הוסף ${ingredient.name} לרשימת הקניות`}
                         >
-                          {visibleStepImages[step.id] ? <EyeOffIcon size={14}/> : <EyeIcon size={14}/>}
-                          {visibleStepImages[step.id] ? 'הסתר תמונה' : 'הצג תמונה'}
+                          <PlusSquare size={20} />
                         </Button>
-                        {(visibleStepImages[step.id] || isGeneratingPdf) && (
-                           <div className="relative w-[300px] h-[225px] step-image-container">
-                            <Image 
-                              src={step.imageUrl} 
-                              alt={`תמונה עבור שלב ${instructionStepCounter}`} 
-                              layout="fill"
-                              className="rounded-md object-cover border shadow-sm"
-                              unoptimized
-                              data-ai-hint="cooking instruction photo"
-                            />
-                          </div>
-                        )}
+                        <span className="font-semibold text-primary flex-1">
+                            {ingredient.name}
+                            {ingredient.isOptional && <span className="text-xs text-muted-foreground ms-1">(אופציונלי)</span>}
+                        </span>
+                        <span className="text-muted-foreground flex-1 text-center">
+                          {Number((ingredient.amount).toFixed(2))} {getDisplayUnit(ingredient.amount, ingredient.unit)}
+                        </span>
+                        <span className="text-xs text-gray-400 flex-1 text-left italic no-print">
+                          {multiplier !== 1 && `(מקורי: ${Number((ingredient.amount / multiplier).toFixed(2))} ${getDisplayUnit(ingredient.amount/multiplier, ingredient.unit)})`}
+                        </span>
                       </div>
-                    )}
-                  </li>
-                );
-              })}
-            </ol>
-          </div>
-        </CardContent>
-      </Card>
+                      {ingredient.notes && (
+                        <div className="ps-10 pt-1 text-xs text-muted-foreground/80 flex items-center">
+                            <Info size={12} className="me-1.5 text-accent"/>
+                            <span>{ingredient.notes}</span>
+                        </div>
+                      )}
+                    </div>
+                  )
+                ))}
+              </div>
+            </div>
+
+            <Separator />
+
+            <div>
+              <h3 className="text-2xl font-headline text-primary mb-3">הוראות</h3>
+              <ol className="list-none space-y-4 font-body text-base md:text-lg leading-relaxed ps-0">
+                {recipe.instructions.map((step) => {
+                  if (step.isHeading) {
+                    return (
+                      <h4 key={step.id} className="text-lg font-semibold text-accent mt-4 mb-2 pt-2 border-t border-dashed">
+                        <Heading2 size={18} className="inline-block me-2 align-middle" />
+                        {step.text}
+                      </h4>
+                    );
+                  }
+                  instructionStepCounter++;
+                  return (
+                    <li key={step.id} className="pe-2 border-r-2 border-primary/50 py-2 hover:bg-primary/5 transition-colors rounded-l-md space-y-2">
+                      <div className="flex">
+                        <span className="font-headline text-xl text-primary me-3">{instructionStepCounter}.</span>
+                        <span>{step.text}</span>
+                      </div>
+                      {step.imageUrl && (
+                        <div className="mt-2 ms-10 space-y-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => toggleStepImageVisibility(step.id)} 
+                            className="flex items-center gap-1.5 text-xs no-print"
+                          >
+                            {visibleStepImages[step.id] ? <EyeOffIcon size={14}/> : <EyeIcon size={14}/>}
+                            {visibleStepImages[step.id] ? 'הסתר תמונה' : 'הצג תמונה'}
+                          </Button>
+                          {(visibleStepImages[step.id] || isGeneratingPdf) && (
+                            <div className="relative w-[300px] h-[225px] step-image-container">
+                              <Image 
+                                src={step.imageUrl} 
+                                alt={`תמונה עבור שלב ${instructionStepCounter}`} 
+                                layout="fill"
+                                className="rounded-md object-cover border shadow-sm"
+                                unoptimized
+                                data-ai-hint="cooking instruction photo"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ol>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
       
       <div className="p-6 flex flex-col sm:flex-row justify-start items-center gap-3 border-t no-print mt-4 rounded-b-lg bg-card">
           <Button asChild variant="outline" className="w-full sm:w-auto flex items-center gap-2">
