@@ -34,10 +34,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
-  Clock, Users, Edit3, Trash2, Printer, ShoppingCart, Utensils, Snowflake, Loader2, AlertTriangle, HomeIcon, RefreshCw, PlusSquare, Info, EyeIcon, EyeOffIcon, Heading2, Share2, FileDown, ClipboardCopy
+  Clock, Users, Edit3, Trash2, Printer, ShoppingCart, Utensils, Snowflake, Loader2, AlertTriangle, HomeIcon, RefreshCw, PlusSquare, Info, EyeIcon, EyeOffIcon, Heading2, Share2, ClipboardCopy
 } from 'lucide-react';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 
 export default function RecipeDetailPage() {
@@ -50,7 +48,6 @@ export default function RecipeDetailPage() {
   const [recipe, setRecipe] = useState<Recipe | null | undefined>(undefined); 
   const [multiplier, setMultiplier] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [visibleStepImages, setVisibleStepImages] = useState<Record<string, boolean>>({});
 
   const recipeId = Array.isArray(params.id) ? params.id[0] : params.id;
@@ -147,150 +144,93 @@ export default function RecipeDetailPage() {
     }, 500);
   };
 
-  const handleDownloadPdf = async () => {
-    if (!printRef.current) return;
-    setIsGeneratingPdf(true);
-
-    const allVisible = Object.fromEntries(recipe?.instructions.map(i => [i.id, true]) || []);
-    setVisibleStepImages(allVisible);
-    
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    try {
-      const canvas = await html2canvas(printRef.current, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null, // Use element's background
-        onclone: (document) => {
-          // This ensures print styles are applied during canvas rendering
-        }
-      });
-
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'p',
-        unit: 'mm',
-        format: 'a4',
-      });
-
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      const ratio = imgWidth / imgHeight;
-      let canvasHeightInPdf = pdfWidth / ratio;
-      
-      let heightLeft = canvasHeightInPdf;
-      let position = 0;
-
-      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, canvasHeightInPdf, undefined, 'FAST');
-      heightLeft -= pdfHeight;
-
-      while (heightLeft > 0) {
-        position = -heightLeft;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, canvasHeightInPdf, undefined, 'FAST');
-        heightLeft -= pdfHeight;
-      }
-      
-      pdf.save(`${recipe?.name || 'recipe'}.pdf`);
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      toast({
-        title: "שגיאה ביצירת PDF",
-        description: "לא ניתן היה ליצור את קובץ ה-PDF.",
-        variant: "destructive",
-      });
-    }
-
-    const originalVisibility = Object.fromEntries(
-        recipe?.instructions
-        .filter(i => i.imageUrl)
-        .map(i => [i.id, !!visibleStepImages[i.id]]) || []
-    );
-    setVisibleStepImages(originalVisibility);
-    setIsGeneratingPdf(false);
-  };
-
   const handleCopyRecipeText = async () => {
     if (!recipe) return;
 
-    try {
-      // 1. Generate Plain Text Content
-      let textToCopy = `*${recipe.name}*\n`;
-      if(recipe.source) textToCopy += `_מקור: ${recipe.source}_\n`;
-      textToCopy += '\n*רכיבים*\n';
-      displayedIngredients.forEach(ing => {
-        if(ing.isHeading) {
-          textToCopy += `\n_${ing.name}_\n`;
-        } else {
-          const amount = Number(ing.amount.toFixed(2));
-          const unit = getDisplayUnit(ing.amount, ing.unit);
-          textToCopy += `- ${ing.name}: ${amount} ${unit}${ing.isOptional ? ' (אופציונלי)' : ''}\n`;
-          if (ing.notes) textToCopy += `  _(${ing.notes})_\n`;
-        }
-      });
-      textToCopy += '\n*הוראות*\n';
-      let instructionCounter = 1;
-      recipe.instructions.forEach(instr => {
-         if(instr.isHeading) {
-           textToCopy += `\n_${instr.text}_\n`;
-         } else {
-           textToCopy += `${instructionCounter}. ${instr.text}\n`;
-           instructionCounter++;
-         }
-      });
-      const textBlob = new Blob([textToCopy], { type: 'text/plain' });
-
-      // 2. Fetch Image and create HTML content
-      let clipboardItems: ClipboardItem[] = [new ClipboardItem({ 'text/plain': textBlob })];
-
-      if (recipe.imageUrl) {
-        const response = await fetch(recipe.imageUrl);
-        const imageBlob = await response.blob();
-        
-        // Create an object URL for the image to use in the HTML
-        const reader = new FileReader();
-        reader.readAsDataURL(imageBlob);
-        const dataUrl = await new Promise<string>(resolve => {
-            reader.onloadend = () => resolve(reader.result as string);
-        });
-
-        let htmlToCopy = `<h1>${recipe.name}</h1>`;
-        if (recipe.source) htmlToCopy += `<em>מקור: ${recipe.source}</em>`;
-        htmlToCopy += `<br><img src="${dataUrl}" alt="${recipe.name}" style="max-width: 500px; height: auto;" />`;
-        htmlToCopy += `<h2>רכיבים</h2><ul>`;
-        displayedIngredients.forEach(ing => {
-            if(ing.isHeading) {
-                htmlToCopy += `</ul><h3>${ing.name}</h3><ul>`;
-            } else {
-                const amount = Number(ing.amount.toFixed(2));
-                const unit = getDisplayUnit(ing.amount, ing.unit);
-                htmlToCopy += `<li><b>${ing.name}</b>: ${amount} ${unit}${ing.isOptional ? ' (אופציונלי)' : ''}${ing.notes ? ` <em>(${ing.notes})</em>` : ''}</li>`;
-            }
-        });
-        htmlToCopy += `</ul><h2>הוראות</h2><ol>`;
-        recipe.instructions.forEach(instr => {
-            if (instr.isHeading) {
-              htmlToCopy += `</ol><h3>${instr.text}</h3><ol>`;
-            } else {
-              htmlToCopy += `<li>${instr.text}</li>`;
-            }
-        });
-        htmlToCopy += '</ol>';
-
-        const htmlBlob = new Blob([htmlToCopy], { type: 'text/html' });
-        clipboardItems = [new ClipboardItem({
-            'text/plain': textBlob,
-            'text/html': htmlBlob,
-            [imageBlob.type]: imageBlob,
-        })];
+    let textToCopy = `*${recipe.name}*\n`;
+    if(recipe.source) textToCopy += `_מקור: ${recipe.source}_\n`;
+    textToCopy += '\n*רכיבים*\n';
+    displayedIngredients.forEach(ing => {
+      if(ing.isHeading) {
+        textToCopy += `\n_${ing.name}_\n`;
+      } else {
+        const amount = Number(ing.amount.toFixed(2));
+        const unit = getDisplayUnit(ing.amount, ing.unit);
+        textToCopy += `- ${ing.name}: ${amount} ${unit}${ing.isOptional ? ' (אופציונלי)' : ''}\n`;
+        if (ing.notes) textToCopy += `  _(${ing.notes})_\n`;
       }
-      
-      await navigator.clipboard.write(clipboardItems);
+    });
+    textToCopy += '\n*הוראות*\n';
+    let instructionCounter = 1;
+    recipe.instructions.forEach(instr => {
+       if(instr.isHeading) {
+         textToCopy += `\n_${instr.text}_\n`;
+       } else {
+         textToCopy += `${instructionCounter}. ${instr.text}\n`;
+         instructionCounter++;
+       }
+    });
 
-      toast({ title: 'המתכון הועתק!', description: 'המתכון והתמונה (אם קיימת) הועתקו.' });
+    try {
+      if (navigator.clipboard?.write) {
+        let clipboardItems: ClipboardItem[] = [];
+
+        // 1. Generate Plain Text Content
+        const textBlob = new Blob([textToCopy], { type: 'text/plain' });
+
+        // 2. Fetch Image and create HTML content if available
+        if (recipe.imageUrl) {
+            const response = await fetch(recipe.imageUrl);
+            const imageBlob = await response.blob();
+            
+            const reader = new FileReader();
+            reader.readAsDataURL(imageBlob);
+            const dataUrl = await new Promise<string>(resolve => {
+                reader.onloadend = () => resolve(reader.result as string);
+            });
+
+            let htmlToCopy = `<h1>${recipe.name}</h1>`;
+            if (recipe.source) htmlToCopy += `<em>מקור: ${recipe.source}</em>`;
+            htmlToCopy += `<br><img src="${dataUrl}" alt="${recipe.name}" style="max-width: 500px; height: auto;" />`;
+            htmlToCopy += `<h2>רכיבים</h2><ul>`;
+            displayedIngredients.forEach(ing => {
+                if(ing.isHeading) {
+                    htmlToCopy += `</ul><h3>${ing.name}</h3><ul>`;
+                } else {
+                    const amount = Number(ing.amount.toFixed(2));
+                    const unit = getDisplayUnit(ing.amount, ing.unit);
+                    htmlToCopy += `<li><b>${ing.name}</b>: ${amount} ${unit}${ing.isOptional ? ' (אופציונלי)' : ''}${ing.notes ? ` <em>(${ing.notes})</em>` : ''}</li>`;
+                }
+            });
+            htmlToCopy += `</ul><h2>הוראות</h2><ol>`;
+            recipe.instructions.forEach(instr => {
+                if (instr.isHeading) {
+                  htmlToCopy += `</ol><h3>${instr.text}</h3><ol>`;
+                } else {
+                  htmlToCopy += `<li>${instr.text}</li>`;
+                }
+            });
+            htmlToCopy += '</ol>';
+
+            const htmlBlob = new Blob([htmlToCopy], { type: 'text/html' });
+            clipboardItems.push(new ClipboardItem({
+                'text/plain': textBlob,
+                'text/html': htmlBlob,
+                [imageBlob.type]: imageBlob,
+            }));
+        } else {
+           // If no image, just copy text
+           clipboardItems.push(new ClipboardItem({ 'text/plain': textBlob }));
+        }
+        
+        await navigator.clipboard.write(clipboardItems);
+        toast({ title: 'המתכון הועתק!', description: 'המתכון והתמונה (אם קיימת) הועתקו.' });
+      } else {
+         // Fallback for older browsers or non-secure contexts
+         if(recipe.imageUrl) textToCopy = `תמונה: ${recipe.imageUrl}\n${textToCopy}`;
+         await navigator.clipboard.writeText(textToCopy);
+         toast({ title: 'המתכון הועתק (טקסט בלבד)!', description: 'הדפדפן שלך אינו תומך בהעתקת תמונות.' });
+      }
     } catch (err) {
       console.error('Failed to copy rich content: ', err);
       // Fallback to text-only copy if advanced API fails
@@ -487,7 +427,7 @@ export default function RecipeDetailPage() {
                             {visibleStepImages[step.id] ? <EyeOffIcon size={14}/> : <EyeIcon size={14}/>}
                             {visibleStepImages[step.id] ? 'הסתר תמונה' : 'הצג תמונה'}
                           </Button>
-                          {(visibleStepImages[step.id] || isGeneratingPdf) && (
+                          {visibleStepImages[step.id] && (
                             <div className="relative w-[300px] h-[225px] step-image-container">
                               <Image 
                                 src={step.imageUrl} 
@@ -566,11 +506,6 @@ export default function RecipeDetailPage() {
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>
                     שתף קישור באימייל
                   </a>
-                </DropdownMenuItem>
-                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleDownloadPdf} disabled={isGeneratingPdf} className="flex items-center gap-2 cursor-pointer">
-                  {isGeneratingPdf ? <Loader2 size={18} className="animate-spin" /> : <FileDown size={18} />}
-                  {isGeneratingPdf ? 'מייצא...' : 'הורד כ-PDF'}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
