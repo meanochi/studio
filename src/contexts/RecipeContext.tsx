@@ -36,7 +36,7 @@ interface RecipeContextType {
 const RecipeContext = createContext<RecipeContextType | undefined>(undefined);
 
 const RECENTLY_VIEWED_KEY = 'recentlyViewedRecipeIds';
-const MAX_RECENTLY_VIEWED = 5;
+const MAX_RECENTLY_VIEWED = 3;
 
 export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -107,8 +107,8 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             isHeading: typeof ing.isHeading === 'boolean' ? ing.isHeading : false,
             amount: (typeof ing.isHeading === 'boolean' && ing.isHeading) ? 0 : (typeof ing.amount === 'number' ? ing.amount : 0), // Amount is 0 for heading
             unit: (typeof ing.isHeading === 'boolean' && ing.isHeading) ? "" : (ing.unit || ""), // Unit is "" for heading
-            isOptional: (typeof ing.isHeading === 'boolean' && ing.isHeading) ? null : (typeof ing.isOptional === 'boolean' ? ing.isOptional : false),
-            notes: (typeof ing.isHeading === 'boolean' && ing.isHeading) ? null : (ing.notes ?? null),
+            isOptional: (typeof ing.isHeading === 'boolean' && ing.isHeading) ? false : (typeof ing.isOptional === 'boolean' ? ing.isOptional : false),
+            notes: (typeof ing.isHeading === 'boolean' && ing.isHeading) ? '' : (ing.notes ?? ''),
           })),
           instructions: (Array.isArray(data.instructions) ? data.instructions : []).map((instr: any): InstructionStep => ({
             id: instr.id || generateId(),
@@ -153,10 +153,10 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
           id: ing.id || generateId(),
           name: ing.name || "",
           isHeading: ing.isHeading || false,
-          amount: ing.isHeading ? null : (typeof ing.amount === 'number' ? ing.amount : 0),
-          unit: ing.isHeading ? null : (ing.unit || ""),
-          isOptional: ing.isHeading ? null : (ing.isOptional || false),
-          notes: ing.isHeading ? null : (ing.notes ?? null),
+          amount: ing.isHeading ? 0 : (typeof ing.amount === 'number' ? ing.amount : 0),
+          unit: ing.isHeading ? "" : (ing.unit || ""),
+          isOptional: ing.isHeading ? false : (ing.isOptional || false),
+          notes: ing.isHeading ? "" : (ing.notes ?? ''),
         })),
         instructions: (recipeData.instructions || []).map(instr => ({
           id: instr.id || generateId(),
@@ -210,10 +210,10 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
           id: ing.id || generateId(),
           name: ing.name || "",
           isHeading: ing.isHeading || false,
-          amount: ing.isHeading ? null : (typeof ing.amount === 'number' ? ing.amount : 0),
-          unit: ing.isHeading ? null : (ing.unit || ""),
-          isOptional: ing.isHeading ? null : (ing.isOptional || false),
-          notes: ing.isHeading ? null : (ing.notes ?? null),
+          amount: ing.isHeading ? 0 : (typeof ing.amount === 'number' ? ing.amount : 0),
+          unit: ing.isHeading ? "" : (ing.unit || ""),
+          isOptional: ing.isHeading ? false : (ing.isOptional || false),
+          notes: ing.isHeading ? "" : (ing.notes ?? ''),
         })),
         instructions: (updatedRecipe.instructions || []).map(instr => ({
           id: instr.id || generateId(),
