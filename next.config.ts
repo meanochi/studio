@@ -7,6 +7,25 @@ import {
 
 const runtimeCaching: RuntimeCaching[] = [
     {
+      urlPattern: ({url, request}) => {
+        if (request.destination === 'document') {
+          return true;
+        }
+        return false;
+      },
+      handler: 'StaleWhileRevalidate',
+      options: {
+        cacheName: 'pages-cache',
+        expiration: {
+          maxEntries: 50,
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+        },
+        cacheableResponse: {
+          statuses: [200],
+        },
+      },
+    },
+    {
       urlPattern: /^https?.*/,
       handler: 'StaleWhileRevalidate',
       options: {
