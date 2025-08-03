@@ -1,12 +1,14 @@
 
 'use client';
 
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import type { ShoppingListItem } from '@/types';
 import { useShoppingList } from '@/contexts/ShoppingListContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Trash2, ShoppingBasket, XCircle, Loader2, Printer } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Trash2, ShoppingBasket, XCircle, Loader2, Printer, PlusCircle } from 'lucide-react';
 import { getDisplayUnit } from '@/lib/utils';
 import {
   AlertDialog,
@@ -21,6 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import { Separator } from '@/components/ui/separator';
 
 interface GroupedShoppingItem {
   name: string; 
@@ -30,9 +33,14 @@ interface GroupedShoppingItem {
 }
 
 export default function ShoppingListPage() {
-  const { shoppingList, removeItemsByNameFromShoppingList, clearShoppingList, loading } = useShoppingList();
+  const { shoppingList, removeItemsByNameFromShoppingList, clearShoppingList, loading, addManualItemToShoppingList } = useShoppingList();
   const { toast } = useToast();
   const printRef = useRef<HTMLDivElement>(null);
+
+  const [newItemName, setNewItemName] = useState('');
+  const [newItemAmount, setNewItemAmount] = useState<number | string>(1);
+  const [newItemUnit, setNewItemUnit] = useState('יחידות');
+
 
   const groupedItems = useMemo(() => {
     if (loading) return [];
@@ -102,6 +110,31 @@ export default function ShoppingListPage() {
     window.print();
   };
   
+  const handleAddManualItem = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newItemName.trim() || !newItemAmount || +newItemAmount <= 0) {
+      toast({
+        title: "פרטים חסרים",
+        description: "אנא מלא שם פריט וכמות חיובית.",
+        variant: "destructive"
+      });
+      return;
+    }
+    addManualItemToShoppingList({
+      name: newItemName.trim(),
+      amount: Number(newItemAmount),
+      unit: newItemUnit.trim() || 'יחידות'
+    });
+    // Reset form
+    setNewItemName('');
+    setNewItemAmount(1);
+    setNewItemUnit('יחידות');
+    toast({
+      title: "פריט נוסף!",
+      description: `${newItemName} נוסף לרשימת הקניות.`,
+    })
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
@@ -148,6 +181,29 @@ export default function ShoppingListPage() {
           </div>
         </CardHeader>
         <CardContent>
+          <form onSubmit={handleAddManualItem} className="mb-6 space-y-3 no-print">
+            <h3 className="text-lg font-headline text-primary">הוסף פריט ידנית</h3>
+            <div className="flex flex-col sm:flex-row items-end gap-3">
+              <div className="w-full sm:w-1/2">
+                <Label htmlFor="itemName">שם הפריט</Label>
+                <Input id="itemName" value={newItemName} onChange={e => setNewItemName(e.target.value)} placeholder="לדוגמה: נייר אפייה" required/>
+              </div>
+              <div className="w-full sm:w-1/4">
+                <Label htmlFor="itemAmount">כמות</Label>
+                <Input id="itemAmount" type="number" value={newItemAmount} onChange={e => setNewItemAmount(e.target.value ? Number(e.target.value) : '')} min="0.1" step="any" required/>
+              </div>
+              <div className="w-full sm:w-1/4">
+                <Label htmlFor="itemUnit">יחידה</Label>
+                <Input id="itemUnit" value={newItemUnit} onChange={e => setNewItemUnit(e.target.value)} placeholder="לדוגמה: יחידות"/>
+              </div>
+              <Button type="submit" className="w-full sm:w-auto flex items-center gap-2">
+                <PlusCircle size={18} /> הוסף
+              </Button>
+            </div>
+          </form>
+
+          {groupedItems.length > 0 && <Separator className="my-6" />}
+          
           {groupedItems.length === 0 ? (
             <div className="text-center py-10">
               <p className="text-xl text-muted-foreground font-body">רשימת הקניות שלך ריקה.</p>

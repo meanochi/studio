@@ -18,9 +18,16 @@ import {
 } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
+interface ManualShoppingListItem {
+  name: string;
+  amount: number;
+  unit: string;
+}
+
 interface ShoppingListContextType {
   shoppingList: ShoppingListItem[];
   addIngredientsToShoppingList: (ingredients: Ingredient[], recipeId?: string, recipeName?: string) => Promise<void>;
+  addManualItemToShoppingList: (item: ManualShoppingListItem) => Promise<void>;
   removeFromShoppingList: (itemId: string) => Promise<void>;
   removeItemsByNameFromShoppingList: (itemName: string) => Promise<void>;
   clearShoppingList: () => Promise<void>;
@@ -99,6 +106,25 @@ export const ShoppingListProvider: React.FC<{ children: ReactNode }> = ({ childr
     }
   };
 
+  const addManualItemToShoppingList = async (item: ManualShoppingListItem) => {
+    try {
+      const newItem: Omit<ShoppingListItem, 'id'> = {
+        name: item.name,
+        amount: item.amount,
+        unit: item.unit,
+        recipeName: 'נוסף ידנית'
+      };
+      await addDoc(collection(db, 'shoppingListItems'), newItem);
+    } catch (error) {
+       console.error("Error adding manual item to shopping list in Firestore: ", error);
+      toast({
+        title: "שגיאה בהוספת פריט",
+        description: "לא ניתן היה להוסיף את הפריט. נסה שוב מאוחר יותר.",
+        variant: "destructive",
+      });
+    }
+  }
+
   const removeFromShoppingList = async (itemId: string) => {
     try {
       const itemRef = doc(db, 'shoppingListItems', itemId);
@@ -171,7 +197,7 @@ export const ShoppingListProvider: React.FC<{ children: ReactNode }> = ({ childr
   };
 
   return (
-    <ShoppingListContext.Provider value={{ shoppingList, addIngredientsToShoppingList, removeFromShoppingList, removeItemsByNameFromShoppingList, clearShoppingList, updateItemAmount, loading }}>
+    <ShoppingListContext.Provider value={{ shoppingList, addIngredientsToShoppingList, addManualItemToShoppingList, removeFromShoppingList, removeItemsByNameFromShoppingList, clearShoppingList, updateItemAmount, loading }}>
       {children}
     </ShoppingListContext.Provider>
   );
@@ -184,4 +210,3 @@ export const useShoppingList = (): ShoppingListContextType => {
   }
   return context;
 };
-
