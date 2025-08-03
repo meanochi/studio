@@ -17,6 +17,7 @@ export function getDisplayUnit(amount: number, unit: string): string {
     if (lowerUnit === 'כפות') return 'כף';
     if (lowerUnit === 'גרמים') return 'גרם';
     if (lowerUnit === 'שקיות') return 'שקית';
+    if (lowerUnit === 'חבילות') return 'חבילה';
     // Add more singularization rules as needed
   } else { // amount > 1, amount = 0, amount < -1
     if (lowerUnit === 'כוס') return 'כוסות';
@@ -24,6 +25,7 @@ export function getDisplayUnit(amount: number, unit: string): string {
     if (lowerUnit === 'כף') return 'כפות';
     if (lowerUnit === 'גרם') return 'גרמים';
     if (lowerUnit === 'שקית') return 'שקיות';
+    if (lowerUnit === 'חבילה') return 'חבילות';
   }
   return unit; // Return original unit if no rule applies or already correct
 }
