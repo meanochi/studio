@@ -5,14 +5,16 @@ import AppProviders from '@/contexts/AppProviders';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 
+const chefHatIcon = `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M18 10.37V4.5h-1.5v5.87M15.5 8.62V4.5h-1.5v4.12M13 11.25V4.5h-1.5v6.75M3 14.25h18v-2.62c0-1-1-1.87-2.25-1.87H5.25C4 9.75 3 10.62 3 11.62v2.63z'/><path d='M6.75 18.75C5.25 18.75 4.5 17.25 4.5 16.5v-2.25h15v2.25c0 .75-.75 2.25-2.25 2.25h-10.5z'/><path d='M12 4.5V2.25'/></svg>`;
+
 export const metadata: Metadata = {
   title: 'Family Cookbook',
   description: 'מקום לכל המתכונים המשפחתיים שלך',
   manifest: '/manifest.json',
   themeColor: '#E07A5F',
   icons: {
-    icon: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧑‍🍳</text></svg>',
-    apple: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧑‍🍳</text></svg>',
+    icon: chefHatIcon,
+    apple: chefHatIcon,
   },
 };
 
