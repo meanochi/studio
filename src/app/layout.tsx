@@ -10,10 +10,6 @@ export const metadata: Metadata = {
   description: 'מקום לכל המתכונים המשפחתיים שלך',
   manifest: '/manifest.json',
   themeColor: '#E07A5F',
-  icons: {
-    icon: '/chef-hat-icon.svg',
-    apple: '/chef-hat-icon.svg',
-  },
 };
 
 export default function RootLayout({
