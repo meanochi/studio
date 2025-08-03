@@ -35,7 +35,9 @@ Follow the output schema precisely.
 - If prepTime is not mentioned, set it to "לא צוין".
 - If servingUnit is not mentioned, set it to "מנות".
 - Determine if the recipe is freezable based on the text.
-- Identify all ingredients. If an ingredient is marked as optional, set the 'isOptional' flag. If there are headings within the ingredients list (e.g., "For the dough:"), create an ingredient item with the 'isHeading' flag set to true.
+- For each ingredient, parse it into its 'name', 'amount', and 'unit'. Do not include the amount or unit in the name field. For example, "2.5 כוסות קמח" should become { name: "קמח", amount: 2.5, unit: "כוסות" }.
+- If an ingredient is marked as optional, set the 'isOptional' flag.
+- If there are headings within the ingredients list (e.g., "For the dough:"), create an ingredient item with the 'isHeading' flag set to true, and put the heading text in the 'name' field.
 - Identify all instruction steps. If there are headings within the instructions (e.g., "Making the filling:"), create an instruction item with the 'isHeading' flag set to true.
 - Identify any tags or categories mentioned in the text.
 - Do not invent any information. If a field cannot be determined from the text, leave it as an empty string, false, or an empty array as appropriate according to the schema, except for the required fields mentioned above.

@@ -138,6 +138,21 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     ingredients: Omit<Ingredient, 'id'>[],
     instructions: Omit<InstructionStep, 'id'>[] 
   }): Promise<Recipe | null> => {
+    
+    // Check for duplicates
+    const isDuplicate = recipes.some(
+      (recipe) => recipe.name === recipeData.name && recipe.source === recipeData.source
+    );
+
+    if (isDuplicate) {
+      toast({
+        title: "מתכון כפול",
+        description: `מתכון בשם "${recipeData.name}" עם אותו מקור כבר קיים.`,
+        variant: "destructive",
+      });
+      return null;
+    }
+
     try {
       const recipeForFirestore = {
         name: recipeData.name,
