@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import AppProviders from '@/contexts/AppProviders';
@@ -9,11 +9,14 @@ export const metadata: Metadata = {
   title: 'Family Cookbook',
   description: 'מקום לכל המתכונים המשפחתיים שלך',
   manifest: '/manifest.json',
-  themeColor: '#E07A5F',
   icons: {
     icon: '/icons/iconi.png?v=1',
     apple: '/icons/iconi.png?v=1',
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#E07A5F',
 };
 
 export default function RootLayout({
