@@ -8,14 +8,14 @@ import {
 const runtimeCaching: RuntimeCaching[] = [
     {
       urlPattern: ({url, request}) => {
-        if (request.destination === 'document') {
+        if (request.destination === 'document' || url.pathname.endsWith('.json') || url.pathname.includes('/icons/')) {
           return true;
         }
         return false;
       },
       handler: 'StaleWhileRevalidate',
       options: {
-        cacheName: 'pages-cache',
+        cacheName: 'app-essentials-cache',
         expiration: {
           maxEntries: 50,
           maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
