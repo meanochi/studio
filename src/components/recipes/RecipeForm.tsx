@@ -12,12 +12,23 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { PlusCircle, Trash2, Save, Image as ImageIcon, UploadCloud, X, FileText, StickyNote, Loader2, ChevronDown, ChevronUp, Heading2, Wand2, Edit } from 'lucide-react';
+import { PlusCircle, Trash2, Save, Image as ImageIcon, UploadCloud, X, FileText, StickyNote, Loader2, ChevronDown, ChevronUp, Heading2, Wand2, Edit, Bot } from 'lucide-react';
 import NextImage from 'next/image';
 import { generateId } from '@/lib/utils';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { parseIngredient } from '@/ai/flows/parse-ingredient-flow';
+import { parseRecipe } from '@/ai/flows/parse-recipe-flow';
 import { useToast } from '@/hooks/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
 
 interface RecipeFormProps {
   initialData?: RecipeFormData;
@@ -70,22 +81,17 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
     defaultValues: defaultFormValues,
   });
   
-  useEffect(() => {
-    form.reset(defaultFormValues);
-  }, [defaultFormValues, form]);
-
-
-  const { fields: ingredientFields, append: appendIngredient, remove: removeIngredient } = useFieldArray({
+  const { fields: ingredientFields, append: appendIngredient, remove: removeIngredient, replace: replaceIngredients } = useFieldArray({
     control: form.control,
     name: "ingredients",
   });
 
-  const { fields: instructionFields, append: appendInstruction, remove: removeInstruction } = useFieldArray({
+  const { fields: instructionFields, append: appendInstruction, remove: removeInstruction, replace: replaceInstructions } = useFieldArray({
     control: form.control,
     name: "instructions",
   });
 
-  const { fields: tagFields, append: appendTag, remove: removeTag } = useFieldArray({
+  const { fields: tagFields, append: appendTag, remove: removeTag, replace: replaceTags } = useFieldArray({
     control: form.control,
     name: "tags",
   });
@@ -103,23 +109,33 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
   const [isParsing, setIsParsing] = useState(false);
   const [addMode, setAddMode] = useState<'smart' | 'manual'>('smart');
 
+  const [fullRecipeText, setFullRecipeText] = useState('');
+  const [isParsingRecipe, setIsParsingRecipe] = useState(false);
+  const [isParseRecipeDialogOpen, setIsParseRecipeDialogOpen] = useState(false);
 
   useEffect(() => {
-    if (defaultFormValues.imageUrl) {
-      setRecipeImagePreview(defaultFormValues.imageUrl);
+    form.reset(defaultFormValues);
+  }, [defaultFormValues, form]);
+
+
+  useEffect(() => {
+    if (initialData?.imageUrl) {
+      setRecipeImagePreview(initialData.imageUrl);
     }
     const initialVisibleStates: Record<string, boolean> = {};
     const initialPreviews: (string | null)[] = [];
 
-    defaultFormValues.instructions.forEach(instr => {
+    initialData?.instructions.forEach(instr => {
         initialVisibleStates[instr.id || ''] = !!instr.imageUrl; // Show if URL exists
         initialPreviews.push(instr.imageUrl || null);
     });
 
     setInstructionImagePreviews(initialPreviews);
     setVisibleInstructionImageInputs(initialVisibleStates);
-    instructionFileInputRefs.current = defaultFormValues.instructions.map(() => null);
-  }, [defaultFormValues]);
+    if(initialData?.instructions) {
+      instructionFileInputRefs.current = initialData.instructions.map(() => null);
+    }
+  }, [initialData]);
 
 
   const toggleInstructionImageInputVisibility = (instructionId: string) => {
@@ -255,6 +271,43 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
       });
     }
   };
+  
+  const handleParseFullRecipe = async () => {
+    if (!fullRecipeText.trim()) return;
+    setIsParsingRecipe(true);
+    try {
+      const result = await parseRecipe({ recipeText: fullRecipeText });
+
+      // Use form.reset to update the entire form state
+      form.reset({
+        ...result,
+        ingredients: result.ingredients.map(ing => ({ ...ing, id: generateId() })),
+        instructions: result.instructions.map(instr => ({ ...instr, id: generateId() })),
+      });
+
+      // Update previews for images
+      setRecipeImagePreview(result.imageUrl || null);
+      const newInstructionPreviews = result.instructions.map(i => i.imageUrl || null);
+      setInstructionImagePreviews(newInstructionPreviews);
+
+
+      toast({
+        title: 'המתכון פוענח בהצלחה!',
+        description: 'בדוק את השדות הממולאים ולחץ על שמירה.',
+      });
+      setIsParseRecipeDialogOpen(false); // Close dialog on success
+      setFullRecipeText('');
+    } catch (error) {
+      console.error("Failed to parse recipe:", error);
+      toast({
+        title: 'שגיאת פיענוח',
+        description: 'לא הצלחתי לפענח את המתכון. אנא ודא שהטקסט בפורמט תקין ונסה שוב.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsParsingRecipe(false);
+    }
+  };
 
 
   const handleSubmitForm = (data: RecipeFormData) => {
@@ -282,10 +335,46 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmitForm)} className="space-y-8">
         <Card className="shadow-lg">
-          <CardHeader>
+          <CardHeader className="flex flex-row justify-between items-center">
             <CardTitle className="text-3xl font-headline text-primary">
               {isEditing ? 'ערוך מתכון' : 'הוסף מתכון חדש'}
             </CardTitle>
+            {!isEditing && (
+              <Dialog open={isParseRecipeDialogOpen} onOpenChange={setIsParseRecipeDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-2">
+                    <Bot size={18} /> יבא מתכון מטקסט
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[600px]">
+                  <DialogHeader>
+                    <DialogTitle>יבא מתכון מטקסט בעזרת AI</DialogTitle>
+                    <DialogDescription>
+                      הדבק את המתכון המלא למטה. הבינה המלאכותית תנסה לפענח אותו ולמלא את השדות בטופס עבורך.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <Textarea
+                      placeholder="הדבק כאן את המתכון המלא שלך..."
+                      rows={15}
+                      value={fullRecipeText}
+                      onChange={(e) => setFullRecipeText(e.target.value)}
+                      disabled={isParsingRecipe}
+                    />
+                  </div>
+                  <DialogFooter>
+                    <DialogClose asChild>
+                       <Button type="button" variant="secondary" disabled={isParsingRecipe}>
+                         ביטול
+                       </Button>
+                     </DialogClose>
+                    <Button type="button" onClick={handleParseFullRecipe} disabled={isParsingRecipe || !fullRecipeText.trim()}>
+                      {isParsingRecipe ? <><Loader2 className="animate-spin me-2" /> מפענח...</> : 'צור מתכון'}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            )}
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Recipe Name and Source */}
