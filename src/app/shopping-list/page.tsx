@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo, useRef } from 'react';
@@ -159,7 +160,7 @@ export default function ShoppingListPage() {
               {groupedItems.map(group => (
                 <li key={group.name} className="flex items-center justify-between p-3 bg-secondary/20 rounded-md shadow-sm hover:bg-secondary/40 transition-colors">
                   <div className="flex-grow">
-                    <span className="font-semibold text-lg text-primary-foreground item-name-print">{group.name}</span>
+                    <span className="font-semibold text-lg text-primary item-name-print">{group.name}</span>
                     <div className="text-sm text-muted-foreground item-amount-unit-print">
                       {group.displayAmount}
                     </div>
