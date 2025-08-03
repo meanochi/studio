@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview An AI flow for parsing a full recipe text into a structured Recipe object.
@@ -31,11 +32,13 @@ const prompt = ai.definePrompt({
 Follow the output schema precisely.
 
 - Extract the recipe name, source (if available), prep time, cook time, servings, and serving unit.
+- If prepTime is not mentioned, set it to "לא צוין".
+- If servingUnit is not mentioned, set it to "מנות".
 - Determine if the recipe is freezable based on the text.
 - Identify all ingredients. If an ingredient is marked as optional, set the 'isOptional' flag. If there are headings within the ingredients list (e.g., "For the dough:"), create an ingredient item with the 'isHeading' flag set to true.
 - Identify all instruction steps. If there are headings within the instructions (e.g., "Making the filling:"), create an instruction item with the 'isHeading' flag set to true.
 - Identify any tags or categories mentioned in the text.
-- Do not invent any information. If a field cannot be determined from the text, leave it as an empty string, false, or an empty array as appropriate according to the schema.
+- Do not invent any information. If a field cannot be determined from the text, leave it as an empty string, false, or an empty array as appropriate according to the schema, except for the required fields mentioned above.
 - For ingredient names with multiple words, use spaces, not hyphens. e.g., "אבקת סוכר".
 
 Recipe Text:
