@@ -10,8 +10,8 @@ export const metadata: Metadata = {
   description: 'מקום לכל המתכונים המשפחתיים שלך',
   manifest: '/manifest.json',
   icons: {
-    icon: '/icons/iconi.png?v=1',
-    apple: '/icons/iconi.png?v=1',
+    icon: '/icons/iconi.png',
+    apple: '/icons/iconi.png',
   },
 };
 

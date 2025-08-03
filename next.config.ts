@@ -30,7 +30,7 @@ const runtimeCaching: RuntimeCaching[] = [
       handler: 'StaleWhileRevalidate',
       options: {
         cacheName: 'http-cache',
-        expiration: {
+        expiration:.
           maxEntries: 200,
           maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
         },
