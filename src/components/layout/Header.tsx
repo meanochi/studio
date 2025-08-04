@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ChefHat, Home, PlusCircle, ShoppingCart, StickyNote } from 'lucide-react';
+import { ChefHat, Home, PlusCircle, ShoppingCart, StickyNote, Calculator } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -12,6 +12,7 @@ const navItems = [
   { href: '/recipes/add', label: 'הוסף מתכון', icon: PlusCircle },
   { href: '/shopping-list', label: 'רשימת קניות', icon: ShoppingCart },
   { href: '/notes', label: 'הערות', icon: StickyNote },
+  { href: '/converter', label: 'ממיר מידות', icon: Calculator },
 ];
 
 export default function Header() {
@@ -25,7 +26,7 @@ export default function Header() {
           <ChefHat size={36} />
         </Link>
         <nav>
-          <ul className="flex items-center space-x-2 sm:space-x-3 rtl:space-x-reverse">
+          <ul className="flex items-center space-x-1 sm:space-x-2 rtl:space-x-reverse">
             {navItems.map(item => (
               <li key={item.href}>
                 <Button
@@ -36,7 +37,7 @@ export default function Header() {
                   )}
                   asChild
                 >
-                  <Link href={item.href} className="flex items-center gap-1.5 px-2 py-1 sm:px-3 sm:py-2 text-sm sm:text-base">
+                  <Link href={item.href} className="flex items-center gap-1.5 px-2 py-1 sm:px-3 sm:py-2 text-xs sm:text-base">
                     <item.icon size={18} className="hidden sm:inline-block" />
                     <span>{item.label}</span>
                   </Link>

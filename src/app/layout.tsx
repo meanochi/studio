@@ -1,17 +1,20 @@
-import type { Metadata, Viewport } from 'next';
+'use client';
+
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import AppProviders from '@/contexts/AppProviders';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import type { Metadata, Viewport } from 'next';
+
 
 export const metadata: Metadata = {
   title: 'Family Cookbook',
   description: 'מקום לכל המתכונים המשפחתיים שלך',
   manifest: '/manifest.json',
   icons: {
-    icon: '/icons/iconi.png',
-    apple: '/icons/iconi.png',
+    icon: '/icons/iconi.png?v=1',
+    apple: '/icons/iconi.png?v=1',
   },
 };
 

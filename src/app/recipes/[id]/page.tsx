@@ -61,6 +61,14 @@ export default function RecipeDetailPage() {
       setRecipe(foundRecipe); 
       if (foundRecipe) {
         addRecentlyViewed(recipeId as string);
+        // Initialize all step images to be visible by default
+        const initialVisibility: Record<string, boolean> = {};
+        foundRecipe.instructions.forEach(step => {
+          if (step.imageUrl) {
+            initialVisibility[step.id] = true;
+          }
+        });
+        setVisibleStepImages(initialVisibility);
       }
       setIsLoading(false);
     }
@@ -432,6 +440,7 @@ export default function RecipeDetailPage() {
                             {visibleStepImages[step.id] ? <EyeOffIcon size={14}/> : <EyeIcon size={14}/>}
                             {visibleStepImages[step.id] ? 'הסתר תמונה' : 'הצג תמונה'}
                           </Button>
+                          
                           {visibleStepImages[step.id] && (
                             <div className="relative w-[300px] h-[225px] step-image-container">
                               <Image 
