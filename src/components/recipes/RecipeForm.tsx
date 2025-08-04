@@ -396,7 +396,7 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
                   <FormItem><FormLabel>זמן הכנה</FormLabel><FormControl><Input placeholder="לדוגמה, 20 דקות" {...field} /></FormControl><FormMessage /></FormItem>
               )}/>
               <FormField control={form.control} name="cookTime" render={({ field }) => (
-                  <FormItem><FormLabel>זמן בישול (אופציונלי)</FormLabel><FormControl><Input placeholder="לדוגמה, 10-12 דקות" {...field} /></FormControl><FormMessage /></FormMessage /></FormItem>
+                  <FormItem><FormLabel>זמן בישול (אופציונלי)</FormLabel><FormControl><Input placeholder="לדוגמה, 10-12 דקות" {...field} /></FormControl><FormMessage /></FormItem>
               )}/>
               <FormField control={form.control} name="servings" render={({ field }) => (
                   <FormItem><FormLabel>מנות</FormLabel><FormControl><Input type="number" min="1" placeholder="לדוגמה, 24" {...field} onChange={e => field.onChange(parseInt(e.target.value,10) || 1)}/></FormControl><FormMessage /></FormItem>
