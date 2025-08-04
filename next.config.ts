@@ -7,7 +7,7 @@ import type {
 
 const runtimeCaching: RuntimeCaching[] = [
     {
-      urlPattern: ({request, url}) => request.destination === 'document',
+      urlPattern: /^https?.*/,
       handler: 'NetworkFirst',
       options: {
         cacheName: 'pages-cache',
@@ -16,52 +16,10 @@ const runtimeCaching: RuntimeCaching[] = [
           maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
         },
         cacheableResponse: {
-          statuses: [200],
+          statuses: [0, 200],
         },
       },
     },
-    {
-      urlPattern: ({request, url}) => request.destination === 'script' || request.destination === 'style',
-      handler: 'StaleWhileRevalidate',
-      options: {
-        cacheName: 'static-resources-cache',
-        expiration: {
-            maxEntries: 64,
-            maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
-        },
-        cacheableResponse: {
-            statuses: [200],
-        },
-      }
-    },
-    {
-      urlPattern: ({request}) => request.destination === 'image',
-      handler: 'CacheFirst',
-      options: {
-        cacheName: 'images-cache',
-        expiration: {
-          maxEntries: 200,
-          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
-        },
-        cacheableResponse: {
-          statuses: [0, 200], // Cache opaque responses for cross-origin images
-        },
-      },
-    },
-    {
-       urlPattern: new RegExp('^https://fonts.(?:googleapis|gstatic).com/(.*)'),
-       handler: 'CacheFirst',
-       options: {
-         cacheName: 'google-fonts-cache',
-         expiration: {
-           maxEntries: 20,
-           maxAgeSeconds: 365 * 24 * 60 * 60, // 1 year
-         },
-         cacheableResponse: {
-           statuses: [0, 200],
-         },
-       },
-    }
   ];
 
 const withPWA = withPWAInit({
@@ -70,6 +28,10 @@ const withPWA = withPWAInit({
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
   runtimeCaching,
+  buildExcludes: [/middleware-manifest\.json$/],
+  fallbacks: {
+    document: "/_offline",
+  }
 });
 
 const nextConfig: NextConfig = {
