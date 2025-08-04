@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, useRef, useMemo } from 'react';
+import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -55,24 +55,27 @@ export default function RecipeDetailPage() {
   
   const printRef = useRef<HTMLDivElement>(null);
 
+  const initializeImageVisibility = useCallback((recipeToInit: Recipe) => {
+    const initialVisibility: Record<string, boolean> = {};
+    recipeToInit.instructions.forEach(step => {
+      if (step.imageUrl && step.id) {
+        initialVisibility[step.id] = true;
+      }
+    });
+    setVisibleStepImages(initialVisibility);
+  }, []);
+
   useEffect(() => {
     if (!recipesLoading && recipeId) {
       const foundRecipe = getRecipeById(recipeId as string);
       setRecipe(foundRecipe); 
       if (foundRecipe) {
         addRecentlyViewed(recipeId as string);
-        // Initialize all step images to be visible by default
-        const initialVisibility: Record<string, boolean> = {};
-        foundRecipe.instructions.forEach(step => {
-          if (step.imageUrl) {
-            initialVisibility[step.id] = true;
-          }
-        });
-        setVisibleStepImages(initialVisibility);
+        initializeImageVisibility(foundRecipe);
       }
       setIsLoading(false);
     }
-  }, [recipeId, getRecipeById, recipesLoading, addRecentlyViewed]);
+  }, [recipeId, getRecipeById, recipesLoading, addRecentlyViewed, initializeImageVisibility]);
   
   const servingsDisplay = useMemo(() => {
     if (!recipe) return '';
@@ -136,20 +139,17 @@ export default function RecipeDetailPage() {
   };
   
   const handlePrint = () => {
-    // Temporarily make all step images visible for printing
-    const allVisible = Object.fromEntries(recipe?.instructions.map(i => [i.id, true]) || []);
+    if (!recipe) return;
+    const allVisible: Record<string, boolean> = {};
+    recipe.instructions.forEach(step => {
+      if(step.id) allVisible[step.id] = true;
+    });
+    const currentVisibility = { ...visibleStepImages };
     setVisibleStepImages(allVisible);
-
-    // Allow a moment for images to render before printing
+    
     setTimeout(() => {
       window.print();
-       // Revert visibility to user's state after printing
-      const originalVisibility = Object.fromEntries(
-          recipe?.instructions
-          .filter(i => i.imageUrl)
-          .map(i => [i.id, !!visibleStepImages[i.id]]) || []
-      );
-      setVisibleStepImages(originalVisibility);
+      setVisibleStepImages(currentVisibility); // Restore previous state
     }, 500);
   };
 
@@ -279,7 +279,10 @@ export default function RecipeDetailPage() {
   const hasImage = !!recipe.imageUrl;
 
   const totalTime = () => {
-    return `${recipe.prepTime}${recipe.cookTime ? `, ${recipe.cookTime}` : ''}`;
+    const prep = recipe.prepTime || '';
+    const cook = recipe.cookTime || '';
+    if (prep && cook) return `${prep}, ${cook}`;
+    return prep || cook;
   }
 
   let instructionStepCounter = 0;
@@ -429,12 +432,12 @@ export default function RecipeDetailPage() {
                         <span className="font-headline text-xl text-primary me-3">{instructionStepCounter}.</span>
                         <span>{step.text}</span>
                       </div>
-                      {step.imageUrl && (
+                      {step.imageUrl && step.id && (
                         <div className="mt-2 ms-10 space-y-2">
                           <Button 
                             variant="outline" 
                             size="sm" 
-                            onClick={() => toggleStepImageVisibility(step.id)} 
+                            onClick={() => toggleStepImageVisibility(step.id!)} 
                             className="flex items-center gap-1.5 text-xs no-print"
                           >
                             {visibleStepImages[step.id] ? <EyeOffIcon size={14}/> : <EyeIcon size={14}/>}

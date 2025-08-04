@@ -20,7 +20,7 @@ export default function AddRecipePage() {
       });
       router.push(`/recipes/${newRecipe.id}`);
     }
-    // Error toast is handled within addRecipe
+    // Error toast is handled within addRecipe context function
   };
 
   return (

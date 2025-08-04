@@ -21,10 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 
 interface RecipeContextType {
   recipes: Recipe[];
-  addRecipe: (recipe: Omit<Recipe, 'id' | 'ingredients' | 'instructions'> & { 
-    ingredients: Omit<Ingredient, 'id'>[],
-    instructions: Omit<InstructionStep, 'id'>[] 
-  }) => Promise<Recipe | null>; // Return type changed to Promise
+  addRecipe: (recipeData: RecipeFormData) => Promise<Recipe | null>;
   updateRecipe: (updatedRecipe: Recipe) => Promise<void>; // Return type changed to Promise
   deleteRecipe: (recipeId: string) => Promise<void>; // Return type changed to Promise
   getRecipeById: (recipeId: string) => Recipe | undefined;
@@ -32,6 +29,9 @@ interface RecipeContextType {
   recentlyViewed: Recipe[];
   addRecentlyViewed: (recipeId: string) => void;
 }
+// Note: Changed addRecipe to accept RecipeFormData for consistency
+import type { RecipeFormData } from '@/components/recipes/RecipeSchema';
+
 
 const RecipeContext = createContext<RecipeContextType | undefined>(undefined);
 
@@ -135,14 +135,11 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   }, [toast]);
 
 
-  const addRecipe = async (recipeData: Omit<Recipe, 'id' | 'ingredients' | 'instructions'> & { 
-    ingredients: Omit<Ingredient, 'id'>[],
-    instructions: Omit<InstructionStep, 'id'>[] 
-  }): Promise<Recipe | null> => {
+  const addRecipe = async (recipeData: RecipeFormData): Promise<Recipe | null> => {
     
     // Check for duplicates
     const isDuplicate = recipes.some(
-      (recipe) => recipe.name === recipeData.name && recipe.source === recipeData.source
+      (recipe) => recipe.name.toLowerCase() === recipeData.name.toLowerCase() && recipe.source?.toLowerCase() === recipeData.source?.toLowerCase()
     );
 
     if (isDuplicate) {
@@ -155,35 +152,33 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
 
     try {
-      const recipeForFirestore = {
-        name: recipeData.name,
-        source: recipeData.source ?? null,
-        prepTime: recipeData.prepTime,
-        cookTime: recipeData.cookTime ?? null,
-        servings: recipeData.servings,
-        servingUnit: recipeData.servingUnit,
-        freezable: recipeData.freezable ?? false,
-        imageUrl: recipeData.imageUrl ?? null,
-        tags: recipeData.tags || [],
-        notes: recipeData.notes ?? null,
-        ingredients: (recipeData.ingredients || []).map(ing => ({
+        const ingredientsWithIds = recipeData.ingredients.map(ing => ({
+          ...ing,
           id: ing.id || generateId(),
-          name: ing.name || "",
-          isHeading: ing.isHeading || false,
-          amount: ing.isHeading ? 0 : (typeof ing.amount === 'number' ? ing.amount : 0),
-          unit: ing.isHeading ? "" : (ing.unit || ""),
-          isOptional: ing.isHeading ? false : (ing.isOptional || false),
-          notes: ing.isHeading ? "" : (ing.notes ?? ''),
-        })),
-        instructions: (recipeData.instructions || []).map(instr => ({
-          id: instr.id || generateId(),
-          text: instr.text || "",
-          isHeading: instr.isHeading || false,
-          imageUrl: instr.isHeading ? null : (instr.imageUrl ?? null),
-        })),
+          amount: ing.isHeading ? 0 : ing.amount!,
+          unit: ing.isHeading ? '' : ing.unit!,
+          isOptional: ing.isHeading ? false : ing.isOptional,
+          notes: ing.isHeading ? '' : ing.notes,
+        }));
+
+        const instructionsWithIds = recipeData.instructions.map(instr => ({
+            ...instr,
+            id: instr.id || generateId(),
+            imageUrl: instr.isHeading ? null : instr.imageUrl
+        }));
+      
+      const recipeForFirestore = {
+        ...recipeData,
+        source: recipeData.source || null,
+        cookTime: recipeData.cookTime || null,
+        imageUrl: recipeData.imageUrl || null,
+        tags: recipeData.tags || [],
+        notes: recipeData.notes || null,
+        ingredients: ingredientsWithIds,
+        instructions: instructionsWithIds
       };
+
       const docRef = await addDoc(collection(db, 'recipes'), recipeForFirestore);
-      // Make sure the returned recipe matches the Recipe type structure precisely
       const newRecipe: Recipe = {
         id: docRef.id,
         name: recipeForFirestore.name,
@@ -196,8 +191,19 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         imageUrl: recipeForFirestore.imageUrl,
         tags: recipeForFirestore.tags,
         notes: recipeForFirestore.notes,
-        ingredients: recipeForFirestore.ingredients.map(ing => ({...ing, id: ing.id || generateId()}) as Ingredient), // ensure IDs and cast
-        instructions: recipeForFirestore.instructions.map(instr => ({...instr, id: instr.id || generateId()}) as InstructionStep), // ensure IDs and cast
+        ingredients: recipeForFirestore.ingredients.map(ing => ({
+            ...ing,
+            id: ing.id,
+            isOptional: ing.isOptional || false,
+            notes: ing.notes || null,
+            isHeading: ing.isHeading || false,
+        })),
+        instructions: recipeForFirestore.instructions.map(instr => ({
+            ...instr,
+            id: instr.id,
+            imageUrl: instr.imageUrl || null,
+            isHeading: instr.isHeading || false,
+        })),
       };
       return newRecipe;
     } catch (error) {
