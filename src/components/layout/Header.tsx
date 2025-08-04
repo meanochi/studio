@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ChefHat, Home, PlusCircle, ShoppingCart, StickyNote, Calculator } from 'lucide-react';
+import { ChefHat, Home, PlusCircle, ShoppingCart, StickyNote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -12,7 +12,6 @@ const navItems = [
   { href: '/recipes/add', label: 'הוסף מתכון', icon: PlusCircle },
   { href: '/shopping-list', label: 'רשימת קניות', icon: ShoppingCart },
   { href: '/notes', label: 'הערות', icon: StickyNote },
-  { href: '/converter', label: 'ממיר מידות', icon: Calculator },
 ];
 
 export default function Header() {

@@ -2,12 +2,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Save, StickyNote, Trash2, PlusCircle, AlertTriangle } from 'lucide-react';
+import { Loader2, Save, StickyNote, Trash2, PlusCircle, AlertTriangle, Calculator } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, addDoc, deleteDoc, doc, query, orderBy, Timestamp } from 'firebase/firestore';
 import type { Note } from '@/types';
@@ -120,11 +121,17 @@ export default function NotesPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <Card className="shadow-lg">
-        <CardHeader>
+        <CardHeader className="flex flex-row justify-between items-center">
           <CardTitle className="text-3xl font-headline text-primary flex items-center gap-3">
             <StickyNote size={30} />
             הוסף הערה חדשה
           </CardTitle>
+          <Button asChild variant="outline">
+            <Link href="/converter" className="flex items-center gap-2">
+              <Calculator size={18} />
+              ממיר מידות
+            </Link>
+          </Button>
         </CardHeader>
         <form onSubmit={handleAddNote}>
           <CardContent className="space-y-4">
