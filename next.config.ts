@@ -1,21 +1,16 @@
 
 import type {NextConfig} from 'next';
 import withPWAInit from '@ducanh2912/next-pwa';
-import {
+import type {
   RuntimeCaching,
 } from '@ducanh2912/next-pwa';
 
 const runtimeCaching: RuntimeCaching[] = [
     {
-      urlPattern: ({url, request}) => {
-        if (request.destination === 'document' || url.pathname.endsWith('.json') || url.pathname.includes('/icons/')) {
-          return true;
-        }
-        return false;
-      },
+      urlPattern: ({url, request}) => request.destination === 'document' || url.pathname === '/',
       handler: 'StaleWhileRevalidate',
       options: {
-        cacheName: 'app-essentials-cache',
+        cacheName: 'pages-cache',
         expiration: {
           maxEntries: 50,
           maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
@@ -26,19 +21,47 @@ const runtimeCaching: RuntimeCaching[] = [
       },
     },
     {
-      urlPattern: /^https?.*/,
+      urlPattern: ({request}) => request.destination === 'script' || request.destination === 'style',
       handler: 'StaleWhileRevalidate',
       options: {
-        cacheName: 'http-cache',
+        cacheName: 'static-assets-cache',
+        expiration: {
+            maxEntries: 50,
+            maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+        },
+        cacheableResponse: {
+            statuses: [200],
+        },
+      }
+    },
+    {
+      urlPattern: ({request}) => request.destination === 'image',
+      handler: 'StaleWhileRevalidate',
+      options: {
+        cacheName: 'images-cache',
         expiration: {
           maxEntries: 200,
           maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
         },
         cacheableResponse: {
-          statuses: [0, 200],
+          statuses: [0, 200], // Cache opaque responses for cross-origin images
         },
       },
     },
+    {
+      urlPattern: ({url}) => url.origin === 'https://fonts.googleapis.com' || url.origin === 'https://fonts.gstatic.com',
+       handler: 'StaleWhileRevalidate',
+       options: {
+         cacheName: 'google-fonts-cache',
+         expiration: {
+           maxEntries: 20,
+           maxAgeSeconds: 365 * 24 * 60 * 60, // 1 year
+         },
+         cacheableResponse: {
+           statuses: [0, 200],
+         },
+       },
+    }
   ];
 
 const withPWA = withPWAInit({
