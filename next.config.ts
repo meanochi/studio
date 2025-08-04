@@ -78,6 +78,10 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  transpilePackages: [
+    "@radix-ui/react-dropdown-menu",
+    "@radix-ui/react-slot"
+  ],
 };
 
 export default withPWA(nextConfig);
