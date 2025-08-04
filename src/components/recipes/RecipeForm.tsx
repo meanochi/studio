@@ -320,15 +320,15 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
         ingredients: data.ingredients.map(ing => ({
             ...ing,
             id: ing.id || generateId(),
-            notes: ing.isHeading ? undefined : (ing.notes?.trim() === '' ? undefined : ing.notes),
+            notes: ing.isHeading ? null : (ing.notes?.trim() === '' ? null : ing.notes),
             amount: ing.isHeading ? 0 : Number(ing.amount), 
             unit: ing.isHeading ? '' : ing.unit, 
-            isOptional: ing.isHeading ? undefined : ing.isOptional,
+            isOptional: ing.isHeading ? false : ing.isOptional,
         })),
         instructions: data.instructions.map(instr => ({
             ...instr,
             id: instr.id || generateId(),
-            imageUrl: instr.isHeading ? undefined : (instr.imageUrl?.trim() === '' ? undefined : instr.imageUrl),
+            imageUrl: instr.isHeading ? null : (instr.imageUrl?.trim() === '' ? null : instr.imageUrl),
         })),
     };
     onSubmit(processedData);
