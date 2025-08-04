@@ -2,34 +2,54 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Save, StickyNote } from 'lucide-react';
+import { Loader2, Save, StickyNote, Trash2, PlusCircle, AlertTriangle } from 'lucide-react';
 import { db } from '@/lib/firebase';
-import { doc, onSnapshot, setDoc, getDoc } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, deleteDoc, doc, query, orderBy, Timestamp } from 'firebase/firestore';
+import type { Note } from '@/types';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { format } from 'date-fns';
 
-const NOTES_DOC_ID = 'general';
+
 const NOTES_COLLECTION = 'notes';
 
 export default function NotesPage() {
-  const [notes, setNotes] = useState('');
+  const [notes, setNotes] = useState<Note[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [newNoteTitle, setNewNoteTitle] = useState('');
+  const [newNoteContent, setNewNoteContent] = useState('');
+
   const { toast } = useToast();
 
-  // Load notes from Firestore on initial render
   useEffect(() => {
-    const notesDocRef = doc(db, NOTES_COLLECTION, NOTES_DOC_ID);
+    const notesQuery = query(collection(db, NOTES_COLLECTION), orderBy('createdAt', 'desc'));
 
-    const unsubscribe = onSnapshot(notesDocRef, (docSnap) => {
-      if (docSnap.exists()) {
-        setNotes(docSnap.data().content || '');
-      } else {
-        // If the document doesn't exist, it means no notes have been saved yet.
-        setNotes('');
-      }
+    const unsubscribe = onSnapshot(notesQuery, (snapshot) => {
+      const notesData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          title: data.title,
+          content: data.content,
+          createdAt: data.createdAt?.toDate() || new Date(),
+        };
+      });
+      setNotes(notesData);
       setIsLoading(false);
     }, (error) => {
       console.error('Failed to load notes from Firestore', error);
@@ -41,24 +61,38 @@ export default function NotesPage() {
       setIsLoading(false);
     });
 
-    // Cleanup subscription on unmount
     return () => unsubscribe();
   }, [toast]);
 
-  const handleSave = async () => {
+  const handleAddNote = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newNoteTitle.trim() || !newNoteContent.trim()) {
+      toast({
+        title: 'חסרים פרטים',
+        description: 'אנא מלא כותרת ותוכן להערה.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     setIsSaving(true);
     try {
-      const notesDocRef = doc(db, NOTES_COLLECTION, NOTES_DOC_ID);
-      await setDoc(notesDocRef, { content: notes });
+      await addDoc(collection(db, NOTES_COLLECTION), {
+        title: newNoteTitle,
+        content: newNoteContent,
+        createdAt: Timestamp.now(),
+      });
+      setNewNoteTitle('');
+      setNewNoteContent('');
       toast({
-        title: 'נשמר!',
-        description: 'ההערות שלך נשמרו בהצלחה וזמינות לכולם.',
+        title: 'הערה נוספה!',
+        description: 'ההערה שלך נשמרה בהצלחה וזמינה לכולם.',
       });
     } catch (error) {
-      console.error('Failed to save notes to Firestore', error);
+      console.error('Failed to save note to Firestore', error);
       toast({
         title: 'שגיאת שמירה',
-        description: 'לא ניתן היה לשמור את ההערות שלך. אנא נסה שוב.',
+        description: 'לא ניתן היה לשמור את ההערה שלך. אנא נסה שוב.',
         variant: 'destructive',
       });
     } finally {
@@ -66,39 +100,111 @@ export default function NotesPage() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="ms-4 text-xl font-semibold text-primary">טוען הערות...</p>
-      </div>
-    );
-  }
+  const handleDeleteNote = async (noteId: string) => {
+    try {
+      await deleteDoc(doc(db, NOTES_COLLECTION, noteId));
+      toast({
+        title: 'הערה נמחקה',
+        variant: 'destructive'
+      });
+    } catch (error) {
+      console.error('Failed to delete note:', error);
+      toast({
+        title: 'שגיאת מחיקה',
+        description: 'לא ניתן היה למחוק את ההערה.',
+        variant: 'destructive',
+      });
+    }
+  };
 
   return (
-    <Card className="max-w-4xl mx-auto shadow-lg">
-      <CardHeader>
-        <CardTitle className="text-3xl font-headline text-primary flex items-center gap-3">
-          <StickyNote size={30} />
-          הערות כלליות
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <p className="text-muted-foreground">
-          זהו האזור המשותף לרשום כל דבר שתרצו - המרות מידות, כללים להוספת מתכונים, רעיונות, או כל דבר אחר שעולה על דעתך. ההערות נשמרות בענן וזמינות לכל המשתמשים.
-        </p>
-        <Textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="כתוב כאן את ההערות שלך..."
-          rows={15}
-          className="text-base"
-        />
-        <Button onClick={handleSave} disabled={isSaving}>
-          {isSaving ? <Loader2 className="animate-spin" /> : <Save />}
-          {isSaving ? 'שומר...' : 'שמור הערות'}
-        </Button>
-      </CardContent>
-    </Card>
+    <div className="max-w-4xl mx-auto space-y-8">
+      <Card className="shadow-lg">
+        <CardHeader>
+          <CardTitle className="text-3xl font-headline text-primary flex items-center gap-3">
+            <StickyNote size={30} />
+            הוסף הערה חדשה
+          </CardTitle>
+        </CardHeader>
+        <form onSubmit={handleAddNote}>
+          <CardContent className="space-y-4">
+            <p className="text-muted-foreground">
+              הוסף הערה חדשה לרשימה המשותפת - המרות מידות, כללים, רעיונות, וכו'.
+            </p>
+            <Input
+              value={newNoteTitle}
+              onChange={(e) => setNewNoteTitle(e.target.value)}
+              placeholder="כותרת ההערה"
+              className="text-base"
+              disabled={isSaving}
+            />
+            <Textarea
+              value={newNoteContent}
+              onChange={(e) => setNewNoteContent(e.target.value)}
+              placeholder="כתוב כאן את תוכן ההערה..."
+              rows={5}
+              className="text-base"
+              disabled={isSaving}
+            />
+          </CardContent>
+          <CardFooter>
+            <Button type="submit" disabled={isSaving}>
+              {isSaving ? <Loader2 className="animate-spin" /> : <PlusCircle />}
+              {isSaving ? 'שומר...' : 'הוסף הערה'}
+            </Button>
+          </CardFooter>
+        </form>
+      </Card>
+
+      <div className="space-y-4">
+        {isLoading ? (
+          <div className="flex justify-center items-center min-h-[200px]">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <p className="ms-4 text-xl font-semibold text-primary">טוען הערות...</p>
+          </div>
+        ) : notes.length > 0 ? (
+          notes.map(note => (
+            <Card key={note.id} className="shadow-md">
+              <CardHeader className="flex flex-row justify-between items-start">
+                  <div>
+                    <CardTitle className="text-2xl font-headline text-accent">{note.title}</CardTitle>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      נוצר ב: {format(note.createdAt, 'dd/MM/yyyy HH:mm')}
+                    </p>
+                  </div>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10">
+                        <Trash2 size={18} />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>האם אתה בטוח?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          פעולה זו תמחק את ההערה "{note.title}" לצמיתות.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>ביטול</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDeleteNote(note.id)}>מחק</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+              </CardHeader>
+              <CardContent>
+                <p className="whitespace-pre-wrap">{note.content}</p>
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <div className="text-center py-10 border-2 border-dashed rounded-lg">
+             <AlertTriangle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+            <p className="text-xl text-muted-foreground font-body">עדיין אין הערות.</p>
+            <p className="text-muted-foreground font-body">השתמש בטופס למעלה כדי להוסיף את ההערה הראשונה.</p>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

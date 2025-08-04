@@ -421,7 +421,7 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
                 )}/>
               </div>
               <div className="flex flex-col gap-4">
-                <FormField control={form.control} name="freezable" render={({ field }) => (
+                 <FormField control={form.control} name="freezable" render={({ field }) => (
                     <FormItem className="flex flex-row items-center space-x-3 rtl:space-x-reverse space-y-0 rounded-md border p-4 shadow-sm h-fit"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>טוב להקפאה?</FormLabel></div></FormItem>
                 )}/>
                  <FormField
