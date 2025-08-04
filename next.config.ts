@@ -10,7 +10,7 @@ const withPWA = withPWAInit({
   disable: process.env.NODE_ENV === 'development',
   register: true,
   skipWaiting: true,
-  cacheStartUrl: true,
+  cacheStartUrl: false, // Set to false to avoid auth proxy conflicts
   dynamicStartUrl: true,
   dynamicStartUrlRedirect: '/',
   fallbacks: {
