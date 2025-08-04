@@ -7,8 +7,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Save, StickyNote } from 'lucide-react';
+import { db } from '@/lib/firebase';
+import { doc, onSnapshot, setDoc, getDoc } from 'firebase/firestore';
 
-const NOTES_STORAGE_KEY = 'generalNotes';
+const NOTES_DOC_ID = 'general';
+const NOTES_COLLECTION = 'notes';
 
 export default function NotesPage() {
   const [notes, setNotes] = useState('');
@@ -16,42 +19,50 @@ export default function NotesPage() {
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
-  // Load notes from localStorage on initial render
+  // Load notes from Firestore on initial render
   useEffect(() => {
-    try {
-      const savedNotes = localStorage.getItem(NOTES_STORAGE_KEY);
-      if (savedNotes) {
-        setNotes(savedNotes);
+    const notesDocRef = doc(db, NOTES_COLLECTION, NOTES_DOC_ID);
+
+    const unsubscribe = onSnapshot(notesDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setNotes(docSnap.data().content || '');
+      } else {
+        // If the document doesn't exist, it means no notes have been saved yet.
+        setNotes('');
       }
-    } catch (error) {
-      console.error('Failed to load notes from localStorage', error);
+      setIsLoading(false);
+    }, (error) => {
+      console.error('Failed to load notes from Firestore', error);
       toast({
         title: 'שגיאה',
-        description: 'לא ניתן היה לטעון את ההערות.',
+        description: 'לא ניתן היה לטעון את ההערות ממסד הנתונים.',
         variant: 'destructive',
       });
-    } finally {
       setIsLoading(false);
-    }
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
   }, [toast]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsSaving(true);
     try {
-      localStorage.setItem(NOTES_STORAGE_KEY, notes);
+      const notesDocRef = doc(db, NOTES_COLLECTION, NOTES_DOC_ID);
+      await setDoc(notesDocRef, { content: notes });
       toast({
         title: 'נשמר!',
-        description: 'ההערות שלך נשמרו בהצלחה.',
+        description: 'ההערות שלך נשמרו בהצלחה וזמינות לכולם.',
       });
     } catch (error) {
-      console.error('Failed to save notes to localStorage', error);
+      console.error('Failed to save notes to Firestore', error);
       toast({
         title: 'שגיאת שמירה',
         description: 'לא ניתן היה לשמור את ההערות שלך. אנא נסה שוב.',
         variant: 'destructive',
       });
     } finally {
-      setTimeout(() => setIsSaving(false), 500); // Simulate saving delay
+      setIsSaving(false);
     }
   };
 
@@ -74,7 +85,7 @@ export default function NotesPage() {
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-muted-foreground">
-          זהו האזור האישי שלך לרשום כל דבר שתרצה - המרות מידות, כללים להוספת מתכונים, רעיונות, או כל דבר אחר שעולה על דעתך. ההערות נשמרות מקומית על הדפדפן שלך.
+          זהו האזור המשותף לרשום כל דבר שתרצו - המרות מידות, כללים להוספת מתכונים, רעיונות, או כל דבר אחר שעולה על דעתך. ההערות נשמרות בענן וזמינות לכל המשתמשים.
         </p>
         <Textarea
           value={notes}
