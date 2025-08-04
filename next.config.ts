@@ -7,12 +7,12 @@ import type {
 
 const runtimeCaching: RuntimeCaching[] = [
     {
-      urlPattern: /^https?.*/,
+      urlPattern: ({ url }) => url.origin === self.location.origin && url.pathname === '/',
       handler: 'StaleWhileRevalidate',
       options: {
         cacheName: 'pages-cache',
         expiration: {
-          maxEntries: 50,
+          maxEntries: 1,
           maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
         },
         cacheableResponse: {
@@ -21,12 +21,31 @@ const runtimeCaching: RuntimeCaching[] = [
       },
     },
     {
-      urlPattern: /\.(?:js|css)$/,
+      urlPattern: ({ url }) => {
+        const isApiRoute = url.pathname.startsWith('/api/');
+        const isNextData = url.pathname.includes('/_next/data/');
+        return url.origin === self.location.origin && (isApiRoute || isNextData);
+      },
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'api-and-data-cache',
+        networkTimeoutSeconds: 10,
+        expiration: {
+          maxEntries: 32,
+          maxAgeSeconds: 24 * 60 * 60, // 1 day
+        },
+        cacheableResponse: {
+          statuses: [200],
+        },
+      },
+    },
+    {
+      urlPattern: ({ url }) => url.origin === self.location.origin && url.pathname.startsWith('/_next/static/'),
       handler: 'StaleWhileRevalidate',
       options: {
-        cacheName: 'static-assets-cache',
+        cacheName: 'next-static-cache',
         expiration: {
-            maxEntries: 50,
+            maxEntries: 60,
             maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
         },
         cacheableResponse: {
@@ -35,8 +54,8 @@ const runtimeCaching: RuntimeCaching[] = [
       }
     },
     {
-      urlPattern: /\.(?:png|jpg|jpeg|svg|gif|ico)$/,
-      handler: 'StaleWhileRevalidate',
+      urlPattern: /\.(?:png|jpg|jpeg|svg|gif|ico)$/i,
+      handler: 'CacheFirst',
       options: {
         cacheName: 'images-cache',
         expiration: {
@@ -49,8 +68,8 @@ const runtimeCaching: RuntimeCaching[] = [
       },
     },
     {
-      urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/,
-       handler: 'StaleWhileRevalidate',
+      urlPattern: new RegExp('^https://fonts.(?:googleapis|gstatic).com/(.*)'),
+       handler: 'CacheFirst',
        options: {
          cacheName: 'google-fonts-cache',
          expiration: {
