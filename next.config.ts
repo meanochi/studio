@@ -7,15 +7,63 @@ import type {
 
 const runtimeCaching: RuntimeCaching[] = [
     {
-      urlPattern: /^https?.*/,
+      urlPattern: ({ request, url }) => {
+        // Don't cache any Google APIs (e.g. Firestore)
+        if (url.hostname === 'firestore.googleapis.com' || url.hostname.endsWith('.googleapis.com')) {
+          return false;
+        }
+        // Cache navigation requests (pages)
+        return request.mode === 'navigate';
+      },
       handler: 'NetworkFirst',
       options: {
         cacheName: 'pages-cache',
         expiration: {
-          maxEntries: 32,
+          maxEntries: 64,
           maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
         },
         cacheableResponse: {
+          statuses: [0, 200],
+        },
+      },
+    },
+    {
+      urlPattern: ({ request }) =>
+        request.destination === 'script' || request.destination === 'style',
+      handler: 'StaleWhileRevalidate',
+      options: {
+        cacheName: 'static-assets-cache',
+         expiration: {
+          maxEntries: 64,
+          maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
+        },
+      },
+    },
+    {
+      urlPattern: ({ request }) => request.destination === 'image',
+      handler: 'CacheFirst',
+      options: {
+        cacheName: 'image-cache',
+        expiration: {
+          maxEntries: 64,
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
+        },
+         cacheableResponse: {
+          statuses: [0, 200],
+        },
+      },
+    },
+     {
+      urlPattern: ({ request, url }) =>
+        request.destination === 'font' || url.hostname === 'fonts.gstatic.com',
+      handler: 'CacheFirst',
+      options: {
+        cacheName: 'font-cache',
+        expiration: {
+          maxEntries: 32,
+          maxAgeSeconds: 365 * 24 * 60 * 60, // 1 year
+        },
+         cacheableResponse: {
           statuses: [0, 200],
         },
       },
@@ -28,7 +76,6 @@ const withPWA = withPWAInit({
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
   runtimeCaching,
-  buildExcludes: [/middleware-manifest\.json$/],
   fallbacks: {
     document: "/_offline",
   }
