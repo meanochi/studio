@@ -1,3 +1,4 @@
+
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
@@ -11,21 +12,26 @@ export function generateId(): string {
 
 export function getDisplayUnit(amount: number, unit: string): string {
   const lowerUnit = unit.toLowerCase();
+  
   if (amount === 1 || (amount > 0 && amount < 1) || (amount < 0 && amount > -1) ) { // Handle singular for 1, 0.x, -0.x
-    if (lowerUnit === 'כוסות') return 'כוס';
-    if (lowerUnit === 'כפיות') return 'כפית';
-    if (lowerUnit === 'כפות') return 'כף';
-    if (lowerUnit === 'גרמים') return 'גרם';
-    if (lowerUnit === 'שקיות') return 'שקית';
-    if (lowerUnit === 'חבילות') return 'חבילה';
-    // Add more singularization rules as needed
-  } else { // amount > 1, amount = 0, amount < -1
-    if (lowerUnit === 'כוס') return 'כוסות';
-    if (lowerUnit === 'כפית') return 'כפיות';
-    if (lowerUnit === 'כף') return 'כפות';
-    if (lowerUnit === 'גרם') return 'גרמים';
-    if (lowerUnit === 'שקית') return 'שקיות';
-    if (lowerUnit === 'חבילה') return 'חבילות';
+    if (['כוסות'].includes(lowerUnit)) return 'כוס';
+    if (['כפיות'].includes(lowerUnit)) return 'כפית';
+    if (['כפות'].includes(lowerUnit)) return 'כף';
+    if (['גרמים'].includes(lowerUnit)) return 'גרם';
+    if (['שקיות', 'שקית'].includes(lowerUnit)) return 'שקית';
+    if (['חבילות', 'חבילת'].includes(lowerUnit)) return 'חבילה';
+    if (['שיניים', 'שיני'].includes(lowerUnit)) return 'שן';
+    if (['גביעים', 'גביעי'].includes(lowerUnit)) return 'גביע';
+    return unit; // Return original if no specific singular form
+  } else { // Handle plural for amount > 1, amount = 0, amount <= -1
+    if (['כוס'].includes(lowerUnit)) return 'כוסות';
+    if (['כפית'].includes(lowerUnit)) return 'כפיות';
+    if (['כף'].includes(lowerUnit)) return 'כפות';
+    if (['גרם'].includes(lowerUnit)) return 'גרמים';
+    if (['שקית'].includes(lowerUnit)) return 'שקיות';
+    if (['חבילה', 'חבילת'].includes(lowerUnit)) return 'חבילות';
+    if (['שן', 'שיני'].includes(lowerUnit)) return 'שיניים';
+    if (['גביע', 'גביעי'].includes(lowerUnit)) return 'גביעים';
+    return unit;
   }
-  return unit; // Return original unit if no rule applies or already correct
 }

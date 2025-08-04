@@ -101,6 +101,7 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
           freezable: typeof data.freezable === 'boolean' ? data.freezable : false,
           imageUrl: data.imageUrl ?? null,
           tags: Array.isArray(data.tags) ? data.tags : [],
+          notes: data.notes ?? null,
           ingredients: (Array.isArray(data.ingredients) ? data.ingredients : []).map((ing: any): Ingredient => ({
             id: ing.id || generateId(),
             name: ing.name || "",
@@ -164,6 +165,7 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         freezable: recipeData.freezable ?? false,
         imageUrl: recipeData.imageUrl ?? null,
         tags: recipeData.tags || [],
+        notes: recipeData.notes ?? null,
         ingredients: (recipeData.ingredients || []).map(ing => ({
           id: ing.id || generateId(),
           name: ing.name || "",
@@ -193,6 +195,7 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         freezable: recipeForFirestore.freezable,
         imageUrl: recipeForFirestore.imageUrl,
         tags: recipeForFirestore.tags,
+        notes: recipeForFirestore.notes,
         ingredients: recipeForFirestore.ingredients.map(ing => ({...ing, id: ing.id || generateId()}) as Ingredient), // ensure IDs and cast
         instructions: recipeForFirestore.instructions.map(instr => ({...instr, id: instr.id || generateId()}) as InstructionStep), // ensure IDs and cast
       };
@@ -221,6 +224,7 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         freezable: updatedRecipe.freezable ?? false,
         imageUrl: updatedRecipe.imageUrl ?? null,
         tags: updatedRecipe.tags || [],
+        notes: updatedRecipe.notes ?? null,
         ingredients: (updatedRecipe.ingredients || []).map(ing => ({
           id: ing.id || generateId(),
           name: ing.name || "",

@@ -29,6 +29,7 @@ export interface Recipe {
   instructions: InstructionStep[];
   imageUrl?: string | null;
   tags?: string[] | null;
+  notes?: string | null;
 }
 
 export interface ShoppingListItem {

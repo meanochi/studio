@@ -60,6 +60,7 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
           })),
           tags: initialData.tags || [],
           imageUrl: initialData.imageUrl || '',
+          notes: initialData.notes || '',
         }
       : {
           name: '',
@@ -73,6 +74,7 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
           instructions: [{ id: generateId(), text: '', imageUrl: '', isHeading: false }],
           imageUrl: '',
           tags: [],
+          notes: '',
         };
   }, [initialData]);
 
@@ -314,6 +316,7 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
     const processedData: RecipeFormData = {
         ...data,
         imageUrl: data.imageUrl?.trim() === '' ? undefined : data.imageUrl,
+        notes: data.notes?.trim() === '' ? undefined : data.notes,
         ingredients: data.ingredients.map(ing => ({
             ...ing,
             id: ing.id || generateId(),
@@ -393,7 +396,7 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
                   <FormItem><FormLabel>זמן הכנה</FormLabel><FormControl><Input placeholder="לדוגמה, 20 דקות" {...field} /></FormControl><FormMessage /></FormItem>
               )}/>
               <FormField control={form.control} name="cookTime" render={({ field }) => (
-                  <FormItem><FormLabel>זמן בישול (אופציונלי)</FormLabel><FormControl><Input placeholder="לדוגמה, 10-12 דקות" {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>זמן בישול (אופציונלי)</FormLabel><FormControl><Input placeholder="לדוגמה, 10-12 דקות" {...field} /></FormControl><FormMessage /></FormMessage /></FormItem>
               )}/>
               <FormField control={form.control} name="servings" render={({ field }) => (
                   <FormItem><FormLabel>מנות</FormLabel><FormControl><Input type="number" min="1" placeholder="לדוגמה, 24" {...field} onChange={e => field.onChange(parseInt(e.target.value,10) || 1)}/></FormControl><FormMessage /></FormItem>
@@ -417,9 +420,28 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
                     <FormItem className="mt-2"><FormLabel className="sr-only">כתובת URL של תמונה</FormLabel><FormControl><Input placeholder="או הדבק כתובת URL של תמונה" {...field} value={field.value ?? ''} onChange={(e) => { field.onChange(e); setRecipeImagePreview(e.target.value); }} /></FormControl><FormMessage /></FormItem>
                 )}/>
               </div>
-              <FormField control={form.control} name="freezable" render={({ field }) => (
-                  <FormItem className="flex flex-row items-center space-x-3 rtl:space-x-reverse space-y-0 rounded-md border p-4 shadow-sm h-fit mt-auto"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>טוב להקפאה?</FormLabel></div></FormItem>
-              )}/>
+              <div className="flex flex-col gap-4">
+                <FormField control={form.control} name="freezable" render={({ field }) => (
+                    <FormItem className="flex flex-row items-center space-x-3 rtl:space-x-reverse space-y-0 rounded-md border p-4 shadow-sm h-fit"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl><div className="space-y-1 leading-none"><FormLabel>טוב להקפאה?</FormLabel></div></FormItem>
+                )}/>
+                 <FormField
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2"><StickyNote size={18}/> הערות למתכון (אופציונלי)</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="הערות כלליות על המתכון, טיפים, או הצעות הגשה..."
+                            rows={5}
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+              </div>
             </div>
 
             {/* Ingredients Section */}

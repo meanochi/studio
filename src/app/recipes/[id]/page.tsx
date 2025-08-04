@@ -35,7 +35,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
-  Clock, Users, Edit3, Trash2, Printer, ShoppingCart, Utensils, Snowflake, Loader2, AlertTriangle, HomeIcon, RefreshCw, PlusSquare, Info, EyeIcon, EyeOffIcon, Heading2, Share2, ClipboardCopy
+  Clock, Users, Edit3, Trash2, Printer, ShoppingCart, Utensils, Snowflake, Loader2, AlertTriangle, HomeIcon, RefreshCw, PlusSquare, Info, EyeIcon, EyeOffIcon, Heading2, Share2, ClipboardCopy, StickyNote
 } from 'lucide-react';
 
 
@@ -174,6 +174,10 @@ export default function RecipeDetailPage() {
        }
     });
 
+    if (recipe.notes) {
+        textToCopy += `\n*הערות*\n${recipe.notes}\n`;
+    }
+
     try {
       if (navigator.clipboard?.write && imageUrl) {
           const response = await fetch(imageUrl);
@@ -208,6 +212,9 @@ export default function RecipeDetailPage() {
               }
           });
           htmlToCopy += '</ol>';
+          if (recipe.notes) {
+              htmlToCopy += `<h2>הערות</h2><p>${recipe.notes.replace(/\n/g, '<br>')}</p>`;
+          }
           
           const htmlBlob = new Blob([htmlToCopy], { type: 'text/html' });
           const textBlob = new Blob([textToCopy], {type: 'text/plain' });
@@ -315,6 +322,18 @@ export default function RecipeDetailPage() {
                   <Badge key={tag} variant="default" className="font-body text-sm bg-accent text-accent-foreground border border-accent hover:bg-accent/90">{tag}</Badge>
                 ))}
               </div>
+            )}
+            
+            {recipe.notes && (
+                <div>
+                  <h3 className="text-2xl font-headline text-primary mb-2 flex items-center gap-2">
+                    <StickyNote size={22} />
+                    הערות
+                  </h3>
+                  <div className="p-4 bg-background rounded-md border shadow-sm">
+                    <p className="font-body whitespace-pre-wrap">{recipe.notes}</p>
+                  </div>
+                </div>
             )}
 
             <Separator />
@@ -499,5 +518,3 @@ export default function RecipeDetailPage() {
     </div>
   );
 }
-
-    

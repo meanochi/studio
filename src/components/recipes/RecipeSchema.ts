@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 
 export const ingredientSchema = z.object({
@@ -46,6 +47,7 @@ export const recipeSchema = z.object({
   instructions: z.array(instructionStepSchema).min(1, "נדרש לפחות שלב אחד בהוראות או כותרת הוראות"),
   imageUrl: z.string().optional(), 
   tags: z.array(z.string().min(1).max(30)).optional(),
+  notes: z.string().optional(),
 });
 
 export type RecipeFormData = z.infer<typeof recipeSchema>;
