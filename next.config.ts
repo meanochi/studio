@@ -7,12 +7,12 @@ import type {
 
 const runtimeCaching: RuntimeCaching[] = [
     {
-      urlPattern: ({ url }) => url.origin === self.location.origin && url.pathname === '/',
-      handler: 'StaleWhileRevalidate',
+      urlPattern: ({request, url}) => request.destination === 'document',
+      handler: 'NetworkFirst',
       options: {
         cacheName: 'pages-cache',
         expiration: {
-          maxEntries: 1,
+          maxEntries: 32,
           maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
         },
         cacheableResponse: {
@@ -21,31 +21,12 @@ const runtimeCaching: RuntimeCaching[] = [
       },
     },
     {
-      urlPattern: ({ url }) => {
-        const isApiRoute = url.pathname.startsWith('/api/');
-        const isNextData = url.pathname.includes('/_next/data/');
-        return url.origin === self.location.origin && (isApiRoute || isNextData);
-      },
-      handler: 'NetworkFirst',
-      options: {
-        cacheName: 'api-and-data-cache',
-        networkTimeoutSeconds: 10,
-        expiration: {
-          maxEntries: 32,
-          maxAgeSeconds: 24 * 60 * 60, // 1 day
-        },
-        cacheableResponse: {
-          statuses: [200],
-        },
-      },
-    },
-    {
-      urlPattern: ({ url }) => url.origin === self.location.origin && url.pathname.startsWith('/_next/static/'),
+      urlPattern: ({request, url}) => request.destination === 'script' || request.destination === 'style',
       handler: 'StaleWhileRevalidate',
       options: {
-        cacheName: 'next-static-cache',
+        cacheName: 'static-resources-cache',
         expiration: {
-            maxEntries: 60,
+            maxEntries: 64,
             maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
         },
         cacheableResponse: {
@@ -54,7 +35,7 @@ const runtimeCaching: RuntimeCaching[] = [
       }
     },
     {
-      urlPattern: /\.(?:png|jpg|jpeg|svg|gif|ico)$/i,
+      urlPattern: ({request}) => request.destination === 'image',
       handler: 'CacheFirst',
       options: {
         cacheName: 'images-cache',
@@ -68,7 +49,7 @@ const runtimeCaching: RuntimeCaching[] = [
       },
     },
     {
-      urlPattern: new RegExp('^https://fonts.(?:googleapis|gstatic).com/(.*)'),
+       urlPattern: new RegExp('^https://fonts.(?:googleapis|gstatic).com/(.*)'),
        handler: 'CacheFirst',
        options: {
          cacheName: 'google-fonts-cache',
