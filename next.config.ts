@@ -7,7 +7,7 @@ import type {
 
 const runtimeCaching: RuntimeCaching[] = [
     {
-      urlPattern: ({url, request}) => request.destination === 'document' || url.pathname === '/',
+      urlPattern: /^https?.*/,
       handler: 'StaleWhileRevalidate',
       options: {
         cacheName: 'pages-cache',
@@ -21,7 +21,7 @@ const runtimeCaching: RuntimeCaching[] = [
       },
     },
     {
-      urlPattern: ({request}) => request.destination === 'script' || request.destination === 'style',
+      urlPattern: /\.(?:js|css)$/,
       handler: 'StaleWhileRevalidate',
       options: {
         cacheName: 'static-assets-cache',
@@ -35,7 +35,7 @@ const runtimeCaching: RuntimeCaching[] = [
       }
     },
     {
-      urlPattern: ({request}) => request.destination === 'image',
+      urlPattern: /\.(?:png|jpg|jpeg|svg|gif|ico)$/,
       handler: 'StaleWhileRevalidate',
       options: {
         cacheName: 'images-cache',
@@ -49,7 +49,7 @@ const runtimeCaching: RuntimeCaching[] = [
       },
     },
     {
-      urlPattern: ({url}) => url.origin === 'https://fonts.googleapis.com' || url.origin === 'https://fonts.gstatic.com',
+      urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/,
        handler: 'StaleWhileRevalidate',
        options: {
          cacheName: 'google-fonts-cache',
