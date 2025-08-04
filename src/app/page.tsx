@@ -1,10 +1,11 @@
+
 'use client';
 
 import RecipeCard from '@/components/recipes/RecipeCard';
 import { Button } from '@/components/ui/button';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { Input } from '@/components/ui/input';
-import { PlusCircle, Search, Loader2, History } from 'lucide-react';
+import { PlusCircle, Search, Loader2, History, BookOpen } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useMemo } from 'react';
 import { Separator } from '@/components/ui/separator';
@@ -22,6 +23,14 @@ export default function HomePage() {
     );
   }, [recipes, searchTerm]);
 
+  const resultsText = useMemo(() => {
+    if (loading) return '';
+    if (searchTerm) {
+      return `נמצאו ${filteredRecipes.length} מתוך ${recipes.length} מתכונים`;
+    }
+    return `סך הכל ${recipes.length} מתכונים`;
+  }, [loading, searchTerm, filteredRecipes.length, recipes.length]);
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
@@ -34,7 +43,13 @@ export default function HomePage() {
   return (
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 bg-card rounded-lg shadow">
-        <h2 className="text-3xl font-headline text-primary">המתכונים שלי</h2>
+        <div className="flex items-baseline gap-3">
+            <h2 className="text-3xl font-headline text-primary">המתכונים שלי</h2>
+            <span className="text-sm text-muted-foreground font-body flex items-center gap-1.5">
+                <BookOpen size={16} />
+                {resultsText}
+            </span>
+        </div>
         <div className="relative w-full sm:w-auto sm:min-w-[300px]">
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input
