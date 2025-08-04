@@ -10,7 +10,7 @@ import type { Metadata, Viewport } from 'next';
 export const metadata: Metadata = {
   title: 'Family Cookbook',
   description: 'מקום לכל המתכונים המשפחתיים שלך',
-  manifest: '/manifest.json',
+  manifest: '/manifest.webmanifest',
   icons: {
     icon: '/icons/iconi.png',
     apple: '/icons/iconi.png',
