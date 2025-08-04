@@ -26,7 +26,10 @@ export default function HomePage() {
   const resultsText = useMemo(() => {
     if (loading) return '';
     if (searchTerm) {
-      return `נמצאו ${filteredRecipes.length} מתוך ${recipes.length} מתכונים`;
+      if (filteredRecipes.length === 1) {
+        return `נמצא מתכון אחד`;
+      }
+      return `נמצאו ${filteredRecipes.length} מתכונים`;
     }
     return `סך הכל ${recipes.length} מתכונים`;
   }, [loading, searchTerm, filteredRecipes.length, recipes.length]);
