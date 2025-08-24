@@ -321,6 +321,8 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
   const handleSubmitForm = (data: RecipeFormData) => {
     const processedData: RecipeFormData = {
         ...data,
+        source: data.source?.trim() === '' ? undefined : data.source,
+        cookTime: data.cookTime?.trim() === '' ? undefined : data.cookTime,
         imageUrl: data.imageUrl?.trim() === '' ? undefined : data.imageUrl,
         notes: data.notes?.trim() === '' ? undefined : data.notes,
         ingredients: data.ingredients.map(ing => ({

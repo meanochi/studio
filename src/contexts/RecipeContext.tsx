@@ -109,7 +109,7 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             amount: (typeof ing.isHeading === 'boolean' && ing.isHeading) ? 0 : (typeof ing.amount === 'number' ? ing.amount : 0), // Amount is 0 for heading
             unit: (typeof ing.isHeading === 'boolean' && ing.isHeading) ? "" : (ing.unit || ""), // Unit is "" for heading
             isOptional: (typeof ing.isHeading === 'boolean' && ing.isHeading) ? false : (typeof ing.isOptional === 'boolean' ? ing.isOptional : false),
-            notes: (typeof ing.isHeading === 'boolean' && ing.isHeading) ? '' : (ing.notes ?? ''),
+            notes: (typeof ing.isHeading === 'boolean' && ing.isHeading) ? null : (ing.notes ?? null),
           })),
           instructions: (Array.isArray(data.instructions) ? data.instructions : []).map((instr: any): InstructionStep => ({
             id: instr.id || generateId(),
@@ -137,9 +137,8 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   const addRecipe = async (recipeData: RecipeFormData): Promise<Recipe | null> => {
     
-    // Check for duplicates
     const isDuplicate = recipes.some(
-      (recipe) => recipe.name.toLowerCase() === recipeData.name.toLowerCase() && recipe.source?.toLowerCase() === recipeData.source?.toLowerCase()
+      (recipe) => recipe.name.toLowerCase() === recipeData.name.toLowerCase() && recipe.source?.toLowerCase() === (recipeData.source || '').toLowerCase()
     );
 
     if (isDuplicate) {
@@ -152,21 +151,6 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
 
     try {
-        const ingredientsWithIds = recipeData.ingredients.map(ing => ({
-          ...ing,
-          id: ing.id || generateId(),
-          amount: ing.isHeading ? 0 : ing.amount!,
-          unit: ing.isHeading ? '' : ing.unit!,
-          isOptional: ing.isHeading ? false : ing.isOptional,
-          notes: ing.isHeading ? '' : ing.notes,
-        }));
-
-        const instructionsWithIds = recipeData.instructions.map(instr => ({
-            ...instr,
-            id: instr.id || generateId(),
-            imageUrl: instr.isHeading ? null : instr.imageUrl
-        }));
-      
       const recipeForFirestore = {
         ...recipeData,
         source: recipeData.source || null,
@@ -174,8 +158,21 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         imageUrl: recipeData.imageUrl || null,
         tags: recipeData.tags || [],
         notes: recipeData.notes || null,
-        ingredients: ingredientsWithIds,
-        instructions: instructionsWithIds
+        ingredients: (recipeData.ingredients || []).map(ing => ({
+          id: ing.id || generateId(),
+          name: ing.name || "",
+          isHeading: ing.isHeading || false,
+          amount: ing.isHeading ? 0 : (ing.amount ?? 0),
+          unit: ing.isHeading ? "" : (ing.unit ?? ""),
+          isOptional: ing.isHeading ? false : (ing.isOptional ?? false),
+          notes: ing.isHeading ? null : (ing.notes ?? null),
+        })),
+        instructions: (recipeData.instructions || []).map(instr => ({
+          id: instr.id || generateId(),
+          text: instr.text || "",
+          isHeading: instr.isHeading || false,
+          imageUrl: instr.isHeading ? null : (instr.imageUrl ?? null),
+        })),
       };
 
       const docRef = await addDoc(collection(db, 'recipes'), recipeForFirestore);
@@ -210,7 +207,7 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       console.error("Error adding recipe to Firestore: ", error);
       toast({
         title: "שגיאה בהוספת מתכון",
-        description: "לא ניתן היה לשמור את המתכון. נסה שוב מאוחר יותר.",
+        description: "לא ניתן היה לשמור את המתכון. בדוק את כל השדות ונסה שוב.",
         variant: "destructive",
       });
       return null;
@@ -235,10 +232,10 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
           id: ing.id || generateId(),
           name: ing.name || "",
           isHeading: ing.isHeading || false,
-          amount: ing.isHeading ? 0 : (typeof ing.amount === 'number' ? ing.amount : 0),
-          unit: ing.isHeading ? "" : (ing.unit || ""),
-          isOptional: ing.isHeading ? false : (ing.isOptional || false),
-          notes: ing.isHeading ? "" : (ing.notes ?? ''),
+          amount: ing.isHeading ? 0 : (ing.amount ?? 0),
+          unit: ing.isHeading ? "" : (ing.unit ?? ""),
+          isOptional: ing.isHeading ? false : (ing.isOptional ?? false),
+          notes: ing.isHeading ? null : (ing.notes ?? null),
         })),
         instructions: (updatedRecipe.instructions || []).map(instr => ({
           id: instr.id || generateId(),
@@ -292,5 +289,3 @@ export const useRecipes = (): RecipeContextType => {
   }
   return context;
 };
-
-    
