@@ -13,7 +13,7 @@ const withPWA = withPWAInit({
   dynamicStartUrl: true,
   dynamicStartUrlRedirect: '/',
   fallbacks: {
-    document: "/_offline",
+    document: "/offline",
   },
   cacheOnFrontEndNav: true,
   aggressiveFrontEndNavCaching: true,

@@ -386,7 +386,7 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
                   <FormItem><FormLabel>שם המתכון</FormLabel><FormControl><Input placeholder="לדוגמה, עוגיות שוקולד צ'יפס" {...field} /></FormControl><FormMessage /></FormItem>
               )}/>
               <FormField control={form.control} name="source" render={({ field }) => (
-                  <FormItem><FormLabel>מקור (אופציונלי)</FormLabel><FormControl><Input placeholder="לדוגמה, ספר המתכונים של סבתא" {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>מקור (אופציונלי)</FormLabel><FormControl><Input placeholder="לדוגמה, ספר המתכונים של סבתא" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
               )}/>
             </div>
 
@@ -396,7 +396,7 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
                   <FormItem><FormLabel>זמן הכנה</FormLabel><FormControl><Input placeholder="לדוגמה, 20 דקות" {...field} /></FormControl><FormMessage /></FormItem>
               )}/>
               <FormField control={form.control} name="cookTime" render={({ field }) => (
-                  <FormItem><FormLabel>זמן בישול (אופציונלי)</FormLabel><FormControl><Input placeholder="לדוגמה, 10-12 דקות" {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>זמן בישול (אופציונלי)</FormLabel><FormControl><Input placeholder="לדוגמה, 10-12 דקות" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
               )}/>
               <FormField control={form.control} name="servings" render={({ field }) => (
                   <FormItem><FormLabel>מנות</FormLabel><FormControl><Input type="number" min="1" placeholder="לדוגמה, 24" {...field} onChange={e => field.onChange(parseInt(e.target.value,10) || 1)}/></FormControl><FormMessage /></FormItem>
@@ -435,6 +435,7 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
                             placeholder="הערות כלליות על המתכון, טיפים, או הצעות הגשה..."
                             rows={5}
                             {...field}
+                            value={field.value ?? ''}
                           />
                         </FormControl>
                         <FormMessage />
@@ -502,7 +503,7 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
                             <FormItem className="flex flex-row items-center space-x-2 rtl:space-x-reverse"><FormControl><Checkbox checked={f.value} onCheckedChange={f.onChange} /></FormControl><FormLabel className="font-normal text-xs text-muted-foreground">אופציונלי?</FormLabel></FormItem>
                         )}/>
                         <FormField control={form.control} name={`ingredients.${index}.notes`} render={({ field: f }) => (
-                            <FormItem className="flex-grow"><FormLabel className="sr-only">הערות</FormLabel><FormControl><Input className="text-xs h-8" placeholder="הערות/אלטרנטיבה (אופציונלי)" {...f} /></FormControl><FormMessage /></FormItem>
+                            <FormItem className="flex-grow"><FormLabel className="sr-only">הערות</FormLabel><FormControl><Input className="text-xs h-8" placeholder="הערות/אלטרנטיבה (אופציונלי)" {...f} value={f.value ?? ''} /></FormControl><FormMessage /></FormItem>
                         )}/>
                       </>
                     )}

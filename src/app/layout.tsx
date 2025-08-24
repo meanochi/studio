@@ -1,4 +1,3 @@
-
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import AppProviders from '@/contexts/AppProviders';
@@ -6,11 +5,11 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import type { Metadata, Viewport } from 'next';
 
-
+// הגדרת המטא-דאטה הנכונה
 export const metadata: Metadata = {
   title: 'Family Cookbook',
   description: 'מקום לכל המתכונים המשפחתיים שלך',
-  manifest: '/manifest.webmanifest',
+  manifest: '/manifest.json', // <-- תיקון הנתיב והסיומת
   icons: {
     icon: '/icons/iconi.png',
     apple: '/icons/iconi.png',
@@ -29,7 +28,10 @@ export default function RootLayout({
   return (
     <html lang="he" dir="rtl" suppressHydrationWarning>
       <head>
-      
+        {/*
+          הסרנו את תג ה-link הידני.
+          Next.js יוסיף אותו אוטומטית על סמך אובייקט ה-metadata.
+        */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Belleza&display=swap" rel="stylesheet" />

@@ -1,23 +1,23 @@
-manifest: {
-    name: "Family Cookbook",
-    short_name: "Cookbook",
-    description: "A place for all your family recipes",
-    background_color: "#F8F5F1",
-    theme_color: "#E07A5F",
-    display: "standalone",
-    start_url: "/",
-    icons: [
-      {
-        src: "/icons/iconi.png",
-        sizes: "192x192",
-        type: "image/png",
-        purpose: "any maskable",
-      },
-      {
-        src: "/icons/iconi.png",
-        sizes: "512x512",
-        type: "image/png",
-        purpose: "any maskable",
-      },
-    ],
-  },
+{
+  "name": "Family Cookbook",
+  "short_name": "Cookbook",
+  "description": "A place for all your family recipes",
+  "background_color": "#F8F5F1",
+  "theme_color": "#E07A5F",
+  "display": "standalone",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "/icons/iconi.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/iconi.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
