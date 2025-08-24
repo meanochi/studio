@@ -55,13 +55,13 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
               amount: ing.isHeading ? undefined : (ing.amount ?? 1),
               unit: ing.isHeading ? undefined : (ing.unit ?? ''),
               isOptional: ing.isHeading ? false : (ing.isOptional || false),
-              notes: ing.isHeading ? '' : (ing.notes || ''),
+              notes: ing.notes || '',
               isHeading: ing.isHeading || false,
           })),
           instructions: initialData.instructions.map(instr => ({
               id: instr.id || generateId(),
               text: instr.text || '',
-              imageUrl: instr.isHeading ? '' : (instr.imageUrl || ''),
+              imageUrl: instr.imageUrl || '',
               isHeading: instr.isHeading || false,
           })),
           tags: initialData.tags || [],
@@ -326,15 +326,15 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
         ingredients: data.ingredients.map(ing => ({
             ...ing,
             id: ing.id || generateId(),
-            notes: ing.isHeading ? null : (ing.notes?.trim() === '' ? null : ing.notes),
-            amount: ing.isHeading ? 0 : Number(ing.amount), 
-            unit: ing.isHeading ? '' : ing.unit, 
+            notes: ing.isHeading ? undefined : (ing.notes?.trim() === '' ? undefined : ing.notes),
+            amount: ing.isHeading ? undefined : Number(ing.amount), 
+            unit: ing.isHeading ? undefined : ing.unit, 
             isOptional: ing.isHeading ? false : ing.isOptional,
         })),
         instructions: data.instructions.map(instr => ({
             ...instr,
             id: instr.id || generateId(),
-            imageUrl: instr.isHeading ? null : (instr.imageUrl?.trim() === '' ? null : instr.imageUrl),
+            imageUrl: instr.isHeading ? undefined : (instr.imageUrl?.trim() === '' ? undefined : instr.imageUrl),
         })),
     };
     onSubmit(processedData);
@@ -669,5 +669,3 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
     </Form>
   );
 }
-
-    
