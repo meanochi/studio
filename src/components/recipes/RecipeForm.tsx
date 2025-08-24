@@ -42,17 +42,23 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
     return initialData
       ? {
           ...initialData,
+          name: initialData.name || '',
+          source: initialData.source || '',
+          prepTime: initialData.prepTime || '',
+          cookTime: initialData.cookTime || '',
+          servings: initialData.servings || 1,
+          servingUnit: initialData.servingUnit || 'מנה',
+          freezable: initialData.freezable || false,
           ingredients: initialData.ingredients.map(ing => ({
-              ...ing,
               id: ing.id || generateId(),
-              amount: ing.isHeading ? undefined : Number(ing.amount),
-              unit: ing.isHeading ? undefined : ing.unit,
+              name: ing.name || '',
+              amount: ing.isHeading ? undefined : (ing.amount ?? 1),
+              unit: ing.isHeading ? undefined : (ing.unit ?? ''),
               isOptional: ing.isHeading ? false : (ing.isOptional || false),
               notes: ing.isHeading ? '' : (ing.notes || ''),
               isHeading: ing.isHeading || false,
           })),
           instructions: initialData.instructions.map(instr => ({
-              ...instr,
               id: instr.id || generateId(),
               text: instr.text || '',
               imageUrl: instr.isHeading ? '' : (instr.imageUrl || ''),
@@ -663,3 +669,5 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
     </Form>
   );
 }
+
+    
