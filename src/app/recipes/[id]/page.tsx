@@ -32,7 +32,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
   Clock, Users, Edit3, Trash2, Printer, ShoppingCart, Utensils, Snowflake, Loader2, AlertTriangle, HomeIcon, RefreshCw, PlusSquare, Info, EyeIcon, EyeOffIcon, Heading2, Share2, ClipboardCopy, StickyNote, MoreVertical
@@ -388,7 +387,7 @@ export default function RecipeDetailPage() {
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="me-2 no-print text-green-500 hover:text-green-600 hover:bg-green-500/10 h-8 w-8" 
+                          className="me-2 no-print text-green-400 hover:text-green-500 hover:bg-green-500/10 h-8 w-8" 
                           onClick={() => handleAddSingleIngredientToShoppingList(ingredient)}
                           aria-label={`הוסף ${ingredient.name} לרשימת הקניות`}
                           title={`הוסף ${ingredient.name} לרשימת הקניות`}
@@ -507,34 +506,25 @@ export default function RecipeDetailPage() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" title="אפשרויות נוספות">
-                      <MoreVertical size={18} />
-                  </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                  <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                          <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive flex items-center gap-2 cursor-pointer">
-                              <Trash2 size={18} /> מחק מתכון
-                          </DropdownMenuItem>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                          <AlertDialogHeader>
-                              <AlertDialogTitle>האם אתה בטוח?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                  לא ניתן לבטל פעולה זו. הפעולה תמחק לצמיתות את המתכון "{recipe.name}".
-                              </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                              <AlertDialogCancel>ביטול</AlertDialogCancel>
-                              <AlertDialogAction onClick={handleDelete}>מחק</AlertDialogAction>
-                          </AlertDialogFooter>
-                      </AlertDialogContent>
-                  </AlertDialog>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button variant="outline" size="icon" title="מחק מתכון" className="text-destructive hover:bg-destructive/10 hover:text-destructive">
+                        <Trash2 size={18} />
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>האם אתה בטוח?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            לא ניתן לבטל פעולה זו. הפעולה תמחק לצמיתות את המתכון "{recipe.name}".
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>ביטול</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete}>מחק</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
     </div>
