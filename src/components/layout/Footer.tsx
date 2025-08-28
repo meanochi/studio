@@ -1,6 +1,6 @@
 'use client';
 
-import { ChefHat } from 'lucide-react';
+import { ChefHat, Phone } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 export default function Footer() {
@@ -15,8 +15,8 @@ export default function Footer() {
   return (
     <footer className="bg-primary/10 text-primary py-6 text-center no-print">
       <div className="container mx-auto flex justify-center items-center gap-2">
-        <ChefHat size={20} />
-        <p className="text-sm font-body">&copy; {year} Lopiansky's Cookbook. נצרו את המורשת הקולינרית שלכם.</p>
+        <Phone size={16} />
+        <p className="text-sm font-body">rights reserved for michal 0583245395</p>
       </div>
     </footer>
   );
