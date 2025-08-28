@@ -7,7 +7,7 @@ import type { Metadata, Viewport } from 'next';
 
 // הגדרת המטא-דאטה הנכונה
 export const metadata: Metadata = {
-  title: 'Family Cookbook',
+  title: "Lopiansky's Cookbook",
   description: 'מקום לכל המתכונים המשפחתיים שלך',
   manifest: '/manifest.json', // <-- תיקון הנתיב והסיומת
   icons: {

@@ -16,7 +16,7 @@ export default function Footer() {
     <footer className="bg-primary/10 text-primary py-6 text-center no-print">
       <div className="container mx-auto flex justify-center items-center gap-2">
         <ChefHat size={20} />
-        <p className="text-sm font-body">&copy; {year} Family Cookbook. נצרו את המורשת הקולינרית שלכם.</p>
+        <p className="text-sm font-body">&copy; {year} Lopiansky's Cookbook. נצרו את המורשת הקולינרית שלכם.</p>
       </div>
     </footer>
   );

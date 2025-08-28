@@ -21,7 +21,7 @@ export default function Header() {
     <header className="bg-primary text-primary-foreground shadow-md sticky top-0 z-50 no-print">
       <div className="container mx-auto px-4 py-3 flex flex-col sm:flex-row justify-between items-center">
         <Link href="/" className="flex items-center gap-2 mb-2 sm:mb-0 hover:opacity-90 transition-opacity">
-          <h1 className="text-3xl font-headline">Family Cookbook</h1>
+          <h1 className="text-3xl font-headline">Lopiansky's Cookbook</h1>
           <ChefHat size={36} />
         </Link>
         <nav>
