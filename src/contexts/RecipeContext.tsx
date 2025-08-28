@@ -36,7 +36,7 @@ import type { RecipeFormData } from '@/components/recipes/RecipeSchema';
 const RecipeContext = createContext<RecipeContextType | undefined>(undefined);
 
 const RECENTLY_VIEWED_KEY = 'recentlyViewedRecipeIds';
-const MAX_RECENTLY_VIEWED = 3;
+const MAX_RECENTLY_VIEWED = 4;
 
 export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [recipes, setRecipes] = useState<Recipe[]>([]);

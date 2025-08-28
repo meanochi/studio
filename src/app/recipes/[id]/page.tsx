@@ -35,7 +35,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
-  Clock, Users, Edit3, Trash2, Printer, ShoppingCart, Utensils, Snowflake, Loader2, AlertTriangle, HomeIcon, RefreshCw, PlusSquare, Info, EyeIcon, EyeOffIcon, Heading2, Share2, ClipboardCopy, StickyNote
+  Clock, Users, Edit3, Trash2, Printer, ShoppingCart, Utensils, Snowflake, Loader2, AlertTriangle, HomeIcon, RefreshCw, PlusSquare, Info, EyeIcon, EyeOffIcon, Heading2, Share2, ClipboardCopy, StickyNote, MoreVertical
 } from 'lucide-react';
 
 
@@ -388,14 +388,12 @@ export default function RecipeDetailPage() {
                         >
                           <PlusSquare size={20} />
                         </Button>
-                        <span className="font-semibold text-primary flex-1">
-                            {ingredient.name}
+                         <span className="text-foreground">
+                            <span className="font-semibold text-primary">{ingredient.name}</span>
+                            <span> - {Number((ingredient.amount).toFixed(2))} {getDisplayUnit(ingredient.amount, ingredient.unit)}</span>
                             {ingredient.isOptional && <span className="text-xs text-muted-foreground ms-1">(אופציונלי)</span>}
                         </span>
-                        <span className="text-muted-foreground flex-1 text-center">
-                          {Number((ingredient.amount).toFixed(2))} {getDisplayUnit(ingredient.amount, ingredient.unit)}
-                        </span>
-                        <span className="text-xs text-gray-400 flex-1 text-left italic no-print">
+                        <span className="text-xs text-gray-400 flex-1 text-left italic no-print ms-4">
                           {multiplier !== 1 && `(מקורי: ${Number((ingredient.amount / multiplier).toFixed(2))} ${getDisplayUnit(ingredient.amount/multiplier, ingredient.unit)})`}
                         </span>
                       </div>
@@ -466,39 +464,15 @@ export default function RecipeDetailPage() {
         </Card>
       </div>
       
-      <div className="p-6 flex flex-col sm:flex-row justify-start items-center gap-3 border-t no-print mt-4 rounded-b-lg bg-card">
-          <Button asChild variant="outline" className="w-full sm:w-auto flex items-center gap-2">
-            <Link href={`/recipes/edit/${recipe.id}`}>
-              <Edit3 size={18} /> ערוך
-            </Link>
-          </Button>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive" className="w-full sm:w-auto flex items-center gap-2">
-                <Trash2 size={18} /> מחק
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>האם אתה בטוח?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  לא ניתן לבטל פעולה זו. הפעולה תמחק לצמיתות את המתכון "{recipe.name}".
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>ביטול</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete}>מחק</AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+      <div className="p-6 flex flex-col sm:flex-row justify-between items-center gap-3 border-t no-print mt-4 rounded-b-lg bg-card">
+        <Button variant="outline" onClick={handleAddAllToShoppingList} className="flex-grow sm:flex-grow-0 flex items-center gap-2">
+            <ShoppingCart size={18} /> הוסף הכל לרשימת קניות
+        </Button>
 
-          <div className="ms-auto flex flex-wrap justify-end gap-2">
-             <Button variant="outline" onClick={handleAddAllToShoppingList} className="flex-grow sm:flex-grow-0 flex items-center gap-2">
-               <ShoppingCart size={18} /> הוסף הכל לרשימת קניות
-             </Button>
-             <Button variant="outline" onClick={handlePrint} size="icon" title="הדפס">
-               <Printer size={18} />
-             </Button>
+        <div className="flex-grow sm:flex-grow-0 ms-auto flex items-center gap-2">
+            <Button variant="outline" onClick={handlePrint} size="icon" title="הדפס">
+              <Printer size={18} />
+            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="icon" title="שתף או הורד">
@@ -523,6 +497,41 @@ export default function RecipeDetailPage() {
                     שתף קישור באימייל
                   </a>
                 </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+             <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" title="אפשרויות נוספות">
+                      <MoreVertical size={18} />
+                  </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                      <Link href={`/recipes/edit/${recipe.id}`} className="flex items-center gap-2 cursor-pointer">
+                          <Edit3 size={18} /> ערוך מתכון
+                      </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                          <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive flex items-center gap-2 cursor-pointer">
+                              <Trash2 size={18} /> מחק מתכון
+                          </DropdownMenuItem>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                          <AlertDialogHeader>
+                              <AlertDialogTitle>האם אתה בטוח?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                  לא ניתן לבטל פעולה זו. הפעולה תמחק לצמיתות את המתכון "{recipe.name}".
+                              </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                              <AlertDialogCancel>ביטול</AlertDialogCancel>
+                              <AlertDialogAction onClick={handleDelete}>מחק</AlertDialogAction>
+                          </AlertDialogFooter>
+                      </AlertDialogContent>
+                  </AlertDialog>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

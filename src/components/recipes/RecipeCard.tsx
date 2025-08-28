@@ -21,6 +21,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useRecipes } from '@/contexts/RecipeContext';
 import { useToast } from '@/hooks/use-toast';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface RecipeCardProps {
   recipe: Recipe;
@@ -80,25 +87,34 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
           </div>
         )}
       </CardContent>
-      <CardFooter className="p-4 pt-0 flex flex-col sm:flex-row justify-between items-center gap-2 no-print">
-        <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
+      <CardFooter className="p-4 pt-0 flex justify-between items-center no-print">
+        <Button asChild variant="outline" size="sm">
           <Link href={`/recipes/${recipe.id}`} className="flex items-center gap-1">
-            <Eye size={16} /> הצג
+            <Eye size={16} /> הצג מתכון
           </Link>
         </Button>
-        <div className="flex gap-2 w-full sm:w-auto">
-          <Button asChild variant="outline" size="sm" className="flex-1 sm:flex-none">
-            <Link href={`/recipes/edit/${recipe.id}`} className="flex items-center gap-1">
-              <Edit3 size={16} /> ערוך
-            </Link>
-          </Button>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="sm" className="flex-1 sm:flex-none flex items-center gap-1">
-                <Trash2 size={16} /> מחק
+        <AlertDialog>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm">
+                ערוך
               </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <Link href={`/recipes/edit/${recipe.id}`} className="flex items-center gap-2 cursor-pointer">
+                  <Edit3 size={16} /> ערוך
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <AlertDialogTrigger asChild>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive flex items-center gap-2 cursor-pointer">
+                  <Trash2 size={16} /> מחק
+                </DropdownMenuItem>
+              </AlertDialogTrigger>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>האם אתה בטוח?</AlertDialogTitle>
                 <AlertDialogDescription>
@@ -110,11 +126,8 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
                 <AlertDialogAction onClick={handleDelete}>מחק</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
-          </AlertDialog>
-        </div>
+        </AlertDialog>
       </CardFooter>
     </Card>
   );
 }
-
-    

@@ -9,6 +9,33 @@ import { PlusCircle, Search, Loader2, History, BookOpen } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useMemo } from 'react';
 import { Separator } from '@/components/ui/separator';
+import type { Recipe } from '@/types';
+import Image from 'next/image';
+import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+
+const CompactRecipeCard = ({ recipe }: { recipe: Recipe }) => {
+  return (
+    <Link href={`/recipes/${recipe.id}`} className="group block">
+      <Card className="overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300">
+        <CardHeader className="p-0 relative">
+            <div className="w-full h-32 relative">
+                <Image
+                    src={recipe.imageUrl || 'https://picsum.photos/300/200'}
+                    alt={recipe.name}
+                    fill
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    data-ai-hint="recipe food"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+            </div>
+            <div className="absolute bottom-0 p-2">
+                <CardTitle className="text-md font-headline text-white truncate">{recipe.name}</CardTitle>
+            </div>
+        </CardHeader>
+      </Card>
+    </Link>
+  );
+};
 
 export default function HomePage() {
   const { recipes, loading, recentlyViewed } = useRecipes();
@@ -78,9 +105,9 @@ export default function HomePage() {
               <History size={24} />
               נצפו לאחרונה
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {recentlyViewed.map(recipe => (
-                <RecipeCard key={`recent-${recipe.id}`} recipe={recipe} />
+                <CompactRecipeCard key={`recent-${recipe.id}`} recipe={recipe} />
               ))}
             </div>
             <Separator className="my-8" />
