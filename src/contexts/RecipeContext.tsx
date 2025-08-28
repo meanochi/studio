@@ -36,7 +36,7 @@ import type { RecipeFormData } from '@/components/recipes/RecipeSchema';
 const RecipeContext = createContext<RecipeContextType | undefined>(undefined);
 
 const RECENTLY_VIEWED_KEY = 'recentlyViewedRecipeIds';
-const MAX_RECENTLY_VIEWED = 4;
+const MAX_RECENTLY_VIEWED = 8;
 
 export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -162,8 +162,8 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
           id: ing.id || generateId(),
           name: ing.name || "",
           isHeading: ing.isHeading || false,
-          amount: ing.isHeading ? 0 : (ing.amount ?? 0),
-          unit: ing.isHeading ? "" : (ing.unit ?? ""),
+          amount: ing.isHeading ? null : (ing.amount ?? null),
+          unit: ing.isHeading ? null : (ing.unit ?? null),
           isOptional: ing.isHeading ? false : (ing.isOptional ?? false),
           notes: ing.isHeading ? null : (ing.notes ?? null),
         })),
@@ -190,14 +190,16 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         notes: recipeForFirestore.notes,
         ingredients: recipeForFirestore.ingredients.map(ing => ({
             ...ing,
-            id: ing.id,
+            id: ing.id!,
+            amount: ing.amount || 0,
+            unit: ing.unit || '',
             isOptional: ing.isOptional || false,
             notes: ing.notes || null,
             isHeading: ing.isHeading || false,
         })),
         instructions: recipeForFirestore.instructions.map(instr => ({
             ...instr,
-            id: instr.id,
+            id: instr.id!,
             imageUrl: instr.imageUrl || null,
             isHeading: instr.isHeading || false,
         })),
@@ -232,8 +234,8 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
           id: ing.id || generateId(),
           name: ing.name || "",
           isHeading: ing.isHeading || false,
-          amount: ing.isHeading ? 0 : (ing.amount ?? 0),
-          unit: ing.isHeading ? "" : (ing.unit ?? ""),
+          amount: ing.isHeading ? null : (ing.amount ?? null),
+          unit: ing.isHeading ? null : (ing.unit ?? null),
           isOptional: ing.isHeading ? false : (ing.isOptional ?? false),
           notes: ing.isHeading ? null : (ing.notes ?? null),
         })),

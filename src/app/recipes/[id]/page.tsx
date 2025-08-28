@@ -389,8 +389,8 @@ export default function RecipeDetailPage() {
                           <PlusSquare size={20} />
                         </Button>
                          <span className="text-foreground">
+                            <span>{Number((ingredient.amount).toFixed(2))} {getDisplayUnit(ingredient.amount, ingredient.unit)} </span>
                             <span className="font-semibold text-primary">{ingredient.name}</span>
-                            <span> - {Number((ingredient.amount).toFixed(2))} {getDisplayUnit(ingredient.amount, ingredient.unit)}</span>
                             {ingredient.isOptional && <span className="text-xs text-muted-foreground ms-1">(אופציונלי)</span>}
                         </span>
                         <span className="text-xs text-gray-400 flex-1 text-left italic no-print ms-4">
