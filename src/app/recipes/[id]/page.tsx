@@ -388,7 +388,7 @@ export default function RecipeDetailPage() {
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="me-2 no-print text-green-400 hover:text-green-500 hover:bg-green-500/10 h-8 w-8" 
+                          className="me-2 no-print text-muted-foreground hover:text-primary hover:bg-primary/10 h-8 w-8" 
                           onClick={() => handleAddSingleIngredientToShoppingList(ingredient)}
                           aria-label={`הוסף ${ingredient.name} לרשימת הקניות`}
                           title={`הוסף ${ingredient.name} לרשימת הקניות`}
