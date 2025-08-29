@@ -145,6 +145,43 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
     }
   }, [initialData]);
 
+  const resizeImage = (file: File, maxSize: number, quality: number): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = document.createElement('img');
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let { width, height } = img;
+  
+          if (width > height) {
+            if (width > maxSize) {
+              height *= maxSize / width;
+              width = maxSize;
+            }
+          } else {
+            if (height > maxSize) {
+              width *= maxSize / height;
+              height = maxSize;
+            }
+          }
+  
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            return reject(new Error('Could not get canvas context'));
+          }
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = reject;
+      };
+      reader.onerror = reject;
+    });
+  };
 
   const toggleInstructionImageInputVisibility = (instructionId: string) => {
     setVisibleInstructionImageInputs(prev => ({
@@ -160,20 +197,32 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
     }
   };
 
-  const handleRecipeImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleRecipeImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) { // 2MB limit
-        form.setError('imageUrl', { type: 'manual', message: 'הקובץ גדול מדי (מקסימום 2MB)' });
+      if (file.size > 5 * 1024 * 1024) { // 5MB initial limit before resize
+        form.setError('imageUrl', { type: 'manual', message: 'הקובץ גדול מדי (מקסימום 5MB)' });
         return;
       }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setRecipeImagePreview(result);
-        form.setValue('imageUrl', result, { shouldValidate: true });
-      };
-      reader.readAsDataURL(file);
+      try {
+        const resizedDataUrl = await resizeImage(file, 1024, 0.8);
+        setRecipeImagePreview(resizedDataUrl);
+        form.setValue('imageUrl', resizedDataUrl, { shouldValidate: true });
+        if(resizedDataUrl.length > 1048487) {
+            form.setError('imageUrl', { type: 'manual', message: 'התמונה גדולה מדי גם לאחר הקטנה.' });
+            console.warn("Resized image is still too large for Firestore.");
+        }
+      } catch (error) {
+        console.error("Image resizing failed:", error);
+        toast({ title: 'שגיאה בעיבוד תמונה', description: 'לא ניתן היה להקטין את התמונה.', variant: 'destructive'});
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const result = reader.result as string;
+          setRecipeImagePreview(result);
+          form.setValue('imageUrl', result, { shouldValidate: true });
+        };
+        reader.readAsDataURL(file);
+      }
     }
   };
 
@@ -185,22 +234,35 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
     }
   };
 
-  const handleInstructionImageUpload = (index: number, event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInstructionImageUpload = async (index: number, event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.size > 1 * 1024 * 1024) { // 1MB limit for step images
-        form.setError(`instructions.${index}.imageUrl`, { type: 'manual', message: 'קובץ גדול מדי (1MB מקס)' });
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit for step images
+        form.setError(`instructions.${index}.imageUrl`, { type: 'manual', message: 'קובץ גדול מדי (5MB מקס)' });
         return;
       }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
+      try {
+        const resizedDataUrl = await resizeImage(file, 800, 0.75);
         const newPreviews = [...instructionImagePreviews];
-        newPreviews[index] = result;
+        newPreviews[index] = resizedDataUrl;
         setInstructionImagePreviews(newPreviews);
-        form.setValue(`instructions.${index}.imageUrl`, result, { shouldValidate: true });
-      };
-      reader.readAsDataURL(file);
+        form.setValue(`instructions.${index}.imageUrl`, resizedDataUrl, { shouldValidate: true });
+        if(resizedDataUrl.length > 1048487) {
+            form.setError(`instructions.${index}.imageUrl`, { type: 'manual', message: 'התמונה גדולה מדי.' });
+        }
+      } catch (error) {
+        console.error("Instruction image resizing failed:", error);
+        toast({ title: 'שגיאה בעיבוד תמונה', description: 'לא ניתן היה להקטין את התמונה.', variant: 'destructive'});
+         const reader = new FileReader();
+        reader.onloadend = () => {
+          const result = reader.result as string;
+          const newPreviews = [...instructionImagePreviews];
+          newPreviews[index] = result;
+          setInstructionImagePreviews(newPreviews);
+          form.setValue(`instructions.${index}.imageUrl`, result, { shouldValidate: true });
+        };
+        reader.readAsDataURL(file);
+      }
     }
   };
 
@@ -421,7 +483,7 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
                 {recipeImagePreview ? (
                   <div className="relative group"><NextImage src={recipeImagePreview} alt="תצוגה מקדימה של תמונה" width={200} height={200} className="rounded-md object-cover w-full max-h-64 border" data-ai-hint="recipe food" /><Button type="button" variant="destructive" size="icon" onClick={handleRemoveRecipeImage} className="absolute top-2 right-2 opacity-70 group-hover:opacity-100 transition-opacity h-8 w-8"><X size={16} /></Button></div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-input rounded-md cursor-pointer hover:border-primary transition-colors" onClick={() => recipeFileInputRef.current?.click()}><UploadCloud size={40} className="text-muted-foreground mb-2" /><p className="text-sm text-muted-foreground">גרור ושחרר או לחץ להעלאה</p><p className="text-xs text-muted-foreground">(עד 2MB)</p></div>
+                  <div className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-input rounded-md cursor-pointer hover:border-primary transition-colors" onClick={() => recipeFileInputRef.current?.click()}><UploadCloud size={40} className="text-muted-foreground mb-2" /><p className="text-sm text-muted-foreground">גרור ושחרר או לחץ להעלאה</p><p className="text-xs text-muted-foreground">(עד 5MB)</p></div>
                 )}
                 <Input type="file" accept="image/*" onChange={handleRecipeImageUpload} className="hidden" ref={recipeFileInputRef}/>
                 <FormField control={form.control} name="imageUrl" render={({ field }) => (
@@ -671,3 +733,5 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
     </Form>
   );
 }
+
+    
