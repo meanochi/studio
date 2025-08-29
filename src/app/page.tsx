@@ -14,18 +14,25 @@ import Image from 'next/image';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 
 const CompactRecipeCard = ({ recipe }: { recipe: Recipe }) => {
+  const hasImage = !!recipe.imageUrl;
   return (
     <Link href={`/recipes/${recipe.id}`} className="group block">
       <Card className="overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300">
         <CardHeader className="p-0 relative">
             <div className="w-full h-32 relative">
-                <Image
-                    src={recipe.imageUrl || 'https://picsum.photos/300/200'}
-                    alt={recipe.name}
-                    fill
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    data-ai-hint="recipe food"
-                />
+                {hasImage ? (
+                    <Image
+                        src={recipe.imageUrl!}
+                        alt={recipe.name}
+                        fill
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        data-ai-hint="recipe food"
+                    />
+                ) : (
+                    <div className="w-full h-full bg-secondary flex items-center justify-center">
+                        <span className="text-muted-foreground font-headline text-2xl">{recipe.name.charAt(0)}</span>
+                    </div>
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             </div>
             <div className="absolute bottom-0 p-2">
@@ -105,7 +112,7 @@ export default function HomePage() {
               <History size={24} />
               נצפו לאחרונה
             </h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
               {recentlyViewed.map(recipe => (
                 <CompactRecipeCard key={`recent-${recipe.id}`} recipe={recipe} />
               ))}

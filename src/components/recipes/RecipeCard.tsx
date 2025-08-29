@@ -56,13 +56,17 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
     <Card className="flex flex-col h-full overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 recipe-card-print group">
       <CardHeader className="p-0 relative">
         <Link href={`/recipes/${recipe.id}`} aria-label={`הצג מתכון: ${recipe.name}`} className="block w-full h-48 relative">
-          {hasImage && (
+          {hasImage ? (
             <Image
               src={recipe.imageUrl!}
               alt={recipe.name}
               fill
               className="object-cover transition-transform duration-300 group-hover:scale-105"
             />
+          ) : (
+             <div className="w-full h-full bg-secondary flex items-center justify-center">
+                <span className="text-muted-foreground font-headline text-2xl">{recipe.name.charAt(0)}</span>
+             </div>
           )}
         </Link>
       </CardHeader>
@@ -81,8 +85,8 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
         </div>
         {recipe.tags && recipe.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-2">
-            {recipe.tags.slice(0, 3).map(tag => (
-              <Badge key={tag} variant="default" className="font-body text-xs bg-accent text-accent-foreground border border-accent hover:bg-accent/90">{tag}</Badge>
+            {recipe.tags.slice(0, 3).map((tag, index) => (
+              <Badge key={`${tag}-${index}`} variant="default" className="font-body text-xs bg-accent text-accent-foreground border border-accent hover:bg-accent/90">{tag}</Badge>
             ))}
           </div>
         )}

@@ -292,7 +292,7 @@ export default function RecipeDetailPage() {
       <div ref={printRef}>
         <Card className="overflow-hidden shadow-xl recipe-detail-print">
           <CardHeader className="p-0 relative">
-            {hasImage && (
+            {hasImage ? (
               <div className="w-full h-64 md:h-96 relative print-image-container">
                 <Image
                   src={recipe.imageUrl!}
@@ -302,6 +302,10 @@ export default function RecipeDetailPage() {
                   priority
                 />
               </div>
+            ) : (
+                <div className="w-full h-64 md:h-96 relative print-image-container bg-secondary flex items-center justify-center">
+                    <span className="text-primary font-headline text-7xl">{recipe.name.charAt(0)}</span>
+                </div>
             )}
             <div className={`print-header-overlay ${hasImage ? "absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-6 flex flex-col justify-end" : "p-6 bg-primary/10"}`}>
               <div className="flex items-center gap-4">
@@ -336,8 +340,8 @@ export default function RecipeDetailPage() {
 
             {recipe.tags && recipe.tags.length > 0 && (
               <div className="flex flex-wrap gap-2">
-                {recipe.tags.map(tag => (
-                  <Badge key={tag} variant="default" className="font-body text-sm bg-accent text-accent-foreground border border-accent hover:bg-accent/90">{tag}</Badge>
+                {recipe.tags.map((tag, index) => (
+                  <Badge key={`${tag}-${index}`} variant="default" className="font-body text-sm bg-accent text-accent-foreground border border-accent hover:bg-accent/90">{tag}</Badge>
                 ))}
               </div>
             )}
@@ -531,5 +535,3 @@ export default function RecipeDetailPage() {
     </div>
   );
 }
-
-    
