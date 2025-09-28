@@ -39,7 +39,7 @@ export default function HomePage() {
                        <X size={14}/>
                    </div>
                 </TabsTrigger>
-            ))}
+            )).reverse()}
          </TabsList>
       </div>
     );
@@ -116,7 +116,7 @@ export default function HomePage() {
   return (
     <>
       <TabsContent value="home" className="mt-6">
-          <div className="flex justify-between items-center gap-4 mb-6">
+          <div className="flex justify-between items-center gap-4 mb-6 text-right">
             <Button asChild className="w-full sm:w-auto flex-shrink-0">
                 <Link href="/recipes/add" className="flex items-center gap-2">
                 <PlusCircle size={20} />
