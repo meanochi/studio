@@ -136,7 +136,7 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
   }, [recipe, multiplier]);
 
   const toggleStepImageVisibility = (stepId: string) => {
-    setVisibleStepImages(prev => ({ ...prev, [stepId]: !prev[stepId] }));
+    setVisibleStepImages(prev => ({ ...prev, [stepId] : !prev[stepId] }));
   };
 
   const handleMultiplierChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -441,7 +441,7 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
                     <StickyNote size={22} />
                     הערות
                   </h3>
-                  <div className="p-4 bg-background rounded-md border shadow-sm">
+                  <div className="p-4 bg-background rounded-md border shadow-sm text-right">
                     <p className="font-body whitespace-pre-wrap">{recipe.notes}</p>
                   </div>
                 </div>
@@ -468,7 +468,7 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
                   </Button>
                 </div>
               </div>
-              <div className="space-y-1 font-body">
+              <div className="space-y-1 font-body text-right">
                 {displayedIngredients.map(ingredient => (
                   ingredient.isHeading ? (
                     <h4 key={ingredient.id} className="text-lg font-semibold text-accent mt-4 mb-2 pt-2 border-t border-dashed">
@@ -513,7 +513,7 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
 
             <div>
               <h3 className="text-2xl font-headline text-primary mb-3">הוראות</h3>
-              <ol className="list-none space-y-4 font-body text-base md:text-lg leading-relaxed ps-0">
+              <ol className="list-none space-y-4 font-body text-base md:text-lg leading-relaxed ps-0 text-right">
                 {recipe.instructions.map((step, index) => {
                   if (step.isHeading) {
                     return (
