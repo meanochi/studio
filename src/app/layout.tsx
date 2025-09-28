@@ -1,9 +1,9 @@
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
-import AppProviders from '@/contexts/AppProviders';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import type { Metadata, Viewport } from 'next';
+import { Providers } from './providers';
 
 // הגדרת המטא-דאטה הנכונה
 export const metadata: Metadata = {
@@ -38,14 +38,14 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300..700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased min-h-screen flex flex-col">
-        <AppProviders>
+        <Providers>
           <Header />
           <main className="flex-grow container mx-auto px-4 py-8">
             {children}
           </main>
           <Footer />
           <Toaster />
-        </AppProviders>
+        </Providers>
       </body>
     </html>
   );
