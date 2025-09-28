@@ -16,7 +16,7 @@ import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 const CompactRecipeCard = ({ recipe }: { recipe: Recipe }) => {
   const hasImage = !!recipe.imageUrl;
   return (
-    <Link href={`/recipes/${recipe.id}`} className="group block">
+    <Link href={`/recipes/${recipe.id}`} className="group block" target="_blank" rel="noopener noreferrer">
       <Card className="overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300">
         <CardHeader className="p-0 relative">
             <div className="w-full h-32 relative">

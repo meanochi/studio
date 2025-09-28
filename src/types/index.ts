@@ -1,5 +1,4 @@
 
-
 export interface Ingredient {
   id: string;
   name: string;
@@ -48,4 +47,11 @@ export interface Note {
   title: string;
   content: string;
   createdAt: Date;
+}
+
+export interface MealPlan {
+  id: string;
+  name: string;
+  createdAt: Date;
+  recipeIds: string[];
 }

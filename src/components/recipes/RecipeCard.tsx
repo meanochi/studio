@@ -55,7 +55,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
   return (
     <Card className="flex flex-col h-full overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 recipe-card-print group">
       <CardHeader className="p-0 relative">
-        <Link href={`/recipes/${recipe.id}`} aria-label={`הצג מתכון: ${recipe.name}`} className="block w-full h-48 relative">
+        <Link href={`/recipes/${recipe.id}`} aria-label={`הצג מתכון: ${recipe.name}`} className="block w-full h-48 relative" target="_blank" rel="noopener noreferrer">
           {hasImage ? (
             <Image
               src={recipe.imageUrl!}
@@ -71,7 +71,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
         </Link>
       </CardHeader>
       <CardContent className="p-4 flex-grow">
-        <Link href={`/recipes/${recipe.id}`} className="hover:text-primary">
+        <Link href={`/recipes/${recipe.id}`} className="hover:text-primary" target="_blank" rel="noopener noreferrer">
           <CardTitle className="text-2xl font-headline mb-2 truncate" title={recipe.name}>{recipe.name}</CardTitle>
         </Link>
         <p className="text-sm text-muted-foreground mb-1 font-body italic">מקור: {recipe.source}</p>
@@ -93,7 +93,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
       </CardContent>
       <CardFooter className="p-4 pt-0 flex justify-between items-center no-print">
         <Button asChild variant="outline" size="sm">
-          <Link href={`/recipes/${recipe.id}`} className="flex items-center gap-1">
+          <Link href={`/recipes/${recipe.id}`} className="flex items-center gap-1" target="_blank" rel="noopener noreferrer">
             <Eye size={16} /> הצג מתכון
           </Link>
         </Button>
