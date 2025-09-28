@@ -4,6 +4,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import type { Metadata, Viewport } from 'next';
 import { Providers } from './providers';
+import { HeaderProvider } from '@/contexts/HeaderContext';
 
 // הגדרת המטא-דאטה הנכונה
 export const metadata: Metadata = {
@@ -39,12 +40,14 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased min-h-screen flex flex-col">
         <Providers>
-          <Header />
-          <main className="flex-grow container mx-auto px-4 py-8">
-            {children}
-          </main>
-          <Footer />
-          <Toaster />
+          <HeaderProvider>
+            <Header />
+            <main className="flex-grow container mx-auto px-4 py-8">
+              {children}
+            </main>
+            <Footer />
+            <Toaster />
+          </HeaderProvider>
         </Providers>
       </body>
     </html>

@@ -7,10 +7,11 @@ import { useRecipes } from '@/contexts/RecipeContext';
 import { Input } from '@/components/ui/input';
 import { PlusCircle, Search, Loader2, BookOpen, X, Home } from 'lucide-react';
 import Link from 'next/link';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Recipe } from '@/types';
-import RecipeDetail from '@/components/recipes/RecipeDetail'; // We'll create this
+import RecipeDetail from '@/components/recipes/RecipeDetail';
+import { useHeader } from '@/contexts/HeaderContext';
 
 export default function HomePage() {
   const { recipes, loading, getRecipeById } = useRecipes();
@@ -18,6 +19,41 @@ export default function HomePage() {
   
   const [openTabs, setOpenTabs] = useState<Recipe[]>([]);
   const [activeTab, setActiveTab] = useState<string>('home');
+  const { setHeaderContent } = useHeader();
+
+
+  useEffect(() => {
+    const headerTabs = (
+        <div className="flex justify-start items-center gap-2 p-1 bg-card rounded-lg shadow overflow-x-auto">
+         <TabsList className="grid-flow-col auto-cols-max">
+            <TabsTrigger value="home" className="flex items-center gap-2">
+                <Home size={16}/> בית
+            </TabsTrigger>
+            {openTabs.map(recipe => (
+                <TabsTrigger key={recipe.id} value={recipe.id} className="relative group pe-8">
+                   <span className="truncate max-w-[150px]">{recipe.name}</span>
+                   <div
+                     role="button"
+                     aria-label={`Close tab for ${recipe.name}`}
+                     className="absolute end-0.5 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full opacity-50 group-hover:opacity-100 group-hover:bg-muted flex items-center justify-center"
+                     onClick={(e) => handleCloseTab(recipe.id, e)}
+                   >
+                       <X size={14}/>
+                   </div>
+                </TabsTrigger>
+            ))}
+         </TabsList>
+      </div>
+    );
+    
+    setHeaderContent(headerTabs);
+
+    // Cleanup function
+    return () => {
+        setHeaderContent(null);
+    }
+  }, [openTabs, setHeaderContent]);
+
 
   const handleOpenRecipeTab = (recipeId: string) => {
     const recipe = getRecipeById(recipeId);
@@ -87,27 +123,6 @@ export default function HomePage() {
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <div className="flex items-center justify-end gap-2 p-4 bg-card rounded-lg shadow overflow-x-auto">
-         <TabsList className="grid-flow-col auto-cols-max">
-            <TabsTrigger value="home" className="flex items-center gap-2">
-                <Home size={16}/> בית
-            </TabsTrigger>
-            {openTabs.map(recipe => (
-                <TabsTrigger key={recipe.id} value={recipe.id} className="relative group pe-8">
-                   <span className="truncate max-w-[150px]">{recipe.name}</span>
-                   <div
-                     role="button"
-                     aria-label={`Close tab for ${recipe.name}`}
-                     className="absolute end-0.5 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full opacity-50 group-hover:opacity-100 group-hover:bg-muted flex items-center justify-center"
-                     onClick={(e) => handleCloseTab(recipe.id, e)}
-                   >
-                       <X size={14}/>
-                   </div>
-                </TabsTrigger>
-            ))}
-         </TabsList>
-      </div>
-      
       <TabsContent value="home" className="mt-6">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
             <div className="text-right">
@@ -117,7 +132,7 @@ export default function HomePage() {
                     {resultsText}
                 </span>
             </div>
-            <div className="relative w-full sm:w-auto sm:min-w-[300px] flex-grow">
+            <div className="relative w-full sm:w-auto flex-grow">
                 <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
                 type="search"

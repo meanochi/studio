@@ -6,6 +6,8 @@ import { ChefHat, Home, ShoppingCart, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { useHeader } from '@/contexts/HeaderContext';
+
 
 const navItems = [
   { href: '/', label: 'בית', icon: Home },
@@ -15,6 +17,8 @@ const navItems = [
 
 export default function Header() {
   const pathname = usePathname();
+  const { headerContent } = useHeader();
+
 
   return (
     <header className="bg-primary text-primary-foreground shadow-md sticky top-0 z-50 no-print">
@@ -45,6 +49,11 @@ export default function Header() {
           </ul>
         </nav>
       </div>
+       {headerContent && (
+        <div className="container mx-auto px-4 pb-2 -mt-1">
+          {headerContent}
+        </div>
+      )}
     </header>
   );
 }
