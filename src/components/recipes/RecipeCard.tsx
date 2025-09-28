@@ -8,26 +8,8 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Clock, Users, Edit3, Trash2, Eye, CalendarPlus, Loader2, MoreVertical } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { useRecipes } from '@/contexts/RecipeContext';
 import { useToast } from '@/hooks/use-toast';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -184,88 +166,61 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
             <Eye size={16} /> הצג מתכון
           </Link>
         </Button>
-        <Dialog open={isPlanDialogOpen} onOpenChange={setIsPlanDialogOpen}>
-          <AlertDialog>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <MoreVertical size={16} />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <Link href={`/recipes/edit/${recipe.id}`} className="flex items-center gap-2 cursor-pointer">
-                    <Edit3 size={16} /> ערוך
-                  </Link>
-                </DropdownMenuItem>
+        <div className="flex items-center gap-2">
+            <Button asChild variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
+                <Link href={`/recipes/edit/${recipe.id}`} title="ערוך מתכון">
+                    <Edit3 size={16} />
+                </Link>
+            </Button>
+            <Dialog open={isPlanDialogOpen} onOpenChange={setIsPlanDialogOpen}>
                 <DialogTrigger asChild>
-                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="flex items-center gap-2 cursor-pointer">
-                        <CalendarPlus size={16} /> הוסף לתכנית
-                    </DropdownMenuItem>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" title="הוסף לתכנית">
+                        <CalendarPlus size={16} />
+                    </Button>
                 </DialogTrigger>
-                <DropdownMenuSeparator />
-                <AlertDialogTrigger asChild>
-                  <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive flex items-center gap-2 cursor-pointer">
-                    <Trash2 size={16} /> מחק
-                  </DropdownMenuItem>
-                </AlertDialogTrigger>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>האם אתה בטוח?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    לא ניתן לבטל פעולה זו. הפעולה תמחק לצמיתות את המתכון "{recipe.name}".
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>ביטול</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDelete}>מחק</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-          </AlertDialog>
-           <DialogContent>
-              <DialogHeader>
-                  <DialogTitle>הוסף את "{recipe.name}" לתכנית ארוחות</DialogTitle>
-              </DialogHeader>
-              {mealPlans.length > 0 ? (
-                  <div className="space-y-4 py-4">
-                      <Input
-                          placeholder="חפש תכנית..."
-                          value={planSearchTerm}
-                          onChange={(e) => setPlanSearchTerm(e.target.value)}
-                          className="mb-4"
-                      />
-                      <RadioGroup
-                          value={selectedPlanId}
-                          onValueChange={setSelectedPlanId}
-                          className="space-y-2 max-h-60 overflow-y-auto"
-                      >
-                          {filteredMealPlans.map(plan => (
-                              <div key={plan.id} className="flex items-center space-x-2">
-                                  <RadioGroupItem value={plan.id} id={`card-${recipe.id}-${plan.id}`} />
-                                  <Label htmlFor={`card-${recipe.id}-${plan.id}`}>{plan.name}</Label>
-                              </div>
-                          ))}
-                      </RadioGroup>
-                      {filteredMealPlans.length === 0 && (
-                          <p className="text-sm text-muted-foreground text-center">לא נמצאו תכניות תואמות.</p>
-                      )}
-                  </div>
-              ) : (
-                  <div className="py-4 text-center text-muted-foreground">
-                      <p>לא נמצאו תכניות ארוחות.</p>
-                      <Button variant="link" asChild><Link href="/meal-plans">צור תכנית חדשה</Link></Button>
-                  </div>
-              )}
-              <DialogFooter>
-                  <DialogClose asChild><Button variant="ghost">ביטול</Button></DialogClose>
-                  <Button onClick={handleAddToPlan} disabled={isAddingToPlan || !selectedPlanId}>
-                      {isAddingToPlan ? <Loader2 className="animate-spin" /> : "הוסף לתכנית"}
-                  </Button>
-              </DialogFooter>
-          </DialogContent>
-        </Dialog>
+                <DialogContent>
+                  <DialogHeader>
+                      <DialogTitle>הוסף את "{recipe.name}" לתכנית ארוחות</DialogTitle>
+                  </DialogHeader>
+                  {mealPlans.length > 0 ? (
+                      <div className="space-y-4 py-4">
+                          <Input
+                              placeholder="חפש תכנית..."
+                              value={planSearchTerm}
+                              onChange={(e) => setPlanSearchTerm(e.target.value)}
+                              className="mb-4"
+                          />
+                          <RadioGroup
+                              value={selectedPlanId}
+                              onValueChange={setSelectedPlanId}
+                              className="space-y-2 max-h-60 overflow-y-auto"
+                          >
+                              {filteredMealPlans.map(plan => (
+                                  <div key={plan.id} className="flex items-center space-x-2">
+                                      <RadioGroupItem value={plan.id} id={`card-${recipe.id}-${plan.id}`} />
+                                      <Label htmlFor={`card-${recipe.id}-${plan.id}`}>{plan.name}</Label>
+                                  </div>
+                              ))}
+                          </RadioGroup>
+                          {filteredMealPlans.length === 0 && (
+                              <p className="text-sm text-muted-foreground text-center">לא נמצאו תכניות תואמות.</p>
+                          )}
+                      </div>
+                  ) : (
+                      <div className="py-4 text-center text-muted-foreground">
+                          <p>לא נמצאו תכניות ארוחות.</p>
+                          <Button variant="link" asChild><Link href="/meal-plans">צור תכנית חדשה</Link></Button>
+                      </div>
+                  )}
+                  <DialogFooter>
+                      <DialogClose asChild><Button variant="ghost">ביטול</Button></DialogClose>
+                      <Button onClick={handleAddToPlan} disabled={isAddingToPlan || !selectedPlanId}>
+                          {isAddingToPlan ? <Loader2 className="animate-spin" /> : "הוסף לתכנית"}
+                      </Button>
+                  </DialogFooter>
+              </DialogContent>
+            </Dialog>
+        </div>
       </CardFooter>
     </Card>
   );
