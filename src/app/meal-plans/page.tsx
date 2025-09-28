@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Trash2, PlusCircle, AlertTriangle, CalendarDays, BookOpen, Copy, ShoppingCart } from 'lucide-react';
+import { Loader2, Trash2, PlusCircle, AlertTriangle, CalendarDays, BookOpen, Copy, ShoppingCart, MinusCircle, Plus, Minus } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, addDoc, deleteDoc, doc, query, orderBy, Timestamp, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import type { MealPlan, Recipe, Ingredient } from '@/types';
@@ -141,26 +141,19 @@ export default function MealPlansPage() {
     }
   };
 
-  const handleDuplicateRecipeInPlan = useCallback(async (planId: string, recipeId: string) => {
-    try {
-      const planRef = doc(db, MEAL_PLANS_COLLECTION, planId);
-      await updateDoc(planRef, {
-        recipeIds: arrayUnion(recipeId)
-      });
-      toast({
-        title: "מתכון שוכפל",
-        description: "המתכון נוסף שוב לתכנית."
-      });
-    } catch(error) {
-       console.error("Error duplicating recipe in plan:", error);
-       toast({ title: 'שגיאה', description: 'לא ניתן היה לשכפל את המתכון.', variant: 'destructive' });
-    }
-  }, [toast]);
-
-  const handleRemoveRecipeFromPlan = useCallback(async (plan: MealPlan, recipeId: string, indexToRemove: number) => {
+  const handleRemoveRecipeFromPlan = useCallback(async (plan: MealPlan, recipeId: string) => {
       try {
-        const updatedRecipeIds = [...plan.recipeIds];
-        updatedRecipeIds.splice(indexToRemove, 1);
+        const currentRecipeIds = plan.recipeIds || [];
+        const firstIndexToRemove = currentRecipeIds.indexOf(recipeId);
+        
+        if (firstIndexToRemove === -1) {
+            // Should not happen if UI is correct
+            console.warn("Recipe not found in plan for removal");
+            return;
+        }
+
+        const updatedRecipeIds = [...currentRecipeIds];
+        updatedRecipeIds.splice(firstIndexToRemove, 1);
         
         const planRef = doc(db, MEAL_PLANS_COLLECTION, plan.id);
         await updateDoc(planRef, {
@@ -175,9 +168,27 @@ export default function MealPlansPage() {
         toast({ title: 'שגיאה', description: 'לא ניתן היה להסיר את המתכון.', variant: 'destructive' });
     }
   }, [toast]);
+  
+  const handleRemoveAllInstanceOfRecipe = useCallback(async (plan: MealPlan, recipeId: string) => {
+      try {
+        const updatedRecipeIds = (plan.recipeIds || []).filter(id => id !== recipeId);
+        
+        const planRef = doc(db, MEAL_PLANS_COLLECTION, plan.id);
+        await updateDoc(planRef, {
+            recipeIds: updatedRecipeIds
+        });
+        toast({
+            title: "המתכון הוסר לחלוטין",
+            description: "כל המופעים של המתכון הוסרו מהתכנית.",
+            variant: "destructive"
+        });
+    } catch (error) {
+        console.error("Error removing all instances of recipe from plan:", error);
+        toast({ title: 'שגיאה', description: 'לא ניתן היה להסיר את המתכון.', variant: 'destructive' });
+    }
+  }, [toast]);
 
   const handleAddPlanToShoppingList = (plan: MealPlan) => {
-    const allIngredients: { recipe: Recipe, ingredients: Ingredient[] }[] = [];
     
     plan.recipeIds.forEach(recipeId => {
       const recipe = recipes.find(r => r.id === recipeId);
@@ -196,6 +207,18 @@ export default function MealPlansPage() {
   };
 
   const sortedRecipes = useMemo(() => recipes.slice().sort((a, b) => a.name.localeCompare(b.name, 'he')), [recipes]);
+  
+  const groupedRecipes = (plan: MealPlan) => {
+    const recipeCounts: Record<string, number> = {};
+    for (const recipeId of plan.recipeIds) {
+      recipeCounts[recipeId] = (recipeCounts[recipeId] || 0) + 1;
+    }
+    return Object.entries(recipeCounts).map(([recipeId, count]) => ({
+      recipe: recipes.find(r => r.id === recipeId),
+      count: count
+    })).filter(item => item.recipe); // Filter out cases where recipe might not be found
+  };
+
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
@@ -287,19 +310,28 @@ export default function MealPlansPage() {
                 
                 {plan.recipeIds.length > 0 ? (
                     <ul className="space-y-2">
-                        {plan.recipeIds.map((recipeId, index) => {
-                            const recipe = recipes.find(r => r.id === recipeId);
+                        {groupedRecipes(plan).map(({ recipe, count }) => {
                             if (!recipe) return null;
                             return (
-                                <li key={`${recipeId}-${index}`} className="flex items-center justify-between p-2 bg-secondary/20 rounded-md">
-                                    <Link href={`/recipes/${recipe.id}`} className="font-semibold text-primary hover:underline flex items-center gap-2" target="_blank" rel="noopener noreferrer">
-                                        <BookOpen size={16}/> {recipe.name}
-                                    </Link>
+                                <li key={recipe.id} className="flex items-center justify-between p-2 bg-secondary/20 rounded-md">
+                                    <div className="flex items-center gap-2">
+                                        <Link href={`/recipes/${recipe.id}`} className="font-semibold text-primary hover:underline flex items-center gap-2" target="_blank" rel="noopener noreferrer">
+                                            <BookOpen size={16}/> {recipe.name}
+                                        </Link>
+                                        {count > 1 && (
+                                            <span className="text-xs font-bold text-accent bg-accent/20 px-1.5 py-0.5 rounded-full">
+                                                x{count}
+                                            </span>
+                                        )}
+                                    </div>
                                     <div className="flex items-center gap-1">
-                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-primary/80" onClick={() => handleDuplicateRecipeInPlan(plan.id, recipeId)} title="שכפל מתכון">
-                                          <Copy size={16} />
+                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-primary/80" onClick={() => handleAddRecipeToPlan(plan.id, recipe.id)} title="הוסף עוד אחד">
+                                          <Plus size={16} />
                                       </Button>
-                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleRemoveRecipeFromPlan(plan, recipeId, index)} title="הסר מתכון">
+                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-primary/80" onClick={() => handleRemoveRecipeFromPlan(plan, recipe.id)} title="הסר אחד" disabled={count <= 0}>
+                                          <Minus size={16} />
+                                      </Button>
+                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleRemoveAllInstanceOfRecipe(plan, recipe.id)} title="הסר את כל המופעים">
                                           <Trash2 size={16} />
                                       </Button>
                                     </div>
@@ -324,3 +356,5 @@ export default function MealPlansPage() {
     </div>
   );
 }
+
+    
