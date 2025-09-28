@@ -39,7 +39,7 @@ export default function HomePage() {
                        <X size={14}/>
                    </div>
                 </TabsTrigger>
-            )).reverse()}
+            ))}
          </TabsList>
       </div>
     );
