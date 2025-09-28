@@ -87,7 +87,7 @@ export default function HomePage() {
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <div className="flex items-center gap-2 p-4 bg-card rounded-lg shadow overflow-x-auto">
+      <div className="flex items-center justify-end gap-2 p-4 bg-card rounded-lg shadow overflow-x-auto">
          <TabsList className="grid-flow-col auto-cols-max">
             <TabsTrigger value="home" className="flex items-center gap-2">
                 <Home size={16}/> בית
@@ -109,21 +109,14 @@ export default function HomePage() {
       </div>
       
       <TabsContent value="home" className="mt-6">
-          <div className="flex flex-col sm:flex-row justify-between items-baseline gap-4 mb-6">
-            <div className="flex-grow">
-                <h2 className="text-3xl font-headline text-primary">המתכונים שלי</h2>
-                <span className="text-sm text-muted-foreground font-body flex items-center gap-1.5 mt-1">
-                    <BookOpen size={16} />
-                    {resultsText}
-                </span>
-            </div>
+          <div className="flex flex-col sm:flex-row-reverse justify-between items-baseline gap-4 mb-6">
             <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
                 <div className="relative w-full sm:w-auto sm:min-w-[300px]">
                     <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     <Input
                     type="search"
                     placeholder="חפש מתכונים, תגיות או רכיבים..."
-                    className="ps-10 w-full"
+                    className="ps-10 w-full text-right"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     aria-label="חיפוש מתכונים"
@@ -135,6 +128,13 @@ export default function HomePage() {
                     הוסף מתכון חדש
                     </Link>
                 </Button>
+            </div>
+            <div className="flex-grow text-right">
+                <h2 className="text-3xl font-headline text-primary">המתכונים שלי</h2>
+                <span className="text-sm text-muted-foreground font-body flex items-center justify-end gap-1.5 mt-1">
+                    <BookOpen size={16} />
+                    {resultsText}
+                </span>
             </div>
           </div>
          
