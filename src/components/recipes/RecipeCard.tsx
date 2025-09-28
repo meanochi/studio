@@ -1,12 +1,12 @@
 
 'use client';
 
-import type { Recipe } from '@/types';
+import type { Recipe, MealPlan } from '@/types';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Clock, Users, Edit3, Trash2, Eye } from 'lucide-react';
+import { Clock, Users, Edit3, Trash2, Eye, CalendarPlus, Loader2, MoreVertical } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
   AlertDialog,
@@ -28,6 +28,23 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import React, { useState, useEffect, useMemo } from 'react';
+import { db } from '@/lib/firebase';
+import { collection, onSnapshot, query, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { generateId } from '@/lib/utils';
+
 
 interface RecipeCardProps {
   recipe: Recipe;
@@ -37,6 +54,28 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
   const { deleteRecipe } = useRecipes();
   const { toast } = useToast();
 
+  const [isPlanDialogOpen, setIsPlanDialogOpen] = useState(false);
+  const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
+  const [selectedPlanId, setSelectedPlanId] = useState<string>('');
+  const [isAddingToPlan, setIsAddingToPlan] = useState(false);
+  const [planSearchTerm, setPlanSearchTerm] = useState('');
+
+  // Fetch meal plans when the dialog is about to open
+  useEffect(() => {
+    if (isPlanDialogOpen) {
+      const plansQuery = query(collection(db, 'mealPlans'));
+      const unsubscribe = onSnapshot(plansQuery, (snapshot) => {
+        const plansData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as MealPlan));
+        setMealPlans(plansData);
+        if (plansData.length > 0 && !selectedPlanId) {
+          setSelectedPlanId(plansData[0].id);
+        }
+      });
+      return () => unsubscribe();
+    }
+  }, [isPlanDialogOpen, selectedPlanId]);
+
+
   const handleDelete = () => {
     deleteRecipe(recipe.id);
     toast({
@@ -45,6 +84,54 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
       variant: 'destructive',
     });
   };
+  
+  const handleAddToPlan = async () => {
+    if (!selectedPlanId || !recipe.id) {
+      toast({ title: "שגיאה", description: "אנא בחר תכנית.", variant: "destructive" });
+      return;
+    }
+    setIsAddingToPlan(true);
+    try {
+      const planRef = doc(db, 'mealPlans', selectedPlanId);
+      const planSnap = await getDoc(planRef);
+      if (planSnap.exists()) {
+        const planData = planSnap.data();
+        const items = planData.items || [];
+        const existingItemIndex = items.findIndex((item: any) => item.recipeId === recipe.id);
+
+        let updatedItems;
+        if (existingItemIndex > -1) {
+          updatedItems = [...items];
+          updatedItems[existingItemIndex].multiplier += 1;
+        } else {
+          updatedItems = [...items, { id: generateId(), recipeId: recipe.id, multiplier: 1 }];
+        }
+        await updateDoc(planRef, { items: updatedItems });
+        
+        toast({
+          title: "המתכון נוסף!",
+          description: `"${recipe?.name}" נוסף לתכנית "${planData.name}".`,
+        });
+        setIsPlanDialogOpen(false);
+      }
+    } catch (error) {
+      console.error("Error adding recipe to plan:", error);
+      toast({ title: 'שגיאה', description: 'לא ניתן היה להוסיף את המתכון לתכנית.', variant: 'destructive' });
+    } finally {
+      setIsAddingToPlan(false);
+      setPlanSearchTerm(''); // Reset search
+    }
+  };
+
+  const filteredMealPlans = useMemo(() => {
+    if (!planSearchTerm) {
+      return mealPlans;
+    }
+    return mealPlans.filter(plan =>
+      plan.name.toLowerCase().includes(planSearchTerm.toLowerCase())
+    );
+  }, [mealPlans, planSearchTerm]);
+
   
   const totalTime = () => {
     return `${recipe.prepTime}${recipe.cookTime ? `, ${recipe.cookTime}` : ''}`;
@@ -97,40 +184,88 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
             <Eye size={16} /> הצג מתכון
           </Link>
         </Button>
-        <AlertDialog>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm">
-                ערוך
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link href={`/recipes/edit/${recipe.id}`} className="flex items-center gap-2 cursor-pointer">
-                  <Edit3 size={16} /> ערוך
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <AlertDialogTrigger asChild>
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive flex items-center gap-2 cursor-pointer">
-                  <Trash2 size={16} /> מחק
+        <Dialog open={isPlanDialogOpen} onOpenChange={setIsPlanDialogOpen}>
+          <AlertDialog>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <MoreVertical size={16} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link href={`/recipes/edit/${recipe.id}`} className="flex items-center gap-2 cursor-pointer">
+                    <Edit3 size={16} /> ערוך
+                  </Link>
                 </DropdownMenuItem>
-              </AlertDialogTrigger>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>האם אתה בטוח?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  לא ניתן לבטל פעולה זו. הפעולה תמחק לצמיתות את המתכון "{recipe.name}".
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>ביטול</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete}>מחק</AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
+                <DialogTrigger asChild>
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="flex items-center gap-2 cursor-pointer">
+                        <CalendarPlus size={16} /> הוסף לתכנית
+                    </DropdownMenuItem>
+                </DialogTrigger>
+                <DropdownMenuSeparator />
+                <AlertDialogTrigger asChild>
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive flex items-center gap-2 cursor-pointer">
+                    <Trash2 size={16} /> מחק
+                  </DropdownMenuItem>
+                </AlertDialogTrigger>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>האם אתה בטוח?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    לא ניתן לבטל פעולה זו. הפעולה תמחק לצמיתות את המתכון "{recipe.name}".
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>ביטול</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete}>מחק</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+          </AlertDialog>
+           <DialogContent>
+              <DialogHeader>
+                  <DialogTitle>הוסף את "{recipe.name}" לתכנית ארוחות</DialogTitle>
+              </DialogHeader>
+              {mealPlans.length > 0 ? (
+                  <div className="space-y-4 py-4">
+                      <Input
+                          placeholder="חפש תכנית..."
+                          value={planSearchTerm}
+                          onChange={(e) => setPlanSearchTerm(e.target.value)}
+                          className="mb-4"
+                      />
+                      <RadioGroup
+                          value={selectedPlanId}
+                          onValueChange={setSelectedPlanId}
+                          className="space-y-2 max-h-60 overflow-y-auto"
+                      >
+                          {filteredMealPlans.map(plan => (
+                              <div key={plan.id} className="flex items-center space-x-2">
+                                  <RadioGroupItem value={plan.id} id={`card-${recipe.id}-${plan.id}`} />
+                                  <Label htmlFor={`card-${recipe.id}-${plan.id}`}>{plan.name}</Label>
+                              </div>
+                          ))}
+                      </RadioGroup>
+                      {filteredMealPlans.length === 0 && (
+                          <p className="text-sm text-muted-foreground text-center">לא נמצאו תכניות תואמות.</p>
+                      )}
+                  </div>
+              ) : (
+                  <div className="py-4 text-center text-muted-foreground">
+                      <p>לא נמצאו תכניות ארוחות.</p>
+                      <Button variant="link" asChild><Link href="/meal-plans">צור תכנית חדשה</Link></Button>
+                  </div>
+              )}
+              <DialogFooter>
+                  <DialogClose asChild><Button variant="ghost">ביטול</Button></DialogClose>
+                  <Button onClick={handleAddToPlan} disabled={isAddingToPlan || !selectedPlanId}>
+                      {isAddingToPlan ? <Loader2 className="animate-spin" /> : "הוסף לתכנית"}
+                  </Button>
+              </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </CardFooter>
     </Card>
   );
