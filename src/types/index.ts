@@ -49,9 +49,15 @@ export interface Note {
   createdAt: Date;
 }
 
+export interface MealPlanItem {
+  id: string;
+  recipeId: string;
+  multiplier: number;
+}
+
 export interface MealPlan {
   id: string;
   name: string;
   createdAt: Date;
-  recipeIds: string[];
+  items: MealPlanItem[];
 }

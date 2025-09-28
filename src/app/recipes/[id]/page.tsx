@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRecipes } from '@/contexts/RecipeContext';
@@ -42,6 +42,7 @@ import {
 export default function RecipeDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { getRecipeById, deleteRecipe, loading: recipesLoading, addRecentlyViewed } = useRecipes();
   const { addIngredientsToShoppingList } = useShoppingList();
   const { toast } = useToast();
@@ -70,12 +71,18 @@ export default function RecipeDetailPage() {
       const foundRecipe = getRecipeById(recipeId as string);
       setRecipe(foundRecipe); 
       if (foundRecipe) {
+        const planMultiplier = searchParams.get('multiplier');
+        if (planMultiplier && !isNaN(Number(planMultiplier))) {
+          setMultiplier(Number(planMultiplier));
+        } else {
+          setMultiplier(1);
+        }
         addRecentlyViewed(recipeId as string);
         initializeImageVisibility(foundRecipe);
       }
       setIsLoading(false);
     }
-  }, [recipeId, getRecipeById, recipesLoading, addRecentlyViewed, initializeImageVisibility]);
+  }, [recipeId, getRecipeById, recipesLoading, addRecentlyViewed, initializeImageVisibility, searchParams]);
   
   const servingsDisplay = useMemo(() => {
     if (!recipe) return '';

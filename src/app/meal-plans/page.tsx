@@ -7,10 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Trash2, PlusCircle, AlertTriangle, CalendarDays, BookOpen, Copy, ShoppingCart, MinusCircle, Plus, Minus } from 'lucide-react';
+import { Loader2, Trash2, PlusCircle, AlertTriangle, CalendarDays, BookOpen, ShoppingCart, Minus, Plus } from 'lucide-react';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, addDoc, deleteDoc, doc, query, orderBy, Timestamp, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
-import type { MealPlan, Recipe, Ingredient } from '@/types';
+import { collection, onSnapshot, addDoc, deleteDoc, doc, query, orderBy, Timestamp, updateDoc } from 'firebase/firestore';
+import type { MealPlan, Recipe, Ingredient, MealPlanItem } from '@/types';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { useShoppingList } from '@/contexts/ShoppingListContext';
 import {
@@ -32,6 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { format } from 'date-fns';
+import { generateId } from '@/lib/utils';
 
 const MEAL_PLANS_COLLECTION = 'mealPlans';
 
@@ -54,7 +55,7 @@ export default function MealPlansPage() {
         return {
           id: doc.id,
           name: data.name,
-          recipeIds: data.recipeIds || [],
+          items: data.items || [],
           createdAt: data.createdAt?.toDate() || new Date(),
         };
       });
@@ -89,7 +90,7 @@ export default function MealPlansPage() {
       await addDoc(collection(db, MEAL_PLANS_COLLECTION), {
         name: newPlanName,
         createdAt: Timestamp.now(),
-        recipeIds: [],
+        items: [],
       });
       setNewPlanName('');
       toast({
@@ -124,43 +125,64 @@ export default function MealPlansPage() {
       });
     }
   };
-
-  const handleAddRecipeToPlan = async (planId: string, recipeId: string) => {
+  
+  const handleAddRecipeToPlan = async (plan: MealPlan, recipeId: string) => {
     if (!recipeId) return;
     try {
-        const planRef = doc(db, MEAL_PLANS_COLLECTION, planId);
-        await updateDoc(planRef, {
-            recipeIds: arrayUnion(recipeId)
-        });
-        toast({
-            title: "מתכון נוסף לתכנית"
-        });
+        const planRef = doc(db, MEAL_PLANS_COLLECTION, plan.id);
+        const existingItemIndex = plan.items.findIndex(item => item.recipeId === recipeId);
+
+        if (existingItemIndex > -1) {
+            // If item already exists, just increment its multiplier
+            const updatedItems = [...plan.items];
+            updatedItems[existingItemIndex].multiplier += 1;
+            await updateDoc(planRef, { items: updatedItems });
+        } else {
+            // Otherwise, add a new item
+            const newItem: MealPlanItem = { id: generateId(), recipeId, multiplier: 1 };
+            const updatedItems = [...plan.items, newItem];
+            await updateDoc(planRef, { items: updatedItems });
+        }
+
+        toast({ title: "מתכון נוסף לתכנית" });
     } catch (error) {
         console.error("Error adding recipe to plan:", error);
         toast({ title: 'שגיאה', description: 'לא ניתן היה להוסיף את המתכון.', variant: 'destructive' });
     }
   };
 
-  const handleRemoveRecipeFromPlan = useCallback(async (plan: MealPlan, recipeId: string) => {
-      try {
-        const currentRecipeIds = plan.recipeIds || [];
-        const firstIndexToRemove = currentRecipeIds.indexOf(recipeId);
-        
-        if (firstIndexToRemove === -1) {
-            // Should not happen if UI is correct
-            console.warn("Recipe not found in plan for removal");
-            return;
-        }
+  const handleUpdateRecipeMultiplier = useCallback(async (plan: MealPlan, itemId: string, change: number) => {
+    const planRef = doc(db, MEAL_PLANS_COLLECTION, plan.id);
+    const itemIndex = plan.items.findIndex(item => item.id === itemId);
 
-        const updatedRecipeIds = [...currentRecipeIds];
-        updatedRecipeIds.splice(firstIndexToRemove, 1);
-        
-        const planRef = doc(db, MEAL_PLANS_COLLECTION, plan.id);
-        await updateDoc(planRef, {
-            recipeIds: updatedRecipeIds
-        });
+    if (itemIndex === -1) return;
+
+    const updatedItems = [...plan.items];
+    const newMultiplier = updatedItems[itemIndex].multiplier + change;
+
+    if (newMultiplier <= 0) {
+      // Remove item if multiplier is 0 or less
+      updatedItems.splice(itemIndex, 1);
+    } else {
+      updatedItems[itemIndex].multiplier = newMultiplier;
+    }
+    
+    try {
+      await updateDoc(planRef, { items: updatedItems });
+    } catch (error) {
+       console.error("Error updating recipe multiplier:", error);
+       toast({ title: 'שגיאה', description: 'לא ניתן היה לעדכן את כמות המתכון.', variant: 'destructive' });
+    }
+  }, [toast]);
+  
+  const handleRemoveRecipeFromPlan = useCallback(async (plan: MealPlan, itemId: string) => {
+    const planRef = doc(db, MEAL_PLANS_COLLECTION, plan.id);
+    const updatedItems = plan.items.filter(item => item.id !== itemId);
+    
+    try {
+        await updateDoc(planRef, { items: updatedItems });
         toast({
-            title: "מתכון הוסר מהתכנית",
+            title: "המתכון הוסר מהתכנית",
             variant: "destructive"
         });
     } catch (error) {
@@ -168,35 +190,19 @@ export default function MealPlansPage() {
         toast({ title: 'שגיאה', description: 'לא ניתן היה להסיר את המתכון.', variant: 'destructive' });
     }
   }, [toast]);
-  
-  const handleRemoveAllInstanceOfRecipe = useCallback(async (plan: MealPlan, recipeId: string) => {
-      try {
-        const updatedRecipeIds = (plan.recipeIds || []).filter(id => id !== recipeId);
-        
-        const planRef = doc(db, MEAL_PLANS_COLLECTION, plan.id);
-        await updateDoc(planRef, {
-            recipeIds: updatedRecipeIds
-        });
-        toast({
-            title: "המתכון הוסר לחלוטין",
-            description: "כל המופעים של המתכון הוסרו מהתכנית.",
-            variant: "destructive"
-        });
-    } catch (error) {
-        console.error("Error removing all instances of recipe from plan:", error);
-        toast({ title: 'שגיאה', description: 'לא ניתן היה להסיר את המתכון.', variant: 'destructive' });
-    }
-  }, [toast]);
+
 
   const handleAddPlanToShoppingList = (plan: MealPlan) => {
-    
-    plan.recipeIds.forEach(recipeId => {
-      const recipe = recipes.find(r => r.id === recipeId);
+    plan.items.forEach(item => {
+      const recipe = recipes.find(r => r.id === item.recipeId);
       if (recipe) {
-        const nonOptionalIngredients = recipe.ingredients.filter(ing => !ing.isOptional && !ing.isHeading);
-        nonOptionalIngredients.forEach(ing => {
-          addIngredientsToShoppingList([ing], recipe.id, recipe.name);
-        });
+        const scaledIngredients = recipe.ingredients
+          .filter(ing => !ing.isOptional && !ing.isHeading)
+          .map(ing => ({
+            ...ing,
+            amount: ing.amount * item.multiplier,
+          }));
+        addIngredientsToShoppingList(scaledIngredients, recipe.id, recipe.name);
       }
     });
 
@@ -208,15 +214,12 @@ export default function MealPlansPage() {
 
   const sortedRecipes = useMemo(() => recipes.slice().sort((a, b) => a.name.localeCompare(b.name, 'he')), [recipes]);
   
-  const groupedRecipes = (plan: MealPlan) => {
-    const recipeCounts: Record<string, number> = {};
-    for (const recipeId of plan.recipeIds) {
-      recipeCounts[recipeId] = (recipeCounts[recipeId] || 0) + 1;
-    }
-    return Object.entries(recipeCounts).map(([recipeId, count]) => ({
-      recipe: recipes.find(r => r.id === recipeId),
-      count: count
-    })).filter(item => item.recipe); // Filter out cases where recipe might not be found
+  const getPlanItemsWithRecipeData = (plan: MealPlan) => {
+     if (!plan.items) return [];
+     return plan.items.map(item => ({
+        ...item,
+        recipe: recipes.find(r => r.id === item.recipeId),
+     })).filter(item => !!item.recipe); // Filter out items where recipe is not found
   };
 
 
@@ -294,7 +297,7 @@ export default function MealPlansPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-2">
-                    <Select onValueChange={(recipeId) => handleAddRecipeToPlan(plan.id, recipeId)}>
+                    <Select onValueChange={(recipeId) => handleAddRecipeToPlan(plan, recipeId)}>
                         <SelectTrigger className="flex-grow">
                             <SelectValue placeholder="הוסף מתכון לתכנית..." />
                         </SelectTrigger>
@@ -308,30 +311,28 @@ export default function MealPlansPage() {
                     </Select>
                 </div>
                 
-                {plan.recipeIds.length > 0 ? (
+                {plan.items && plan.items.length > 0 ? (
                     <ul className="space-y-2">
-                        {groupedRecipes(plan).map(({ recipe, count }) => {
+                        {getPlanItemsWithRecipeData(plan).map(({ id: itemId, recipe, multiplier }) => {
                             if (!recipe) return null;
                             return (
-                                <li key={recipe.id} className="flex items-center justify-between p-2 bg-secondary/20 rounded-md">
+                                <li key={itemId} className="flex items-center justify-between p-2 bg-secondary/20 rounded-md">
                                     <div className="flex items-center gap-2">
-                                        <Link href={`/recipes/${recipe.id}`} className="font-semibold text-primary hover:underline flex items-center gap-2" target="_blank" rel="noopener noreferrer">
+                                        <Link href={`/recipes/${recipe.id}?multiplier=${multiplier}`} className="font-semibold text-primary hover:underline flex items-center gap-2" target="_blank" rel="noopener noreferrer">
                                             <BookOpen size={16}/> {recipe.name}
                                         </Link>
-                                        {count > 1 && (
-                                            <span className="text-xs font-bold text-accent bg-accent/20 px-1.5 py-0.5 rounded-full">
-                                                x{count}
-                                            </span>
-                                        )}
+                                        <span className="text-xs font-bold text-accent bg-accent/20 px-1.5 py-0.5 rounded-full">
+                                            x{multiplier}
+                                        </span>
                                     </div>
                                     <div className="flex items-center gap-1">
-                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-primary/80" onClick={() => handleAddRecipeToPlan(plan.id, recipe.id)} title="הוסף עוד אחד">
+                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-primary/80" onClick={() => handleUpdateRecipeMultiplier(plan, itemId, 1)} title="הוסף עוד אחד">
                                           <Plus size={16} />
                                       </Button>
-                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-primary/80" onClick={() => handleRemoveRecipeFromPlan(plan, recipe.id)} title="הסר אחד" disabled={count <= 0}>
+                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-primary/80" onClick={() => handleUpdateRecipeMultiplier(plan, itemId, -1)} title="הסר אחד">
                                           <Minus size={16} />
                                       </Button>
-                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleRemoveAllInstanceOfRecipe(plan, recipe.id)} title="הסר את כל המופעים">
+                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleRemoveRecipeFromPlan(plan, itemId)} title="הסר את המתכון מהתכנית">
                                           <Trash2 size={16} />
                                       </Button>
                                     </div>
@@ -356,5 +357,3 @@ export default function MealPlansPage() {
     </div>
   );
 }
-
-    
