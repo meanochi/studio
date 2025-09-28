@@ -9,7 +9,6 @@ import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/', label: 'בית', icon: Home },
-  { href: '/recipes/add', label: 'גקךקאק איןד נואאםמ', icon: PlusCircle },
   { href: '/shopping-list', label: 'רשימת קניות', icon: ShoppingCart },
   { href: '/meal-plans', label: 'תכנון', icon: CalendarDays },
 ];
