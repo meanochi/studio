@@ -302,7 +302,7 @@ export default function MealPlansPage() {
                             className="w-full justify-between"
                         >
                             הוסף מתכון לתכנית...
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
@@ -319,7 +319,7 @@ export default function MealPlansPage() {
                                         >
                                             <Check
                                                 className={cn(
-                                                    "mr-2 h-4 w-4",
+                                                    "me-2 h-4 w-4",
                                                     plan.items.some(item => item.recipeId === recipe.id) ? "opacity-100" : "opacity-0"
                                                 )}
                                             />

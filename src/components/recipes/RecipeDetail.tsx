@@ -493,7 +493,7 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
                             <span className="font-semibold text-primary">{ingredient.name}</span>
                             {ingredient.isOptional && <span className="text-xs text-muted-foreground ms-1">(אופציונלי)</span>}
                         </span>
-                        <span className="text-xs text-gray-400 flex-1 text-right italic no-print ms-4">
+                        <span className="text-xs text-gray-400 flex-1 text-end italic no-print ms-4">
                           {multiplier !== 1 && `(מקורי: ${Number((ingredient.amount / multiplier).toFixed(2))} ${getDisplayUnit(ingredient.amount/multiplier, ingredient.unit)})`}
                         </span>
                       </div>
@@ -525,13 +525,13 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
                   }
                   instructionStepCounter++;
                   return (
-                    <li key={step.id} className="ps-2 border-s-2 border-primary/50 py-2 hover:bg-primary/5 transition-colors rounded-r-md space-y-2">
+                    <li key={step.id} className="ps-2 border-s-2 border-primary/50 py-2 hover:bg-primary/5 transition-colors rounded-e-md space-y-2">
                       <div className="flex">
-                        <span className="font-headline text-xl text-primary ms-3">{instructionStepCounter}.</span>
-                        <span>{step.text}</span>
+                        <span className="font-headline text-xl text-primary me-3">{instructionStepCounter}.</span>
+                        <p>{step.text}</p>
                       </div>
                       {step.imageUrl && step.id && (
-                        <div className="mt-2 me-10 space-y-2">
+                        <div className="mt-2 ms-10 space-y-2">
                           <Button 
                             variant="outline" 
                             size="sm" 
@@ -569,7 +569,7 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
             <ShoppingCart size={18} /> הוסף הכל לרשימת קניות
         </Button>
 
-        <div className="flex-grow sm:flex-grow-0 me-auto flex items-center gap-2">
+        <div className="flex-grow sm:flex-grow-0 ms-auto flex items-center gap-2">
             <Dialog open={isPlanDialogOpen} onOpenChange={setIsPlanDialogOpen}>
                 <DialogTrigger asChild>
                     <Button variant="outline" size="icon" title="הוסף לתכנית">
@@ -594,7 +594,7 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
                                 className="space-y-2 max-h-60 overflow-y-auto"
                             >
                                 {filteredMealPlans.map(plan => (
-                                    <div key={plan.id} className="flex items-center space-x-2">
+                                    <div key={plan.id} className="flex items-center space-x-2 rtl:space-x-reverse">
                                         <RadioGroupItem value={plan.id} id={plan.id} />
                                         <Label htmlFor={plan.id}>{plan.name}</Label>
                                     </div>
