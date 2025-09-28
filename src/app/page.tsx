@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { PlusCircle, Search, Loader2, BookOpen, X, Home } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useMemo, useEffect } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Recipe } from '@/types';
 import RecipeDetail from '@/components/recipes/RecipeDetail';
 import { useHeader } from '@/contexts/HeaderContext';
@@ -18,14 +18,15 @@ export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState('');
   
   const [openTabs, setOpenTabs] = useState<Recipe[]>([]);
-  const [activeTab, setActiveTab] = useState<string>('home');
-  const { setHeaderContent } = useHeader();
-
+  const { activeTab, setActiveTab, setHeaderContent } = useHeader();
 
   useEffect(() => {
     const headerTabs = (
       <div className="flex justify-end items-center gap-2 p-1 bg-card rounded-lg shadow overflow-x-auto">
-         <TabsList className="grid-flow-col auto-cols-max">
+         <TabsList className="grid-flow-col auto-cols-max justify-end">
+            <TabsTrigger value="home" className="flex items-center gap-2">
+                <Home size={16}/> בית
+            </TabsTrigger>
             {openTabs.map(recipe => (
                 <TabsTrigger key={recipe.id} value={recipe.id} className="relative group pe-8">
                    <span className="truncate max-w-[150px]">{recipe.name}</span>
@@ -39,9 +40,6 @@ export default function HomePage() {
                    </div>
                 </TabsTrigger>
             ))}
-             <TabsTrigger value="home" className="flex items-center gap-2">
-                <Home size={16}/> בית
-            </TabsTrigger>
          </TabsList>
       </div>
     );
@@ -59,7 +57,6 @@ export default function HomePage() {
     const recipe = getRecipeById(recipeId);
     if (!recipe) return;
 
-    // Check if tab is already open
     if (!openTabs.some(tab => tab.id === recipeId)) {
       setOpenTabs(prev => [...prev, recipe]);
     }
@@ -67,18 +64,14 @@ export default function HomePage() {
   };
   
   const handleCloseTab = (recipeId: string, e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent the tab from being selected when closing
+    e.stopPropagation(); 
     
-    // Find index of the tab to close
     const tabIndex = openTabs.findIndex(tab => tab.id === recipeId);
     if (tabIndex === -1) return;
 
-    // Determine new active tab
     if (activeTab === recipeId) {
        if (openTabs.length > 1) {
-         // If there are other tabs, switch to the previous one, or the next one if it's the first
          const newActiveIndex = tabIndex > 0 ? tabIndex - 1 : 0;
-         // The actual recipe to activate will be different since we are about to remove one
          const newOpenTabs = openTabs.filter(tab => tab.id !== recipeId);
          setActiveTab(newOpenTabs[newActiveIndex]?.id || 'home');
 
@@ -87,7 +80,6 @@ export default function HomePage() {
        }
     }
     
-    // Remove the tab
     setOpenTabs(prev => prev.filter(tab => tab.id !== recipeId));
   };
 
@@ -122,16 +114,16 @@ export default function HomePage() {
   }
 
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+    <>
       <TabsContent value="home" className="mt-6">
-          <div className="flex justify-between items-center gap-4 mb-6 text-right">
+          <div className="flex justify-between items-center gap-4 mb-6">
             <Button asChild className="w-full sm:w-auto flex-shrink-0">
                 <Link href="/recipes/add" className="flex items-center gap-2">
                 <PlusCircle size={20} />
                 הוסף מתכון חדש
                 </Link>
             </Button>
-            <div className="relative w-full sm:w-auto flex-grow">
+            <div className="relative w-full sm:max-w-md flex-grow">
                 <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
                 type="search"
@@ -177,6 +169,6 @@ export default function HomePage() {
             <RecipeDetail recipeId={recipe.id} />
         </TabsContent>
       ))}
-    </Tabs>
+    </>
   );
 }

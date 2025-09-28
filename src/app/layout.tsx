@@ -1,16 +1,23 @@
+
+'use client';
+
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import type { Metadata, Viewport } from 'next';
 import { Providers } from './providers';
-import { HeaderProvider } from '@/contexts/HeaderContext';
+import { HeaderProvider, useHeader } from '@/contexts/HeaderContext';
+import { Tabs } from '@/components/ui/tabs';
 
-// הגדרת המטא-דאטה הנכונה
+// Metadata and Viewport cannot be used in a client component.
+// We will keep them here, but for them to work, we'd need a different structure.
+// This is a tradeoff for the dynamic header content.
+/*
 export const metadata: Metadata = {
   title: "Lopiansky's Cookbook",
   description: 'מקום לכל המתכונים המשפחתיים שלך',
-  manifest: '/manifest.json', // <-- תיקון הנתיב והסיומת
+  manifest: '/manifest.json',
   icons: {
     icon: '/icons/iconi.png',
     apple: '/icons/iconi.png',
@@ -20,6 +27,21 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: '#E07A5F',
 };
+*/
+
+function AppLayout({ children }: { children: React.ReactNode }) {
+  const { activeTab, setActiveTab } = useHeader();
+  return (
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col min-h-screen">
+      <Header />
+      <main className="flex-grow container mx-auto px-4 py-8">
+        {children}
+      </main>
+      <Footer />
+      <Toaster />
+    </Tabs>
+  );
+}
 
 export default function RootLayout({
   children,
@@ -29,24 +51,23 @@ export default function RootLayout({
   return (
     <html lang="he" dir="rtl" suppressHydrationWarning>
       <head>
-        {/*
-          הסרנו את תג ה-link הידני.
-          Next.js יוסיף אותו אוטומטית על סמך אובייקט ה-metadata.
-        */}
+        <title>Lopiansky's Cookbook</title>
+        <meta name="description" content="מקום לכל המתכונים המשפחתיים שלך" />
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="icon" href="/icons/iconi.png" />
+        <link rel="apple-touch-icon" href="/icons/iconi.png" />
+        <meta name="theme-color" content="#E07A5F" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Belleza&display=swap" rel="stylesheet" />
         <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300..700&display=swap" rel="stylesheet" />
       </head>
-      <body className="font-body antialiased min-h-screen flex flex-col">
+      <body className="font-body antialiased">
         <Providers>
           <HeaderProvider>
-            <Header />
-            <main className="flex-grow container mx-auto px-4 py-8">
+            <AppLayout>
               {children}
-            </main>
-            <Footer />
-            <Toaster />
+            </AppLayout>
           </HeaderProvider>
         </Providers>
       </body>

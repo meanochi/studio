@@ -1,19 +1,23 @@
+
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction } from 'react';
 
 interface HeaderContextType {
   headerContent: ReactNode | null;
   setHeaderContent: (content: ReactNode | null) => void;
+  activeTab: string;
+  setActiveTab: Dispatch<SetStateAction<string>>;
 }
 
 const HeaderContext = createContext<HeaderContextType | undefined>(undefined);
 
 export const HeaderProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [headerContent, setHeaderContent] = useState<ReactNode | null>(null);
+  const [activeTab, setActiveTab] = useState('home');
 
   return (
-    <HeaderContext.Provider value={{ headerContent, setHeaderContent }}>
+    <HeaderContext.Provider value={{ headerContent, setHeaderContent, activeTab, setActiveTab }}>
       {children}
     </HeaderContext.Provider>
   );
