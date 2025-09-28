@@ -24,11 +24,8 @@ export default function HomePage() {
 
   useEffect(() => {
     const headerTabs = (
-        <div className="flex justify-start items-center gap-2 p-1 bg-card rounded-lg shadow overflow-x-auto">
+      <div className="flex justify-end items-center gap-2 p-1 bg-card rounded-lg shadow overflow-x-auto">
          <TabsList className="grid-flow-col auto-cols-max">
-            <TabsTrigger value="home" className="flex items-center gap-2">
-                <Home size={16}/> בית
-            </TabsTrigger>
             {openTabs.map(recipe => (
                 <TabsTrigger key={recipe.id} value={recipe.id} className="relative group pe-8">
                    <span className="truncate max-w-[150px]">{recipe.name}</span>
@@ -42,6 +39,9 @@ export default function HomePage() {
                    </div>
                 </TabsTrigger>
             ))}
+             <TabsTrigger value="home" className="flex items-center gap-2">
+                <Home size={16}/> בית
+            </TabsTrigger>
          </TabsList>
       </div>
     );
@@ -124,14 +124,13 @@ export default function HomePage() {
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <TabsContent value="home" className="mt-6">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
-            <div className="text-right">
-                <h2 className="text-3xl font-headline text-primary">המתכונים שלי</h2>
-                <span className="text-sm text-muted-foreground font-body flex items-center justify-end gap-1.5 mt-1">
-                    <BookOpen size={16} />
-                    {resultsText}
-                </span>
-            </div>
+          <div className="flex justify-between items-center gap-4 mb-6 text-right">
+            <Button asChild className="w-full sm:w-auto flex-shrink-0">
+                <Link href="/recipes/add" className="flex items-center gap-2">
+                <PlusCircle size={20} />
+                הוסף מתכון חדש
+                </Link>
+            </Button>
             <div className="relative w-full sm:w-auto flex-grow">
                 <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
@@ -143,12 +142,13 @@ export default function HomePage() {
                 aria-label="חיפוש מתכונים"
                 />
             </div>
-            <Button asChild className="w-full sm:w-auto flex-shrink-0">
-                <Link href="/recipes/add" className="flex items-center gap-2">
-                <PlusCircle size={20} />
-                הוסף מתכון חדש
-                </Link>
-            </Button>
+            <div className="text-right">
+                <h2 className="text-3xl font-headline text-primary">המתכונים שלי</h2>
+                <span className="text-sm text-muted-foreground font-body flex items-center justify-end gap-1.5 mt-1">
+                    <BookOpen size={16} />
+                    {resultsText}
+                </span>
+            </div>
           </div>
          
           {filteredRecipes.length > 0 ? (
