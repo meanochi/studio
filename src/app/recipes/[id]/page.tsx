@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { getDisplayUnit, generateId } from '@/lib/utils';
-import { Combobox } from '@/components/ui/combobox';
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -74,6 +74,7 @@ export default function RecipeDetailPage() {
   const [selectedPlanId, setSelectedPlanId] = useState<string>('');
   const [isAddingToPlan, setIsAddingToPlan] = useState(false);
   const [isPlanDialogOpen, setIsPlanDialogOpen] = useState(false);
+  const [planSearchTerm, setPlanSearchTerm] = useState('');
 
   const recipeId = Array.isArray(params.id) ? params.id[0] : params.id;
   
@@ -325,6 +326,15 @@ export default function RecipeDetailPage() {
       setIsAddingToPlan(false);
     }
   };
+  
+  const filteredMealPlans = useMemo(() => {
+    if (!planSearchTerm) {
+      return mealPlans;
+    }
+    return mealPlans.filter(plan =>
+      plan.name.toLowerCase().includes(planSearchTerm.toLowerCase())
+    );
+  }, [mealPlans, planSearchTerm]);
 
 
   if (isLoading || recipesLoading) {
@@ -572,15 +582,27 @@ export default function RecipeDetailPage() {
                     </DialogHeader>
                     {mealPlans.length > 0 ? (
                         <div className="space-y-4 py-4">
-                            <Label htmlFor="meal-plan-select">בחר תכנית</Label>
-                            <Combobox
-                              options={mealPlans.map(p => ({ value: p.id, label: p.name }))}
-                              value={selectedPlanId}
-                              onChange={setSelectedPlanId}
-                              placeholder="בחר תכנית..."
-                              searchPlaceholder="חפש תכנית..."
-                              emptyMessage="לא נמצאו תכניות."
+                            <Input
+                                placeholder="חפש תכנית..."
+                                value={planSearchTerm}
+                                onChange={(e) => setPlanSearchTerm(e.target.value)}
+                                className="mb-4"
                             />
+                            <RadioGroup
+                                value={selectedPlanId}
+                                onValueChange={setSelectedPlanId}
+                                className="space-y-2 max-h-60 overflow-y-auto"
+                            >
+                                {filteredMealPlans.map(plan => (
+                                    <div key={plan.id} className="flex items-center space-x-2">
+                                        <RadioGroupItem value={plan.id} id={plan.id} />
+                                        <Label htmlFor={plan.id}>{plan.name}</Label>
+                                    </div>
+                                ))}
+                            </RadioGroup>
+                            {filteredMealPlans.length === 0 && (
+                                <p className="text-sm text-muted-foreground text-center">לא נמצאו תכניות תואמות.</p>
+                            )}
                         </div>
                     ) : (
                         <div className="py-4 text-center text-muted-foreground">
