@@ -481,7 +481,7 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
               <div className="space-y-2">
                 <FormLabel className="flex items-center gap-2"><ImageIcon size={18} /> תמונת מתכון ראשית</FormLabel>
                 {recipeImagePreview ? (
-                  <div className="relative group"><NextImage src={recipeImagePreview} alt="תצוגה מקדימה של תמונה" width={200} height={200} className="rounded-md object-cover w-full max-h-64 border" data-ai-hint="recipe food" /><Button type="button" variant="destructive" size="icon" onClick={handleRemoveRecipeImage} className="absolute top-2 right-2 opacity-70 group-hover:opacity-100 transition-opacity h-8 w-8"><X size={16} /></Button></div>
+                  <div className="relative group"><NextImage src={recipeImagePreview} alt="תצוגה מקדימה של תמונה" width={200} height={200} className="rounded-md object-cover w-full max-h-64 border" data-ai-hint="recipe food" /><Button type="button" variant="destructive" size="icon" onClick={handleRemoveRecipeImage} className="absolute top-2 right-2 rtl:right-auto rtl:left-2 opacity-70 group-hover:opacity-100 transition-opacity h-8 w-8"><X size={16} /></Button></div>
                 ) : (
                   <div className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-input rounded-md cursor-pointer hover:border-primary transition-colors" onClick={() => recipeFileInputRef.current?.click()}><UploadCloud size={40} className="text-muted-foreground mb-2" /><p className="text-sm text-muted-foreground">גרור ושחרר או לחץ להעלאה</p><p className="text-xs text-muted-foreground">(עד 5MB)</p></div>
                 )}
@@ -682,7 +682,7 @@ export default function RecipeForm({ initialData, onSubmit, isEditing = false }:
                               {instructionImagePreviews[index] ? (
                               <div className="relative group w-48 h-32">
                                   <NextImage src={instructionImagePreviews[index]!} alt={`תצוגה מקדימה שלב`} layout="fill" objectFit="cover" className="rounded-md border" data-ai-hint="cooking step"/>
-                                  <Button type="button" variant="destructive" size="icon" onClick={() => handleRemoveInstructionImage(index)} className="absolute top-1 right-1 opacity-70 group-hover:opacity-100 transition-opacity h-6 w-6"><X size={14} /></Button>
+                                  <Button type="button" variant="destructive" size="icon" onClick={() => handleRemoveInstructionImage(index)} className="absolute top-1 right-1 rtl:right-auto rtl:left-1 opacity-70 group-hover:opacity-100 transition-opacity h-6 w-6"><X size={14} /></Button>
                               </div>
                               ) : (
                               <div className="flex items-center justify-center w-48 h-24 border-2 border-dashed border-input rounded-md cursor-pointer hover:border-primary transition-colors text-xs p-2" onClick={() => instructionFileInputRefs.current[index]?.click()}>

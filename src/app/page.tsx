@@ -98,7 +98,7 @@ export default function HomePage() {
                    <Button
                      variant="ghost"
                      size="icon"
-                     className="absolute right-0.5 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full opacity-50 group-hover:opacity-100 group-hover:bg-muted"
+                     className="absolute left-0.5 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full opacity-50 group-hover:opacity-100 group-hover:bg-muted"
                      onClick={(e) => handleCloseTab(recipe.id, e)}
                    >
                        <X size={14}/>
@@ -119,11 +119,11 @@ export default function HomePage() {
             </div>
             <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
                 <div className="relative w-full sm:w-auto sm:min-w-[300px]">
-                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     <Input
                     type="search"
                     placeholder="חפש מתכונים, תגיות או רכיבים..."
-                    className="pr-10 w-full"
+                    className="pl-10 w-full"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     aria-label="חיפוש מתכונים"
