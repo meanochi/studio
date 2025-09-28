@@ -95,14 +95,14 @@ export default function HomePage() {
             {openTabs.map(recipe => (
                 <TabsTrigger key={recipe.id} value={recipe.id} className="relative group pe-8">
                    <span className="truncate max-w-[150px]">{recipe.name}</span>
-                   <Button
-                     variant="ghost"
-                     size="icon"
-                     className="absolute end-0.5 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full opacity-50 group-hover:opacity-100 group-hover:bg-muted"
+                   <div
+                     role="button"
+                     aria-label={`Close tab for ${recipe.name}`}
+                     className="absolute end-0.5 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full opacity-50 group-hover:opacity-100 group-hover:bg-muted flex items-center justify-center"
                      onClick={(e) => handleCloseTab(recipe.id, e)}
                    >
                        <X size={14}/>
-                   </Button>
+                   </div>
                 </TabsTrigger>
             ))}
          </TabsList>
