@@ -1,17 +1,18 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Save, Trash2, PlusCircle, AlertTriangle, CalendarDays, Utensils, BookOpen } from 'lucide-react';
+import { Loader2, Trash2, PlusCircle, AlertTriangle, CalendarDays, BookOpen, Copy, ShoppingCart } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, addDoc, deleteDoc, doc, query, orderBy, Timestamp, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
-import type { MealPlan, Recipe } from '@/types';
+import type { MealPlan, Recipe, Ingredient } from '@/types';
 import { useRecipes } from '@/contexts/RecipeContext';
+import { useShoppingList } from '@/contexts/ShoppingListContext';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,7 +32,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { format } from 'date-fns';
-import { Separator } from '@/components/ui/separator';
 
 const MEAL_PLANS_COLLECTION = 'mealPlans';
 
@@ -42,6 +42,7 @@ export default function MealPlansPage() {
   const [newPlanName, setNewPlanName] = useState('');
   
   const { recipes, loading: recipesLoading } = useRecipes();
+  const { addIngredientsToShoppingList } = useShoppingList();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -140,11 +141,30 @@ export default function MealPlansPage() {
     }
   };
 
-  const handleRemoveRecipeFromPlan = async (planId: string, recipeId: string) => {
+  const handleDuplicateRecipeInPlan = useCallback(async (planId: string, recipeId: string) => {
     try {
-        const planRef = doc(db, MEAL_PLANS_COLLECTION, planId);
+      const planRef = doc(db, MEAL_PLANS_COLLECTION, planId);
+      await updateDoc(planRef, {
+        recipeIds: arrayUnion(recipeId)
+      });
+      toast({
+        title: "מתכון שוכפל",
+        description: "המתכון נוסף שוב לתכנית."
+      });
+    } catch(error) {
+       console.error("Error duplicating recipe in plan:", error);
+       toast({ title: 'שגיאה', description: 'לא ניתן היה לשכפל את המתכון.', variant: 'destructive' });
+    }
+  }, [toast]);
+
+  const handleRemoveRecipeFromPlan = useCallback(async (plan: MealPlan, recipeId: string, indexToRemove: number) => {
+      try {
+        const updatedRecipeIds = [...plan.recipeIds];
+        updatedRecipeIds.splice(indexToRemove, 1);
+        
+        const planRef = doc(db, MEAL_PLANS_COLLECTION, plan.id);
         await updateDoc(planRef, {
-            recipeIds: arrayRemove(recipeId)
+            recipeIds: updatedRecipeIds
         });
         toast({
             title: "מתכון הוסר מהתכנית",
@@ -154,7 +174,26 @@ export default function MealPlansPage() {
         console.error("Error removing recipe from plan:", error);
         toast({ title: 'שגיאה', description: 'לא ניתן היה להסיר את המתכון.', variant: 'destructive' });
     }
-  }
+  }, [toast]);
+
+  const handleAddPlanToShoppingList = (plan: MealPlan) => {
+    const allIngredients: { recipe: Recipe, ingredients: Ingredient[] }[] = [];
+    
+    plan.recipeIds.forEach(recipeId => {
+      const recipe = recipes.find(r => r.id === recipeId);
+      if (recipe) {
+        const nonOptionalIngredients = recipe.ingredients.filter(ing => !ing.isOptional && !ing.isHeading);
+        nonOptionalIngredients.forEach(ing => {
+          addIngredientsToShoppingList([ing], recipe.id, recipe.name);
+        });
+      }
+    });
+
+    toast({
+      title: "נוסף לרשימת קניות",
+      description: `כל הרכיבים מתכנית "${plan.name}" נוספו לרשימת הקניות.`,
+    });
+  };
 
   const sortedRecipes = useMemo(() => recipes.slice().sort((a, b) => a.name.localeCompare(b.name, 'he')), [recipes]);
 
@@ -198,32 +237,37 @@ export default function MealPlansPage() {
         ) : mealPlans.length > 0 ? (
           mealPlans.map(plan => (
             <Card key={plan.id} className="shadow-md">
-              <CardHeader className="flex flex-row justify-between items-start">
+              <CardHeader className="flex flex-col sm:flex-row justify-between items-start gap-2">
                   <div>
                     <CardTitle className="text-2xl font-headline text-accent">{plan.name}</CardTitle>
                     <p className="text-xs text-muted-foreground mt-1">
                       נוצר ב: {format(plan.createdAt, 'dd/MM/yyyy')}
                     </p>
                   </div>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10">
-                        <Trash2 size={18} />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>האם אתה בטוח?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          פעולה זו תמחק את התכנית "{plan.name}" לצמיתות.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>ביטול</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDeletePlan(plan.id)}>מחק</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => handleAddPlanToShoppingList(plan)} className="flex items-center gap-1.5">
+                      <ShoppingCart size={16} /> הוסף הכל לרשימת קניות
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10">
+                          <Trash2 size={18} />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>האם אתה בטוח?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            פעולה זו תמחק את התכנית "{plan.name}" לצמיתות.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>ביטול</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDeletePlan(plan.id)}>מחק</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-2">
@@ -243,17 +287,22 @@ export default function MealPlansPage() {
                 
                 {plan.recipeIds.length > 0 ? (
                     <ul className="space-y-2">
-                        {plan.recipeIds.map(recipeId => {
+                        {plan.recipeIds.map((recipeId, index) => {
                             const recipe = recipes.find(r => r.id === recipeId);
                             if (!recipe) return null;
                             return (
-                                <li key={recipeId} className="flex items-center justify-between p-2 bg-secondary/20 rounded-md">
+                                <li key={`${recipeId}-${index}`} className="flex items-center justify-between p-2 bg-secondary/20 rounded-md">
                                     <Link href={`/recipes/${recipe.id}`} className="font-semibold text-primary hover:underline flex items-center gap-2" target="_blank" rel="noopener noreferrer">
                                         <BookOpen size={16}/> {recipe.name}
                                     </Link>
-                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleRemoveRecipeFromPlan(plan.id, recipeId)}>
-                                        <Trash2 size={16} />
-                                    </Button>
+                                    <div className="flex items-center gap-1">
+                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-primary/80" onClick={() => handleDuplicateRecipeInPlan(plan.id, recipeId)} title="שכפל מתכון">
+                                          <Copy size={16} />
+                                      </Button>
+                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleRemoveRecipeFromPlan(plan, recipeId, index)} title="הסר מתכון">
+                                          <Trash2 size={16} />
+                                      </Button>
+                                    </div>
                                 </li>
                             )
                         })}
