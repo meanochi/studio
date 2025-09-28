@@ -7,7 +7,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { useShoppingList } from '@/contexts/ShoppingListContext';
-import type { Recipe, Ingredient, InstructionStep } from '@/types';
+import type { Recipe, Ingredient, InstructionStep, MealPlan } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -35,8 +35,26 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
-  Clock, Users, Edit3, Trash2, Printer, ShoppingCart, Utensils, Snowflake, Loader2, AlertTriangle, HomeIcon, RefreshCw, PlusSquare, Info, EyeIcon, EyeOffIcon, Heading2, Share2, ClipboardCopy, StickyNote, MoreVertical
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Clock, Users, Edit3, Trash2, Printer, ShoppingCart, Utensils, Snowflake, Loader2, AlertTriangle, HomeIcon, RefreshCw, PlusSquare, Info, EyeIcon, EyeOffIcon, Heading2, Share2, ClipboardCopy, StickyNote, MoreVertical, CalendarPlus
 } from 'lucide-react';
+import { db } from '@/lib/firebase';
+import { collection, doc, onSnapshot, query, updateDoc, getDoc, arrayUnion } from 'firebase/firestore';
 
 
 export default function RecipeDetailPage() {
@@ -51,6 +69,10 @@ export default function RecipeDetailPage() {
   const [multiplier, setMultiplier] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [visibleStepImages, setVisibleStepImages] = useState<Record<string, boolean>>({});
+  const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
+  const [selectedPlanId, setSelectedPlanId] = useState<string>('');
+  const [isAddingToPlan, setIsAddingToPlan] = useState(false);
+  const [isPlanDialogOpen, setIsPlanDialogOpen] = useState(false);
 
   const recipeId = Array.isArray(params.id) ? params.id[0] : params.id;
   
@@ -83,6 +105,18 @@ export default function RecipeDetailPage() {
       setIsLoading(false);
     }
   }, [recipeId, getRecipeById, recipesLoading, addRecentlyViewed, initializeImageVisibility, searchParams]);
+
+  useEffect(() => {
+    const plansQuery = query(collection(db, 'mealPlans'));
+    const unsubscribe = onSnapshot(plansQuery, (snapshot) => {
+      const plansData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as MealPlan));
+      setMealPlans(plansData);
+      if (plansData.length > 0 && !selectedPlanId) {
+        setSelectedPlanId(plansData[0].id);
+      }
+    });
+    return () => unsubscribe();
+  }, [selectedPlanId]);
   
   const servingsDisplay = useMemo(() => {
     if (!recipe) return '';
@@ -251,6 +285,43 @@ export default function RecipeDetailPage() {
         console.error('Fallback text copy failed: ', fallbackErr);
         toast({ title: 'שגיאת העתקה', description: 'לא ניתן היה להעתיק את המתכון.', variant: 'destructive' });
       });
+    }
+  };
+  
+  const handleAddToPlan = async () => {
+    if (!selectedPlanId || !recipeId) {
+      toast({ title: "שגיאה", description: "אנא בחר תכנית.", variant: "destructive" });
+      return;
+    }
+    setIsAddingToPlan(true);
+    try {
+      const planRef = doc(db, 'mealPlans', selectedPlanId);
+      const planSnap = await getDoc(planRef);
+      if (planSnap.exists()) {
+        const planData = planSnap.data();
+        const items = planData.items || [];
+        const existingItemIndex = items.findIndex((item: any) => item.recipeId === recipeId);
+
+        let updatedItems;
+        if (existingItemIndex > -1) {
+          updatedItems = [...items];
+          updatedItems[existingItemIndex].multiplier += 1;
+        } else {
+          updatedItems = [...items, { id: generateId(), recipeId: recipeId, multiplier: 1 }];
+        }
+        await updateDoc(planRef, { items: updatedItems });
+        
+        toast({
+          title: "המתכון נוסף!",
+          description: `"${recipe?.name}" נוסף לתכנית "${planData.name}".`,
+        });
+        setIsPlanDialogOpen(false);
+      }
+    } catch (error) {
+      console.error("Error adding recipe to plan:", error);
+      toast({ title: 'שגיאה', description: 'לא ניתן היה להוסיף את המתכון לתכנית.', variant: 'destructive' });
+    } finally {
+      setIsAddingToPlan(false);
     }
   };
 
@@ -432,7 +503,7 @@ export default function RecipeDetailPage() {
             <div>
               <h3 className="text-2xl font-headline text-primary mb-3">הוראות</h3>
               <ol className="list-none space-y-4 font-body text-base md:text-lg leading-relaxed ps-0">
-                {recipe.instructions.map((step) => {
+                {recipe.instructions.map((step, index) => {
                   if (step.isHeading) {
                     return (
                       <h4 key={step.id} className="text-lg font-semibold text-accent mt-4 mb-2 pt-2 border-t border-dashed">
@@ -488,6 +559,45 @@ export default function RecipeDetailPage() {
         </Button>
 
         <div className="flex-grow sm:flex-grow-0 ms-auto flex items-center gap-2">
+            <Dialog open={isPlanDialogOpen} onOpenChange={setIsPlanDialogOpen}>
+                <DialogTrigger asChild>
+                    <Button variant="outline" size="icon" title="הוסף לתכנית">
+                        <CalendarPlus size={18} />
+                    </Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>הוסף מתכון לתכנית ארוחות</DialogTitle>
+                    </DialogHeader>
+                    {mealPlans.length > 0 ? (
+                        <div className="space-y-4 py-4">
+                            <Label htmlFor="meal-plan-select">בחר תכנית</Label>
+                            <Select value={selectedPlanId} onValueChange={setSelectedPlanId}>
+                                <SelectTrigger id="meal-plan-select">
+                                    <SelectValue placeholder="בחר תכנית..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {mealPlans.map(plan => (
+                                        <SelectItem key={plan.id} value={plan.id}>{plan.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    ) : (
+                        <div className="py-4 text-center text-muted-foreground">
+                            <p>לא נמצאו תכניות ארוחות.</p>
+                            <Button variant="link" asChild><Link href="/meal-plans">צור תכנית חדשה</Link></Button>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <DialogClose asChild><Button variant="ghost">ביטול</Button></DialogClose>
+                        <Button onClick={handleAddToPlan} disabled={isAddingToPlan || !selectedPlanId}>
+                            {isAddingToPlan ? <Loader2 className="animate-spin" /> : "הוסף לתכנית"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
             <Button variant="outline" onClick={handlePrint} size="icon" title="הדפס">
               <Printer size={18} />
             </Button>
@@ -542,3 +652,5 @@ export default function RecipeDetailPage() {
     </div>
   );
 }
+
+    

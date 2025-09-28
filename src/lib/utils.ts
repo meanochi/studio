@@ -7,8 +7,10 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function generateId(): string {
-  return Math.random().toString(36).substr(2, 9);
+  // More robust unique ID generator
+  return `${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 9)}`;
 }
+
 
 export function getDisplayUnit(amount: number, unit: string): string {
   const lowerUnit = unit.toLowerCase();
@@ -35,3 +37,5 @@ export function getDisplayUnit(amount: number, unit: string): string {
     return unit;
   }
 }
+
+    
