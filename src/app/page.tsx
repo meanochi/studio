@@ -87,54 +87,57 @@ export default function HomePage() {
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 bg-card rounded-lg shadow">
-          <div className="flex items-center gap-2 overflow-x-auto w-full">
-             <TabsList className="grid-flow-col auto-cols-max">
-                <TabsTrigger value="home" className="flex items-center gap-2">
-                    <Home size={16}/> בית
+      <div className="flex items-center gap-2 p-4 bg-card rounded-lg shadow overflow-x-auto">
+         <TabsList className="grid-flow-col auto-cols-max">
+            <TabsTrigger value="home" className="flex items-center gap-2">
+                <Home size={16}/> בית
+            </TabsTrigger>
+            {openTabs.map(recipe => (
+                <TabsTrigger key={recipe.id} value={recipe.id} className="relative group pe-8">
+                   <span className="truncate max-w-[150px]">{recipe.name}</span>
+                   <Button
+                     variant="ghost"
+                     size="icon"
+                     className="absolute right-0.5 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full opacity-50 group-hover:opacity-100 group-hover:bg-muted"
+                     onClick={(e) => handleCloseTab(recipe.id, e)}
+                   >
+                       <X size={14}/>
+                   </Button>
                 </TabsTrigger>
-                {openTabs.map(recipe => (
-                    <TabsTrigger key={recipe.id} value={recipe.id} className="relative group pe-8">
-                       <span className="truncate max-w-[150px]">{recipe.name}</span>
-                       <Button
-                         variant="ghost"
-                         size="icon"
-                         className="absolute right-0.5 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full opacity-50 group-hover:opacity-100 group-hover:bg-muted"
-                         onClick={(e) => handleCloseTab(recipe.id, e)}
-                       >
-                           <X size={14}/>
-                       </Button>
-                    </TabsTrigger>
-                ))}
-             </TabsList>
-          </div>
-          <Button asChild className="w-full sm:w-auto flex-shrink-0">
-            <Link href="/recipes/add" className="flex items-center gap-2">
-              <PlusCircle size={20} />
-              הוסף מתכון חדש
-            </Link>
-          </Button>
+            ))}
+         </TabsList>
       </div>
       
       <TabsContent value="home" className="mt-6">
-          <div className="flex items-baseline gap-3 mb-6">
-            <h2 className="text-3xl font-headline text-primary">המתכונים שלי</h2>
-            <span className="text-sm text-muted-foreground font-body flex items-center gap-1.5">
-                <BookOpen size={16} />
-                {resultsText}
-            </span>
+          <div className="flex flex-col sm:flex-row justify-between items-baseline gap-4 mb-6">
+            <div className="flex-grow">
+                <h2 className="text-3xl font-headline text-primary">המתכונים שלי</h2>
+                <span className="text-sm text-muted-foreground font-body flex items-center gap-1.5 mt-1">
+                    <BookOpen size={16} />
+                    {resultsText}
+                </span>
+            </div>
+            <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+                <div className="relative w-full sm:w-auto sm:min-w-[300px]">
+                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                    type="search"
+                    placeholder="חפש מתכונים, תגיות או רכיבים..."
+                    className="pr-10 w-full"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    aria-label="חיפוש מתכונים"
+                    />
+                </div>
+                 <Button asChild className="w-full sm:w-auto flex-shrink-0">
+                    <Link href="/recipes/add" className="flex items-center gap-2">
+                    <PlusCircle size={20} />
+                    הוסף מתכון חדש
+                    </Link>
+                </Button>
+            </div>
           </div>
-          <div className="relative w-full sm:w-auto sm:min-w-[300px] mb-6">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="חפש מתכונים, תגיות או רכיבים..."
-              className="pr-10 w-full"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              aria-label="חיפוש מתכונים"
-            />
-          </div>
+         
           {filteredRecipes.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredRecipes.map(recipe => (
