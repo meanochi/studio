@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Trash2, PlusCircle, AlertTriangle, CalendarDays, BookOpen, ShoppingCart, Minus, Plus } from 'lucide-react';
+import { Loader2, Trash2, PlusCircle, AlertTriangle, CalendarDays, BookOpen, ShoppingCart, Minus, Plus, Check, ChevronsUpDown } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, addDoc, deleteDoc, doc, query, orderBy, Timestamp, updateDoc } from 'firebase/firestore';
 import type { MealPlan, Recipe, Ingredient, MealPlanItem } from '@/types';
@@ -24,15 +24,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { format } from 'date-fns';
-import { generateId } from '@/lib/utils';
+import { generateId, cn } from '@/lib/utils';
 
 const MEAL_PLANS_COLLECTION = 'mealPlans';
 
@@ -41,6 +36,7 @@ export default function MealPlansPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [newPlanName, setNewPlanName] = useState('');
+  const [popoverOpen, setPopoverOpen] = useState<Record<string, boolean>>({});
   
   const { recipes, loading: recipesLoading } = useRecipes();
   const { addIngredientsToShoppingList } = useShoppingList();
@@ -143,7 +139,8 @@ export default function MealPlansPage() {
             const updatedItems = [...plan.items, newItem];
             await updateDoc(planRef, { items: updatedItems });
         }
-
+        
+        setPopoverOpen(prev => ({...prev, [plan.id]: false}));
         toast({ title: "מתכון נוסף לתכנית" });
     } catch (error) {
         console.error("Error adding recipe to plan:", error);
@@ -296,20 +293,44 @@ export default function MealPlansPage() {
                   </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center gap-2">
-                    <Select onValueChange={(recipeId) => handleAddRecipeToPlan(plan, recipeId)}>
-                        <SelectTrigger className="flex-grow">
-                            <SelectValue placeholder="הוסף מתכון לתכנית..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {sortedRecipes.map(recipe => (
-                                <SelectItem key={recipe.id} value={recipe.id}>
-                                    {recipe.name}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
+                <Popover open={popoverOpen[plan.id]} onOpenChange={(isOpen) => setPopoverOpen(prev => ({...prev, [plan.id]: isOpen}))}>
+                    <PopoverTrigger asChild>
+                        <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={popoverOpen[plan.id]}
+                            className="w-full justify-between"
+                        >
+                            הוסף מתכון לתכנית...
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                        <Command>
+                            <CommandInput placeholder="חפש מתכון..." />
+                            <CommandList>
+                                <CommandEmpty>לא נמצאו מתכונים.</CommandEmpty>
+                                <CommandGroup>
+                                    {sortedRecipes.map((recipe) => (
+                                        <CommandItem
+                                            key={recipe.id}
+                                            value={recipe.name}
+                                            onSelect={() => handleAddRecipeToPlan(plan, recipe.id)}
+                                        >
+                                            <Check
+                                                className={cn(
+                                                    "mr-2 h-4 w-4",
+                                                    plan.items.some(item => item.recipeId === recipe.id) ? "opacity-100" : "opacity-0"
+                                                )}
+                                            />
+                                            {recipe.name}
+                                        </CommandItem>
+                                    ))}
+                                </CommandGroup>
+                            </CommandList>
+                        </Command>
+                    </PopoverContent>
+                </Popover>
                 
                 {plan.items && plan.items.length > 0 ? (
                     <ul className="space-y-2">
@@ -357,3 +378,5 @@ export default function MealPlansPage() {
     </div>
   );
 }
+
+    

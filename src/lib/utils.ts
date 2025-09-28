@@ -13,6 +13,7 @@ export function generateId(): string {
 
 
 export function getDisplayUnit(amount: number, unit: string): string {
+  if (!unit) return '';
   const lowerUnit = unit.toLowerCase();
   
   if (amount === 1 || (amount > 0 && amount < 1) || (amount < 0 && amount > -1) ) { // Handle singular for 1, 0.x, -0.x
@@ -37,5 +38,7 @@ export function getDisplayUnit(amount: number, unit: string): string {
     return unit;
   }
 }
+
+    
 
     
