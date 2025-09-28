@@ -9,6 +9,20 @@ import type { Metadata, Viewport } from 'next';
 import { Providers } from './providers';
 import { HeaderProvider, useHeader } from '@/contexts/HeaderContext';
 import { Tabs } from '@/components/ui/tabs';
+import { Belleza, Rubik } from 'next/font/google';
+
+// Font configuration
+const belleza = Belleza({
+  subsets: ['latin'],
+  weight: '400',
+  variable: '--font-belleza',
+});
+
+const rubik = Rubik({
+  subsets: ['latin', 'hebrew'],
+  variable: '--font-rubik',
+});
+
 
 // Metadata and Viewport cannot be used in a client component.
 // We will keep them here, but for them to work, we'd need a different structure.
@@ -49,7 +63,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="he" dir="rtl" suppressHydrationWarning>
+    <html lang="he" dir="rtl" suppressHydrationWarning className={`${belleza.variable} ${rubik.variable}`}>
       <head>
         <title>Lopiansky's Cookbook</title>
         <meta name="description" content="מקום לכל המתכונים המשפחתיים שלך" />
@@ -57,10 +71,6 @@ export default function RootLayout({
         <link rel="icon" href="/icons/iconi.png" />
         <link rel="apple-touch-icon" href="/icons/iconi.png" />
         <meta name="theme-color" content="#E07A5F" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Belleza&display=swap" rel="stylesheet" />
-        <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300..700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
         <Providers>
