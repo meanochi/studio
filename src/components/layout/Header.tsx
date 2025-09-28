@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ChefHat, Home, PlusCircle, ShoppingCart, StickyNote, CalendarDays } from 'lucide-react';
+import { ChefHat, Home, PlusCircle, ShoppingCart, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -11,8 +11,7 @@ const navItems = [
   { href: '/', label: 'בית', icon: Home },
   { href: '/recipes/add', label: 'הוסף מתכון', icon: PlusCircle },
   { href: '/shopping-list', label: 'רשימת קניות', icon: ShoppingCart },
-  { href: '/meal-plans', label: 'תכנון ארוחות', icon: CalendarDays },
-  { href: '/notes', label: 'הערות', icon: StickyNote },
+  { href: '/meal-plans', label: 'תכנון', icon: CalendarDays },
 ];
 
 export default function Header() {
