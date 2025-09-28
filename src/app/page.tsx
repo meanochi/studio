@@ -5,14 +5,56 @@ import RecipeCard from '@/components/recipes/RecipeCard';
 import { Button } from '@/components/ui/button';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { Input } from '@/components/ui/input';
-import { PlusCircle, Search, Loader2, BookOpen } from 'lucide-react';
+import { PlusCircle, Search, Loader2, BookOpen, X, Home } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useMemo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { Recipe } from '@/types';
+import RecipeDetail from '@/components/recipes/RecipeDetail'; // We'll create this
 
 export default function HomePage() {
-  const { recipes, loading, recentlyViewed } = useRecipes();
+  const { recipes, loading, getRecipeById } = useRecipes();
   const [searchTerm, setSearchTerm] = useState('');
+  
+  const [openTabs, setOpenTabs] = useState<Recipe[]>([]);
+  const [activeTab, setActiveTab] = useState<string>('home');
+
+  const handleOpenRecipeTab = (recipeId: string) => {
+    const recipe = getRecipeById(recipeId);
+    if (!recipe) return;
+
+    // Check if tab is already open
+    if (!openTabs.some(tab => tab.id === recipeId)) {
+      setOpenTabs(prev => [...prev, recipe]);
+    }
+    setActiveTab(recipeId);
+  };
+  
+  const handleCloseTab = (recipeId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent the tab from being selected when closing
+    
+    // Find index of the tab to close
+    const tabIndex = openTabs.findIndex(tab => tab.id === recipeId);
+    if (tabIndex === -1) return;
+
+    // Determine new active tab
+    if (activeTab === recipeId) {
+       if (openTabs.length > 1) {
+         // If there are other tabs, switch to the previous one, or the next one if it's the first
+         const newActiveIndex = tabIndex > 0 ? tabIndex - 1 : 0;
+         // The actual recipe to activate will be different since we are about to remove one
+         const newOpenTabs = openTabs.filter(tab => tab.id !== recipeId);
+         setActiveTab(newOpenTabs[newActiveIndex]?.id || 'home');
+
+       } else {
+         setActiveTab('home');
+       }
+    }
+    
+    // Remove the tab
+    setOpenTabs(prev => prev.filter(tab => tab.id !== recipeId));
+  };
+
 
   const filteredRecipes = useMemo(() => {
     if (!searchTerm) return recipes;
@@ -22,15 +64,6 @@ export default function HomePage() {
       recipe.ingredients.some(ingredient => ingredient.name.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   }, [recipes, searchTerm]);
-  
-  const filteredRecentlyViewed = useMemo(() => {
-    if (!searchTerm) return recentlyViewed;
-    return recentlyViewed.filter(recipe =>
-      recipe.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (recipe.tags && recipe.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))) ||
-      recipe.ingredients.some(ingredient => ingredient.name.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-  }, [recentlyViewed, searchTerm]);
 
   const resultsText = useMemo(() => {
     if (loading) return '';
@@ -53,77 +86,81 @@ export default function HomePage() {
   }
 
   return (
-    <div className="space-y-8">
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 bg-card rounded-lg shadow">
-        <div className="flex items-baseline gap-3">
+          <div className="flex items-center gap-2 overflow-x-auto w-full">
+             <TabsList className="grid-flow-col auto-cols-max">
+                <TabsTrigger value="home" className="flex items-center gap-2">
+                    <Home size={16}/> בית
+                </TabsTrigger>
+                {openTabs.map(recipe => (
+                    <TabsTrigger key={recipe.id} value={recipe.id} className="relative group pe-8">
+                       <span className="truncate max-w-[150px]">{recipe.name}</span>
+                       <Button
+                         variant="ghost"
+                         size="icon"
+                         className="absolute right-0.5 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full opacity-50 group-hover:opacity-100 group-hover:bg-muted"
+                         onClick={(e) => handleCloseTab(recipe.id, e)}
+                       >
+                           <X size={14}/>
+                       </Button>
+                    </TabsTrigger>
+                ))}
+             </TabsList>
+          </div>
+          <Button asChild className="w-full sm:w-auto flex-shrink-0">
+            <Link href="/recipes/add" className="flex items-center gap-2">
+              <PlusCircle size={20} />
+              הוסף מתכון חדש
+            </Link>
+          </Button>
+      </div>
+      
+      <TabsContent value="home" className="mt-6">
+          <div className="flex items-baseline gap-3 mb-6">
             <h2 className="text-3xl font-headline text-primary">המתכונים שלי</h2>
             <span className="text-sm text-muted-foreground font-body flex items-center gap-1.5">
                 <BookOpen size={16} />
                 {resultsText}
             </span>
-        </div>
-        <div className="relative w-full sm:w-auto sm:min-w-[300px]">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="חפש מתכונים, תגיות או רכיבים..."
-            className="pr-10 w-full"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            aria-label="חיפוש מתכונים"
-          />
-        </div>
-        <Button asChild className="w-full sm:w-auto">
-          <Link href="/recipes/add" className="flex items-center gap-2">
-            <PlusCircle size={20} />
-            הוסף מתכון חדש
-          </Link>
-        </Button>
-      </div>
-      
-      <Tabs defaultValue="all" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="all">כל המתכונים</TabsTrigger>
-          <TabsTrigger value="opened">נצפו לאחרונה</TabsTrigger>
-        </TabsList>
-        <TabsContent value="all" className="mt-6">
-            {filteredRecipes.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredRecipes.map(recipe => (
-                  <RecipeCard key={recipe.id} recipe={recipe} />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-10">
-                <p className="text-xl text-muted-foreground font-body">
-                  {searchTerm ? `לא נמצאו מתכונים עבור "${searchTerm}".` : "עדיין לא הוספת מתכונים."}
-                </p>
-                {!searchTerm && (
-                  <Button asChild variant="link" className="mt-4 text-lg">
-                    <Link href="/recipes/add">
-                      רוצה להוסיף את הראשון שלך?
-                    </Link>
-                  </Button>
-                )}
-              </div>
-            )}
+          </div>
+          <div className="relative w-full sm:w-auto sm:min-w-[300px] mb-6">
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="חפש מתכונים, תגיות או רכיבים..."
+              className="pr-10 w-full"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              aria-label="חיפוש מתכונים"
+            />
+          </div>
+          {filteredRecipes.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredRecipes.map(recipe => (
+                <RecipeCard key={recipe.id} recipe={recipe} onOpen={handleOpenRecipeTab} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-10">
+              <p className="text-xl text-muted-foreground font-body">
+                {searchTerm ? `לא נמצאו מתכונים עבור "${searchTerm}".` : "עדיין לא הוספת מתכונים."}
+              </p>
+              {!searchTerm && (
+                <Button asChild variant="link" className="mt-4 text-lg">
+                  <Link href="/recipes/add">
+                    רוצה להוסיף את הראשון שלך?
+                  </Link>
+                </Button>
+              )}
+            </div>
+          )}
+      </TabsContent>
+      {openTabs.map(recipe => (
+        <TabsContent key={recipe.id} value={recipe.id} className="mt-6">
+            <RecipeDetail recipeId={recipe.id} />
         </TabsContent>
-        <TabsContent value="opened" className="mt-6">
-           {filteredRecentlyViewed.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredRecentlyViewed.map(recipe => (
-                  <RecipeCard key={`recent-${recipe.id}`} recipe={recipe} />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-10">
-                <p className="text-xl text-muted-foreground font-body">
-                  {searchTerm ? `לא נמצאו מתכונים שנצפו לאחרונה עבור "${searchTerm}".` : "עדיין לא צפית באף מתכון."}
-                </p>
-              </div>
-            )}
-        </TabsContent>
-      </Tabs>
-    </div>
+      ))}
+    </Tabs>
   );
 }

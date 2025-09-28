@@ -30,9 +30,10 @@ import { generateId } from '@/lib/utils';
 
 interface RecipeCardProps {
   recipe: Recipe;
+  onOpen: (recipeId: string) => void;
 }
 
-export default function RecipeCard({ recipe }: RecipeCardProps) {
+export default function RecipeCard({ recipe, onOpen }: RecipeCardProps) {
   const { deleteRecipe } = useRecipes();
   const { toast } = useToast();
 
@@ -123,49 +124,44 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
 
   return (
     <Card className="flex flex-col h-full overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 recipe-card-print group">
-      <CardHeader className="p-0 relative">
-        <Link href={`/recipes/${recipe.id}`} aria-label={`הצג מתכון: ${recipe.name}`} className="block w-full h-48 relative" target="_blank" rel="noopener noreferrer">
-          {hasImage ? (
-            <Image
-              src={recipe.imageUrl!}
-              alt={recipe.name}
-              fill
-              className="object-cover transition-transform duration-300 group-hover:scale-105"
-            />
-          ) : (
-             <div className="w-full h-full bg-secondary flex items-center justify-center">
-                <span className="text-muted-foreground font-headline text-2xl">{recipe.name.charAt(0)}</span>
-             </div>
-          )}
-        </Link>
-      </CardHeader>
-      <CardContent className="p-4 flex-grow">
-        <Link href={`/recipes/${recipe.id}`} className="hover:text-primary" target="_blank" rel="noopener noreferrer">
-          <CardTitle className="text-2xl font-headline mb-2 truncate" title={recipe.name}>{recipe.name}</CardTitle>
-        </Link>
-        <p className="text-sm text-muted-foreground mb-1 font-body italic">מקור: {recipe.source}</p>
-        <div className="flex items-center text-sm text-muted-foreground mb-1 font-body">
-          <Clock size={16} className="me-1.5 text-accent" />
-          <span>{totalTime()}</span>
+       <div onClick={() => onOpen(recipe.id)} className="cursor-pointer">
+          <CardHeader className="p-0 relative">
+            <div aria-label={`הצג מתכון: ${recipe.name}`} className="block w-full h-48 relative">
+              {hasImage ? (
+                <Image
+                  src={recipe.imageUrl!}
+                  alt={recipe.name}
+                  fill
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+              ) : (
+                 <div className="w-full h-full bg-secondary flex items-center justify-center">
+                    <span className="text-muted-foreground font-headline text-2xl">{recipe.name.charAt(0)}</span>
+                 </div>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="p-4 flex-grow">
+              <CardTitle className="text-2xl font-headline mb-2 truncate group-hover:text-primary" title={recipe.name}>{recipe.name}</CardTitle>
+            <p className="text-sm text-muted-foreground mb-1 font-body italic">מקור: {recipe.source}</p>
+            <div className="flex items-center text-sm text-muted-foreground mb-1 font-body">
+              <Clock size={16} className="me-1.5 text-accent" />
+              <span>{totalTime()}</span>
+            </div>
+            <div className="flex items-center text-sm text-muted-foreground mb-3 font-body">
+              <Users size={16} className="me-1.5 text-accent" />
+              <span>{recipe.servings} {recipe.servingUnit}</span>
+            </div>
+            {recipe.tags && recipe.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-2">
+                {recipe.tags.slice(0, 3).map((tag, index) => (
+                  <Badge key={`${tag}-${index}`} variant="default" className="font-body text-xs bg-accent text-accent-foreground border border-accent hover:bg-accent/90">{tag}</Badge>
+                ))}
+              </div>
+            )}
+          </CardContent>
         </div>
-        <div className="flex items-center text-sm text-muted-foreground mb-3 font-body">
-          <Users size={16} className="me-1.5 text-accent" />
-          <span>{recipe.servings} {recipe.servingUnit}</span>
-        </div>
-        {recipe.tags && recipe.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-2">
-            {recipe.tags.slice(0, 3).map((tag, index) => (
-              <Badge key={`${tag}-${index}`} variant="default" className="font-body text-xs bg-accent text-accent-foreground border border-accent hover:bg-accent/90">{tag}</Badge>
-            ))}
-          </div>
-        )}
-      </CardContent>
-      <CardFooter className="p-4 pt-0 flex justify-between items-center no-print">
-        <Button asChild variant="outline" size="sm">
-          <Link href={`/recipes/${recipe.id}`} className="flex items-center gap-1" target="_blank" rel="noopener noreferrer">
-            <Eye size={16} /> הצג מתכון
-          </Link>
-        </Button>
+      <CardFooter className="p-4 pt-0 flex justify-end items-center no-print mt-auto">
         <div className="flex items-center gap-2">
             <Button asChild variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
                 <Link href={`/recipes/edit/${recipe.id}`} title="ערוך מתכון">
