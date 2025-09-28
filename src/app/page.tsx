@@ -109,33 +109,31 @@ export default function HomePage() {
       </div>
       
       <TabsContent value="home" className="mt-6">
-          <div className="flex flex-col sm:flex-row-reverse justify-between items-baseline gap-4 mb-6">
-            <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
-                <div className="relative w-full sm:w-auto sm:min-w-[300px]">
-                    <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <Input
-                    type="search"
-                    placeholder="חפש מתכונים, תגיות או רכיבים..."
-                    className="ps-10 w-full text-right"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    aria-label="חיפוש מתכונים"
-                    />
-                </div>
-                 <Button asChild className="w-full sm:w-auto flex-shrink-0">
-                    <Link href="/recipes/add" className="flex items-center gap-2">
-                    <PlusCircle size={20} />
-                    הוסף מתכון חדש
-                    </Link>
-                </Button>
-            </div>
-            <div className="flex-grow text-right">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
+            <div className="text-right">
                 <h2 className="text-3xl font-headline text-primary">המתכונים שלי</h2>
                 <span className="text-sm text-muted-foreground font-body flex items-center justify-end gap-1.5 mt-1">
                     <BookOpen size={16} />
                     {resultsText}
                 </span>
             </div>
+            <div className="relative w-full sm:w-auto sm:min-w-[300px] flex-grow">
+                <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                type="search"
+                placeholder="חפש מתכונים, תגיות או רכיבים..."
+                className="ps-10 w-full"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                aria-label="חיפוש מתכונים"
+                />
+            </div>
+            <Button asChild className="w-full sm:w-auto flex-shrink-0">
+                <Link href="/recipes/add" className="flex items-center gap-2">
+                <PlusCircle size={20} />
+                הוסף מתכון חדש
+                </Link>
+            </Button>
           </div>
          
           {filteredRecipes.length > 0 ? (
