@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ChefHat, Home, PlusCircle, ShoppingCart, CalendarDays } from 'lucide-react';
+import { ChefHat, Home, ShoppingCart, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';

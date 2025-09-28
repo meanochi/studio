@@ -396,14 +396,14 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
                     <span className="text-primary font-headline text-7xl">{recipe.name.charAt(0)}</span>
                 </div>
             )}
-            <div className={`print-header-overlay ${hasImage ? "absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-6 flex flex-col justify-end" : "p-6 bg-primary/10"}`}>
-              <div className="flex items-center gap-4">
-                <CardTitle className={`text-4xl md:text-5xl font-headline print-title ${hasImage ? 'text-white' : 'text-primary'}`}>{recipe.name}</CardTitle>
+            <div className={`print-header-overlay ${hasImage ? "absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-6 flex flex-col justify-end text-right" : "p-6 bg-primary/10 text-right"}`}>
+              <div className="flex items-center gap-4 justify-end">
                 <Button asChild variant="outline" size="icon" className={`no-print rounded-full ${hasImage ? 'bg-white/20 text-white hover:bg-white/30 border-white/50' : 'bg-primary/20 text-primary hover:bg-primary/30 border-primary/50'}`}>
                     <Link href={`/recipes/edit/${recipe.id}`} title="ערוך מתכון">
                         <Edit3 size={18} />
                     </Link>
                 </Button>
+                <CardTitle className={`text-4xl md:text-5xl font-headline print-title ${hasImage ? 'text-white' : 'text-primary'}`}>{recipe.name}</CardTitle>
               </div>
               {recipe.source && <CardDescription className={`mt-1 text-lg print-source ${hasImage ? 'text-gray-200' : 'text-muted-foreground'} font-body italic`}>מקור: {recipe.source}</CardDescription>}
             </div>
@@ -428,7 +428,7 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
             </div>
 
             {recipe.tags && recipe.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap justify-end gap-2">
                 {recipe.tags.map((tag, index) => (
                   <Badge key={`${tag}-${index}`} variant="default" className="font-body text-sm bg-accent text-accent-foreground border border-accent hover:bg-accent/90">{tag}</Badge>
                 ))}
@@ -436,12 +436,12 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
             )}
             
             {recipe.notes && (
-                <div>
-                  <h3 className="text-2xl font-headline text-primary mb-2 flex items-center gap-2">
+                <div className="text-right">
+                  <h3 className="text-2xl font-headline text-primary mb-2 flex items-center justify-end gap-2">
                     <StickyNote size={22} />
                     הערות
                   </h3>
-                  <div className="p-4 bg-background rounded-md border shadow-sm text-right">
+                  <div className="p-4 bg-background rounded-md border shadow-sm">
                     <p className="font-body whitespace-pre-wrap">{recipe.notes}</p>
                   </div>
                 </div>
@@ -449,11 +449,12 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
 
             <Separator />
 
-            <div>
+            <div className="text-right">
               <div className="flex flex-col sm:flex-row justify-between items-center mb-3 gap-2 no-print">
-                <h3 className="text-2xl font-headline text-primary">רכיבים</h3>
                 <div className="flex items-center gap-2">
-                  <Label htmlFor="multiplier" className="font-body">הכפל כמויות ב:</Label>
+                  <Button variant="outline" size="icon" onClick={() => setMultiplier(1)} title="אפס מכפיל" className="h-9 w-9">
+                    <RefreshCw size={16}/>
+                  </Button>
                   <Input
                     id="multiplier"
                     type="number"
@@ -463,44 +464,43 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
                     step="0.1"
                     className="w-20 h-9 text-center"
                   />
-                  <Button variant="outline" size="icon" onClick={() => setMultiplier(1)} title="אפס מכפיל" className="h-9 w-9">
-                    <RefreshCw size={16}/>
-                  </Button>
+                  <Label htmlFor="multiplier" className="font-body">הכפל כמויות ב:</Label>
                 </div>
+                <h3 className="text-2xl font-headline text-primary">רכיבים</h3>
               </div>
-              <div className="space-y-1 font-body text-right">
+              <div className="space-y-1 font-body">
                 {displayedIngredients.map(ingredient => (
                   ingredient.isHeading ? (
-                    <h4 key={ingredient.id} className="text-lg font-semibold text-accent mt-4 mb-2 pt-2 border-t border-dashed">
-                      <Heading2 size={18} className="inline-block me-2 align-middle" />
+                    <h4 key={ingredient.id} className="text-lg font-semibold text-accent mt-4 mb-2 pt-2 border-t border-dashed flex items-center justify-end gap-2">
                       {ingredient.name}
+                      <Heading2 size={18} className="inline-block align-middle" />
                     </h4>
                   ) : (
                     <div key={ingredient.id} className="flex flex-col p-3 bg-background rounded-md shadow-sm hover:bg-secondary/20 transition-colors">
                       <div className="flex items-center w-full">
+                         <span className="text-xs text-gray-400 flex-1 text-left italic no-print ms-4">
+                          {multiplier !== 1 && `(מקורי: ${Number((ingredient.amount / multiplier).toFixed(2))} ${getDisplayUnit(ingredient.amount/multiplier, ingredient.unit)})`}
+                        </span>
+                         <span className="text-foreground text-right">
+                            {ingredient.isOptional && <span className="text-xs text-muted-foreground ms-1">(אופציונלי)</span>}
+                            <span className="font-semibold text-primary"> {ingredient.name}</span>
+                            <span>: {Number((ingredient.amount).toFixed(2))} {getDisplayUnit(ingredient.amount, ingredient.unit)} </span>
+                        </span>
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="me-2 no-print text-muted-foreground hover:text-primary hover:bg-primary/10 h-8 w-8" 
+                          className="ms-2 no-print text-muted-foreground hover:text-primary hover:bg-primary/10 h-8 w-8" 
                           onClick={() => handleAddSingleIngredientToShoppingList(ingredient)}
                           aria-label={`הוסף ${ingredient.name} לרשימת הקניות`}
                           title={`הוסף ${ingredient.name} לרשימת הקניות`}
                         >
                           <PlusSquare size={20} />
                         </Button>
-                         <span className="text-foreground">
-                            <span>{Number((ingredient.amount).toFixed(2))} {getDisplayUnit(ingredient.amount, ingredient.unit)} </span>
-                            <span className="font-semibold text-primary">{ingredient.name}</span>
-                            {ingredient.isOptional && <span className="text-xs text-muted-foreground ms-1">(אופציונלי)</span>}
-                        </span>
-                        <span className="text-xs text-gray-400 flex-1 text-end italic no-print ms-4">
-                          {multiplier !== 1 && `(מקורי: ${Number((ingredient.amount / multiplier).toFixed(2))} ${getDisplayUnit(ingredient.amount/multiplier, ingredient.unit)})`}
-                        </span>
                       </div>
                       {ingredient.notes && (
-                        <div className="ps-10 pt-1 text-xs text-muted-foreground/80 flex items-center">
-                            <Info size={12} className="me-1.5 text-accent"/>
+                        <div className="pe-10 pt-1 text-xs text-muted-foreground/80 flex items-center justify-end">
                             <span>{ingredient.notes}</span>
+                            <Info size={12} className="ms-1.5 text-accent"/>
                         </div>
                       )}
                     </div>
@@ -511,27 +511,27 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
 
             <Separator />
 
-            <div>
+            <div className="text-right">
               <h3 className="text-2xl font-headline text-primary mb-3">הוראות</h3>
-              <ol className="list-none space-y-4 font-body text-base md:text-lg leading-relaxed ps-0 text-right">
+              <ol className="list-none space-y-4 font-body text-base md:text-lg leading-relaxed ps-0">
                 {recipe.instructions.map((step, index) => {
                   if (step.isHeading) {
                     return (
-                      <h4 key={step.id} className="text-lg font-semibold text-accent mt-4 mb-2 pt-2 border-t border-dashed">
-                        <Heading2 size={18} className="inline-block me-2 align-middle" />
+                      <h4 key={step.id} className="text-lg font-semibold text-accent mt-4 mb-2 pt-2 border-t border-dashed flex justify-end items-center gap-2">
                         {step.text}
+                        <Heading2 size={18} className="inline-block align-middle" />
                       </h4>
                     );
                   }
                   instructionStepCounter++;
                   return (
-                    <li key={step.id} className="ps-2 border-s-2 border-primary/50 py-2 hover:bg-primary/5 transition-colors rounded-e-md space-y-2">
-                      <div className="flex">
-                        <span className="font-headline text-xl text-primary me-3">{instructionStepCounter}.</span>
-                        <p>{step.text}</p>
+                    <li key={step.id} className="pe-2 border-e-2 border-primary/50 py-2 hover:bg-primary/5 transition-colors rounded-s-md space-y-2">
+                      <div className="flex justify-end">
+                        <p className="max-w-prose">{step.text}</p>
+                        <span className="font-headline text-xl text-primary ms-3">{instructionStepCounter}.</span>
                       </div>
                       {step.imageUrl && step.id && (
-                        <div className="mt-2 ms-10 space-y-2">
+                        <div className="mt-2 me-10 space-y-2 flex flex-col items-end">
                           <Button 
                             variant="outline" 
                             size="sm" 
@@ -565,12 +565,56 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
       </div>
       
       <div className="p-6 flex flex-col sm:flex-row justify-between items-center gap-3 border-t no-print mt-4 rounded-b-lg bg-card">
-        <Button variant="outline" onClick={handleAddAllToShoppingList} className="flex-grow sm:flex-grow-0 flex items-center gap-2">
-            <ShoppingCart size={18} /> הוסף הכל לרשימת קניות
-        </Button>
-
-        <div className="flex-grow sm:flex-grow-0 ms-auto flex items-center gap-2">
-            <Dialog open={isPlanDialogOpen} onOpenChange={setIsPlanDialogOpen}>
+        <div className="flex-grow sm:flex-grow-0 me-auto flex items-center gap-2">
+            <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button variant="outline" size="icon" title="מחק מתכון" className="text-destructive hover:bg-destructive/10 hover:text-destructive">
+                        <Trash2 size={18} />
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>האם אתה בטוח?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            לא ניתן לבטל פעולה זו. הפעולה תמחק לצמיתות את המתכון "{recipe.name}".
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>ביטול</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete}>מחק</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" title="שתף או הורד">
+                  <Share2 size={18} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleCopyRecipeText} className="flex items-center gap-2 cursor-pointer">
+                  <ClipboardCopy size={18} />
+                  העתק מתכון (עם תמונה)
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                   <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                    שתף קישור ב-WhatsApp
+                  </a>
+                </DropdownMenuItem>
+                 <DropdownMenuItem asChild>
+                   <a href={emailUrl} className="flex items-center gap-2 cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>
+                    שתף קישור באימייל
+                  </a>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+             <Button variant="outline" onClick={handlePrint} size="icon" title="הדפס">
+              <Printer size={18} />
+            </Button>
+             <Dialog open={isPlanDialogOpen} onOpenChange={setIsPlanDialogOpen}>
                 <DialogTrigger asChild>
                     <Button variant="outline" size="icon" title="הוסף לתכנית">
                         <CalendarPlus size={18} />
@@ -618,57 +662,11 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-
-            <Button variant="outline" onClick={handlePrint} size="icon" title="הדפס">
-              <Printer size={18} />
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" title="שתף או הורד">
-                  <Share2 size={18} />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handleCopyRecipeText} className="flex items-center gap-2 cursor-pointer">
-                  <ClipboardCopy size={18} />
-                  העתק מתכון (עם תמונה)
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                   <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
-                    שתף קישור ב-WhatsApp
-                  </a>
-                </DropdownMenuItem>
-                 <DropdownMenuItem asChild>
-                   <a href={emailUrl} className="flex items-center gap-2 cursor-pointer">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>
-                    שתף קישור באימייל
-                  </a>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <AlertDialog>
-                <AlertDialogTrigger asChild>
-                    <Button variant="outline" size="icon" title="מחק מתכון" className="text-destructive hover:bg-destructive/10 hover:text-destructive">
-                        <Trash2 size={18} />
-                    </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>האם אתה בטוח?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            לא ניתן לבטל פעולה זו. הפעולה תמחק לצמיתות את המתכון "{recipe.name}".
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>ביטול</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDelete}>מחק</AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-          </div>
+        </div>
+        
+         <Button variant="outline" onClick={handleAddAllToShoppingList} className="flex-grow sm:flex-grow-0 flex items-center gap-2">
+            <ShoppingCart size={18} /> הוסף הכל לרשימת קניות
+        </Button>
         </div>
     </div>
   );

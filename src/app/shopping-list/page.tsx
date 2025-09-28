@@ -215,7 +215,7 @@ export default function ShoppingListPage() {
             <ul className="space-y-3 font-body">
               {groupedItems.map(group => (
                 <li key={group.name} className="flex items-center justify-between p-3 bg-secondary/20 rounded-md shadow-sm hover:bg-secondary/40 transition-colors">
-                  <div className="flex-grow">
+                  <div className="flex-grow text-right">
                     <span className="font-semibold text-lg text-primary item-name-print">{group.name}</span>
                     <div className="text-sm text-muted-foreground item-amount-unit-print">
                       {group.displayAmount}
