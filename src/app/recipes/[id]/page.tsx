@@ -15,7 +15,8 @@ import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { getDisplayUnit } from '@/lib/utils';
+import { getDisplayUnit, generateId } from '@/lib/utils';
+import { Combobox } from '@/components/ui/combobox';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -572,16 +573,14 @@ export default function RecipeDetailPage() {
                     {mealPlans.length > 0 ? (
                         <div className="space-y-4 py-4">
                             <Label htmlFor="meal-plan-select">בחר תכנית</Label>
-                            <Select value={selectedPlanId} onValueChange={setSelectedPlanId}>
-                                <SelectTrigger id="meal-plan-select">
-                                    <SelectValue placeholder="בחר תכנית..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {mealPlans.map(plan => (
-                                        <SelectItem key={plan.id} value={plan.id}>{plan.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <Combobox
+                              options={mealPlans.map(p => ({ value: p.id, label: p.name }))}
+                              value={selectedPlanId}
+                              onChange={setSelectedPlanId}
+                              placeholder="בחר תכנית..."
+                              searchPlaceholder="חפש תכנית..."
+                              emptyMessage="לא נמצאו תכניות."
+                            />
                         </div>
                     ) : (
                         <div className="py-4 text-center text-muted-foreground">
