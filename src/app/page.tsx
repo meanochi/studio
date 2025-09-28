@@ -5,44 +5,10 @@ import RecipeCard from '@/components/recipes/RecipeCard';
 import { Button } from '@/components/ui/button';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { Input } from '@/components/ui/input';
-import { PlusCircle, Search, Loader2, History, BookOpen } from 'lucide-react';
+import { PlusCircle, Search, Loader2, BookOpen } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useMemo } from 'react';
-import { Separator } from '@/components/ui/separator';
-import type { Recipe } from '@/types';
-import Image from 'next/image';
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
-
-const CompactRecipeCard = ({ recipe }: { recipe: Recipe }) => {
-  const hasImage = !!recipe.imageUrl;
-  return (
-    <Link href={`/recipes/${recipe.id}`} className="group block" target="_blank" rel="noopener noreferrer">
-      <Card className="overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300">
-        <CardHeader className="p-0 relative">
-            <div className="w-full h-32 relative">
-                {hasImage ? (
-                    <Image
-                        src={recipe.imageUrl!}
-                        alt={recipe.name}
-                        fill
-                        className="object-cover transition-transform duration-300 group-hover:scale-105"
-                        data-ai-hint="recipe food"
-                    />
-                ) : (
-                    <div className="w-full h-full bg-secondary flex items-center justify-center">
-                        <span className="text-muted-foreground font-headline text-2xl">{recipe.name.charAt(0)}</span>
-                    </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-            </div>
-            <div className="absolute bottom-0 p-2">
-                <CardTitle className="text-md font-headline text-white truncate">{recipe.name}</CardTitle>
-            </div>
-        </CardHeader>
-      </Card>
-    </Link>
-  );
-};
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function HomePage() {
   const { recipes, loading, recentlyViewed } = useRecipes();
@@ -56,6 +22,15 @@ export default function HomePage() {
       recipe.ingredients.some(ingredient => ingredient.name.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   }, [recipes, searchTerm]);
+  
+  const filteredRecentlyViewed = useMemo(() => {
+    if (!searchTerm) return recentlyViewed;
+    return recentlyViewed.filter(recipe =>
+      recipe.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (recipe.tags && recipe.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))) ||
+      recipe.ingredients.some(ingredient => ingredient.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+  }, [recentlyViewed, searchTerm]);
 
   const resultsText = useMemo(() => {
     if (loading) return '';
@@ -105,48 +80,50 @@ export default function HomePage() {
           </Link>
         </Button>
       </div>
-
-      {recentlyViewed.length > 0 && !searchTerm && (
-        <div className="space-y-4">
-            <h3 className="text-2xl font-headline text-primary flex items-center gap-2">
-              <History size={24} />
-              נצפו לאחרונה
-            </h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
-              {recentlyViewed.map(recipe => (
-                <CompactRecipeCard key={`recent-${recipe.id}`} recipe={recipe} />
-              ))}
-            </div>
-            <Separator className="my-8" />
-        </div>
-      )}
-
-
-      {filteredRecipes.length > 0 ? (
-        <div className="space-y-4">
-          {recentlyViewed.length > 0 && !searchTerm && (
-             <h3 className="text-2xl font-headline text-primary">כל המתכונים</h3>
-          )}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredRecipes.map(recipe => (
-              <RecipeCard key={recipe.id} recipe={recipe} />
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="text-center py-10">
-          <p className="text-xl text-muted-foreground font-body">
-            {searchTerm ? `לא נמצאו מתכונים עבור "${searchTerm}".` : "עדיין לא הוספת מתכונים."}
-          </p>
-          {!searchTerm && (
-            <Button asChild variant="link" className="mt-4 text-lg">
-              <Link href="/recipes/add">
-                רוצה להוסיף את הראשון שלך?
-              </Link>
-            </Button>
-          )}
-        </div>
-      )}
+      
+      <Tabs defaultValue="all" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="all">כל המתכונים</TabsTrigger>
+          <TabsTrigger value="opened">נצפו לאחרונה</TabsTrigger>
+        </TabsList>
+        <TabsContent value="all" className="mt-6">
+            {filteredRecipes.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredRecipes.map(recipe => (
+                  <RecipeCard key={recipe.id} recipe={recipe} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-10">
+                <p className="text-xl text-muted-foreground font-body">
+                  {searchTerm ? `לא נמצאו מתכונים עבור "${searchTerm}".` : "עדיין לא הוספת מתכונים."}
+                </p>
+                {!searchTerm && (
+                  <Button asChild variant="link" className="mt-4 text-lg">
+                    <Link href="/recipes/add">
+                      רוצה להוסיף את הראשון שלך?
+                    </Link>
+                  </Button>
+                )}
+              </div>
+            )}
+        </TabsContent>
+        <TabsContent value="opened" className="mt-6">
+           {filteredRecentlyViewed.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredRecentlyViewed.map(recipe => (
+                  <RecipeCard key={`recent-${recipe.id}`} recipe={recipe} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-10">
+                <p className="text-xl text-muted-foreground font-body">
+                  {searchTerm ? `לא נמצאו מתכונים שנצפו לאחרונה עבור "${searchTerm}".` : "עדיין לא צפית באף מתכון."}
+                </p>
+              </div>
+            )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
