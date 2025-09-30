@@ -13,7 +13,6 @@ const navItems = [
   { href: '/', label: 'בית', icon: Home },
   { href: '/shopping-list', label: 'רשימת קניות', icon: ShoppingCart },
   { href: '/meal-plans', label: 'תכנון', icon: CalendarDays },
-  { href: '/converter', label: 'ממיר מידות', icon: BookHeart },
 ];
 
 export default function Header() {
