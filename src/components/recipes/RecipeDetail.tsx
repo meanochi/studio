@@ -565,7 +565,10 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
       </div>
       
       <div className="p-6 flex flex-col sm:flex-row justify-between items-center gap-3 border-t no-print mt-4 rounded-b-lg bg-card">
-        <div className="flex-grow sm:flex-grow-0 me-auto flex items-center gap-2">
+        <Button variant="outline" onClick={handleAddAllToShoppingList} className="flex-grow sm:flex-grow-0 flex items-center gap-2">
+            <ShoppingCart size={18} /> הוסף הכל לרשימת קניות
+        </Button>
+        <div className="flex-grow sm:flex-grow-0 me-auto sm:me-0 flex items-center gap-2">
             <AlertDialog>
                 <AlertDialogTrigger asChild>
                     <Button variant="outline" size="icon" title="מחק מתכון" className="text-destructive hover:bg-destructive/10 hover:text-destructive">
@@ -663,10 +666,6 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
                 </DialogContent>
             </Dialog>
         </div>
-        
-         <Button variant="outline" onClick={handleAddAllToShoppingList} className="flex-grow sm:flex-grow-0 flex items-center gap-2">
-            <ShoppingCart size={18} /> הוסף הכל לרשימת קניות
-        </Button>
         </div>
     </div>
   );

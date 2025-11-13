@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ChefHat, Home, ShoppingCart, CalendarDays, BookHeart } from 'lucide-react';
+import { ChefHat, Home, ShoppingCart, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -22,7 +22,7 @@ export default function Header() {
 
   return (
     <header className="bg-primary text-primary-foreground shadow-md sticky top-0 z-50 no-print">
-      <div className="container mx-auto px-4 py-3 flex flex-col sm:flex-row-reverse justify-between items-center">
+      <div className="container mx-auto px-4 py-3 flex flex-col sm:flex-row justify-between items-center">
         <Link href="/" className="flex items-center gap-2 mb-2 sm:mb-0 hover:opacity-90 transition-opacity">
           <h1 className="text-3xl font-headline">Lopiansky's Cookbook</h1>
           <ChefHat size={36} />
