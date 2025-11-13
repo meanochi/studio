@@ -408,7 +408,7 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
               {recipe.source && <CardDescription className={`mt-1 text-lg print-source ${hasImage ? 'text-gray-200' : 'text-muted-foreground'} font-body italic`}>מקור: {recipe.source}</CardDescription>}
             </div>
           </CardHeader>
-          <CardContent className="p-6 space-y-6">
+          <CardContent className="p-6 space-y-6 print-main-content">
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-center bg-secondary/30 p-4 rounded-lg">
               <div className="font-body">
                 <Clock size={24} className="mx-auto mb-1 text-primary" />
