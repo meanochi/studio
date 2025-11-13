@@ -471,12 +471,12 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
               <div className="space-y-1 font-body">
                 {displayedIngredients.map(ingredient => (
                   ingredient.isHeading ? (
-                    <h4 key={ingredient.id} className="text-lg font-semibold text-accent mt-4 mb-2 pt-2 border-t border-dashed flex items-center justify-end gap-2">
+                    <h4 key={ingredient.id} className="text-lg font-semibold text-accent mt-4 mb-2 pt-2 border-t border-dashed flex items-center justify-end gap-2 ingredient-heading-print">
                       {ingredient.name}
                       <Heading2 size={18} className="inline-block align-middle" />
                     </h4>
                   ) : (
-                    <div key={ingredient.id} className="flex flex-col p-3 bg-background rounded-md shadow-sm hover:bg-secondary/20 transition-colors">
+                    <div key={ingredient.id} className="flex flex-col p-3 bg-background rounded-md shadow-sm hover:bg-secondary/20 transition-colors ingredient-item-print">
                       <div className="flex items-center w-full">
                          <span className="text-xs text-gray-400 flex-1 text-left italic no-print ms-4">
                           {multiplier !== 1 && `(מקורי: ${Number((ingredient.amount / multiplier).toFixed(2))} ${getDisplayUnit(ingredient.amount/multiplier, ingredient.unit)})`}
@@ -525,7 +525,7 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
                   }
                   instructionStepCounter++;
                   return (
-                    <li key={step.id} className="pe-2 border-e-2 border-primary/50 py-2 hover:bg-primary/5 transition-colors rounded-s-md space-y-2">
+                    <li key={step.id} className="pe-2 border-e-2 border-primary/50 py-2 hover:bg-primary/5 transition-colors rounded-s-md space-y-2 instruction-step-print">
                       <div className="flex justify-end">
                         <p className="max-w-prose">{step.text}</p>
                         <span className="font-headline text-xl text-primary ms-3">{instructionStepCounter}.</span>
