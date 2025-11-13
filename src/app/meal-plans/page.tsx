@@ -224,7 +224,7 @@ export default function MealPlansPage() {
     <div className="max-w-4xl mx-auto space-y-8">
       <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle className="text-3xl font-headline text-primary flex items-center gap-3">
+          <CardTitle className="text-3xl font-headline text-primary flex items-center gap-3 flex-row-reverse">
             <CalendarDays size={30} />
             צור תכנית ארוחות חדשה
           </CardTitle>
@@ -260,8 +260,8 @@ export default function MealPlansPage() {
         ) : mealPlans.length > 0 ? (
           mealPlans.map(plan => (
             <Card key={plan.id} className="shadow-md">
-              <CardHeader className="flex flex-col sm:flex-row justify-between items-start gap-2">
-                  <div>
+              <CardHeader className="flex flex-col sm:flex-row-reverse justify-between items-start gap-2">
+                  <div className="text-right">
                     <CardTitle className="text-2xl font-headline text-accent">{plan.name}</CardTitle>
                     <p className="text-xs text-muted-foreground mt-1">
                       נוצר ב: {format(plan.createdAt, 'dd/MM/yyyy')}
@@ -302,7 +302,7 @@ export default function MealPlansPage() {
                             className="w-full justify-between"
                         >
                             הוסף מתכון לתכנית...
-                            <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
+                            <ChevronsUpDown className="me-auto h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
@@ -338,24 +338,24 @@ export default function MealPlansPage() {
                             if (!recipe) return null;
                             return (
                                 <li key={itemId} className="flex items-center justify-between p-2 bg-secondary/20 rounded-md">
-                                    <div className="flex items-center gap-2">
-                                        <Link href={`/recipes/${recipe.id}?multiplier=${multiplier}`} className="font-semibold text-primary hover:underline flex items-center gap-2" target="_blank" rel="noopener noreferrer">
-                                            <BookOpen size={16}/> {recipe.name}
-                                        </Link>
-                                        <span className="text-xs font-bold text-accent bg-accent/20 px-1.5 py-0.5 rounded-full">
-                                            x{multiplier}
-                                        </span>
-                                    </div>
                                     <div className="flex items-center gap-1">
-                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-primary/80" onClick={() => handleUpdateRecipeMultiplier(plan, itemId, 1)} title="הוסף עוד אחד">
-                                          <Plus size={16} />
-                                      </Button>
-                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-primary/80" onClick={() => handleUpdateRecipeMultiplier(plan, itemId, -1)} title="הסר אחד">
-                                          <Minus size={16} />
-                                      </Button>
                                       <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleRemoveRecipeFromPlan(plan, itemId)} title="הסר את המתכון מהתכנית">
                                           <Trash2 size={16} />
                                       </Button>
+                                       <Button variant="ghost" size="icon" className="h-7 w-7 text-primary/80" onClick={() => handleUpdateRecipeMultiplier(plan, itemId, -1)} title="הסר אחד">
+                                          <Minus size={16} />
+                                      </Button>
+                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-primary/80" onClick={() => handleUpdateRecipeMultiplier(plan, itemId, 1)} title="הוסף עוד אחד">
+                                          <Plus size={16} />
+                                      </Button>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs font-bold text-accent bg-accent/20 px-1.5 py-0.5 rounded-full">
+                                            x{multiplier}
+                                        </span>
+                                        <Link href={`/recipes/${recipe.id}?multiplier=${multiplier}`} className="font-semibold text-primary hover:underline flex items-center gap-2" target="_blank" rel="noopener noreferrer">
+                                            {recipe.name} <BookOpen size={16}/>
+                                        </Link>
                                     </div>
                                 </li>
                             )
@@ -378,5 +378,7 @@ export default function MealPlansPage() {
     </div>
   );
 }
+
+    
 
     
