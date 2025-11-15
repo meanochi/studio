@@ -396,8 +396,8 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
                     <span className="text-primary font-headline text-7xl">{recipe.name.charAt(0)}</span>
                 </div>
             )}
-            <div className={`print-header-overlay ${hasImage ? "absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-6 flex flex-col justify-end text-right" : "p-6 bg-primary/10 text-right"}`}>
-              <div className="flex items-center gap-4 justify-end">
+            <div className={`print-header-overlay ${hasImage ? "absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-6 flex flex-col justify-end" : "p-6 bg-primary/10 text-right"}`}>
+              <div className="flex items-center gap-4 justify-start">
                 <Button asChild variant="outline" size="icon" className={`no-print rounded-full ${hasImage ? 'bg-white/20 text-white hover:bg-white/30 border-white/50' : 'bg-primary/20 text-primary hover:bg-primary/30 border-primary/50'}`}>
                     <Link href={`/recipes/edit/${recipe.id}`} title="ערוך מתכון">
                         <Edit3 size={18} />
@@ -428,7 +428,7 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
             </div>
 
             {recipe.tags && recipe.tags.length > 0 && (
-              <div className="flex flex-wrap justify-end gap-2">
+              <div className="flex flex-wrap justify-start gap-2">
                 {recipe.tags.map((tag, index) => (
                   <Badge key={`${tag}-${index}`} variant="default" className="font-body text-sm bg-accent text-accent-foreground border border-accent hover:bg-accent/90">{tag}</Badge>
                 ))}
@@ -437,7 +437,7 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
             
             {recipe.notes && (
                 <div className="text-right">
-                  <h3 className="text-2xl font-headline text-primary mb-2 flex items-center justify-end gap-2">
+                  <h3 className="text-2xl font-headline text-primary mb-2 flex items-center justify-start gap-2">
                     <StickyNote size={22} />
                     הערות
                   </h3>
@@ -450,7 +450,7 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
             <Separator />
 
             <div className="text-right">
-              <div className="flex flex-col sm:flex-row justify-between items-center mb-3 gap-2 no-print">
+              <div className="flex flex-col sm:flex-row-reverse justify-between items-center mb-3 gap-2 no-print">
                 <div className="flex items-center gap-2">
                   <Button variant="outline" size="icon" onClick={() => setMultiplier(1)} title="אפס מכפיל" className="h-9 w-9">
                     <RefreshCw size={16}/>
@@ -471,7 +471,7 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
               <div className="space-y-1 font-body">
                 {displayedIngredients.map(ingredient => (
                   ingredient.isHeading ? (
-                    <h4 key={ingredient.id} className="text-lg font-semibold text-accent mt-4 mb-2 pt-2 border-t border-dashed flex items-center justify-end gap-2 ingredient-heading-print">
+                    <h4 key={ingredient.id} className="text-lg font-semibold text-accent mt-4 mb-2 pt-2 border-t border-dashed flex items-center justify-start gap-2 ingredient-heading-print">
                       {ingredient.name}
                       <Heading2 size={18} className="inline-block align-middle" />
                     </h4>
@@ -517,7 +517,7 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
                 {recipe.instructions.map((step, index) => {
                   if (step.isHeading) {
                     return (
-                      <h4 key={step.id} className="text-lg font-semibold text-accent mt-4 mb-2 pt-2 border-t border-dashed flex justify-end items-center gap-2">
+                      <h4 key={step.id} className="text-lg font-semibold text-accent mt-4 mb-2 pt-2 border-t border-dashed flex justify-start items-center gap-2">
                         {step.text}
                         <Heading2 size={18} className="inline-block align-middle" />
                       </h4>

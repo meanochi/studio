@@ -224,7 +224,7 @@ export default function MealPlansPage() {
     <div className="max-w-4xl mx-auto space-y-8">
       <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle className="text-3xl font-headline text-primary flex items-center gap-3 flex-row-reverse">
+          <CardTitle className="text-3xl font-headline text-primary flex items-center gap-3 flex-row">
             <CalendarDays size={30} />
             צור תכנית ארוחות חדשה
           </CardTitle>
@@ -260,7 +260,7 @@ export default function MealPlansPage() {
         ) : mealPlans.length > 0 ? (
           mealPlans.map(plan => (
             <Card key={plan.id} className="shadow-md">
-              <CardHeader className="flex flex-col sm:flex-row-reverse justify-between items-start gap-2">
+              <CardHeader className="flex flex-col sm:flex-row justify-between items-start gap-2">
                   <div className="text-right">
                     <CardTitle className="text-2xl font-headline text-accent">{plan.name}</CardTitle>
                     <p className="text-xs text-muted-foreground mt-1">

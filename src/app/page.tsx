@@ -22,8 +22,8 @@ export default function HomePage() {
 
   useEffect(() => {
     const headerTabs = (
-      <div className="flex justify-end items-center gap-2 p-1 bg-card rounded-lg shadow overflow-x-auto">
-         <TabsList className="grid-flow-col auto-cols-max justify-end">
+      <div className="flex justify-start items-center gap-2 p-1 bg-card rounded-lg shadow overflow-x-auto">
+         <TabsList className="grid-flow-col auto-cols-max justify-start">
             <TabsTrigger value="home" className="flex items-center gap-2">
                 <Home size={16}/> בית
             </TabsTrigger>

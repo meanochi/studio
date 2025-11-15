@@ -123,7 +123,7 @@ export default function RecipeCard({ recipe, onOpen }: RecipeCardProps) {
   const hasImage = !!recipe.imageUrl;
 
   return (
-    <Card className="flex flex-col h-full overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 recipe-card-print group">
+    <Card className="flex-start flex-col h-full overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 recipe-card-print group">
        <div onClick={() => onOpen(recipe.id)} className="cursor-pointer">
           <CardHeader className="p-0 relative">
             <div aria-label={`הצג מתכון: ${recipe.name}`} className="block w-full h-48 relative">

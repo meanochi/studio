@@ -76,12 +76,13 @@
 
 @layer base {
   * {
+    direction: rtl;
     @apply border-border;
   }
   body {
     @apply bg-background text-foreground font-body;
   }
-  html body {
+  html body[dir="rtl"] {
     @apply text-right;
   }
   h1, h2, h3, h4, h5, h6 {
