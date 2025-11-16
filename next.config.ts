@@ -7,7 +7,7 @@ import type {
 
 const withPWA = withPWAInit({
   dest: 'public',
-  disable: false,
+  disable: true,
   register: true,
   cacheStartUrl: false, // Set to false to avoid auth proxy conflicts
   dynamicStartUrl: true,
