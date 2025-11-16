@@ -118,7 +118,7 @@ export default function HomePage() {
   return (
     <>
       <TabsContent value="home" className="mt-6">
-          <div className="flex justify-between items-center gap-4 mb-6 text-right">
+          <div className="flex flex-col sm:flex-row-reverse justify-between items-center gap-4 mb-6 text-right">
             <Button asChild className="w-auto flex-shrink-0">
                 <Link href="/recipes/add" className="flex items-center gap-2">
                 <PlusCircle size={20} />
