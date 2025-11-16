@@ -16,7 +16,7 @@ const withPWA = withPWAInit({
     document: "/offline",
   },
   cacheOnFrontEndNav: true,
-  aggressiveFrontEndNavCaching: true,
+  aggressiveFrontEndNavCaching: false,
   reloadOnOnline: true,
   workboxOptions: {
     skipWaiting: true,
