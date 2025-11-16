@@ -79,8 +79,8 @@ export default function MealPlansPage() {
           id: doc.id,
           name: data.name,
           items: data.items || [],
-          createdAt: data.createdAt?.toDate() || new Date(),
-        };
+          createdAt: data.createdAt?.toDate(),
+        } as MealPlan;
       });
       setMealPlans(plansData);
       setIsLoading(false);
@@ -290,9 +290,11 @@ export default function MealPlansPage() {
               <CardHeader className="flex flex-col sm:flex-row-reverse justify-between items-start gap-2">
                   <div className="text-right w-full">
                     <CardTitle className="text-2xl font-headline text-accent">{plan.name}</CardTitle>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      נוצר ב: {format(plan.createdAt, 'dd/MM/yyyy')}
-                    </p>
+                    {plan.createdAt && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        נוצר ב: {format(plan.createdAt, 'dd/MM/yyyy')}
+                      </p>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <Button variant="outline" size="sm" onClick={() => handleAddPlanToShoppingList(plan)} className="flex items-center gap-1.5">
@@ -328,8 +330,8 @@ export default function MealPlansPage() {
                             aria-expanded={popoverOpen[plan.id]}
                             className="w-full justify-between"
                         >
-                            <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
                             הוסף מתכון לתכנית...
+                            <ChevronsUpDown className="me-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
@@ -405,3 +407,4 @@ export default function MealPlansPage() {
     </div>
   );
 }
+
