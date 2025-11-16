@@ -398,14 +398,14 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
             )}
             <div className={`print-header-overlay ${hasImage ? "absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-6 flex flex-col justify-end items-end" : "p-6 bg-primary/10 text-right"}`}>
               <div className="flex items-center gap-4 justify-end w-full">
+                <CardTitle className={`w-full text-4xl md:text-5xl font-headline print-title text-right ${hasImage ? 'text-white' : 'text-primary'}`}>{recipe.name}</CardTitle>
                 <Button asChild variant="outline" size="icon" className={`no-print rounded-full ${hasImage ? 'bg-white/20 text-white hover:bg-white/30 border-white/50' : 'bg-primary/20 text-primary hover:bg-primary/30 border-primary/50'}`}>
                     <Link href={`/recipes/edit/${recipe.id}`} title="ערוך מתכון">
                         <Edit3 size={18} />
                     </Link>
                 </Button>
-                <CardTitle className={`w-full text-4xl md:text-5xl font-headline print-title text-right ${hasImage ? 'text-white' : 'text-primary'}`}>{recipe.name}</CardTitle>
               </div>
-              {recipe.source && <CardDescription className={`mt-1 text-lg print-source text-right ${hasImage ? 'text-gray-200' : 'text-muted-foreground'} font-body italic`}>מקור: {recipe.source}</CardDescription>}
+              {recipe.source && <CardDescription className={`w-full mt-1 text-lg print-source text-right ${hasImage ? 'text-gray-200' : 'text-muted-foreground'} font-body italic`}>מקור: {recipe.source}</CardDescription>}
             </div>
           </CardHeader>
           <CardContent className="p-6 space-y-6 print-main-content">
@@ -476,35 +476,37 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
                       {ingredient.name}
                     </h4>
                   ) : (
-                    <div key={ingredient.id} className="flex items-center justify-between p-3 bg-background rounded-md shadow-sm hover:bg-secondary/20 transition-colors ingredient-item-print">
-                      <div className="flex-shrink-0">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="no-print text-muted-foreground hover:text-primary hover:bg-primary/10 h-8 w-8" 
-                          onClick={() => handleAddSingleIngredientToShoppingList(ingredient)}
-                          aria-label={`הוסף ${ingredient.name} לרשימת הקניות`}
-                          title={`הוסף ${ingredient.name} לרשימת הקניות`}
-                        >
-                          <PlusSquare size={20} />
-                        </Button>
-                      </div>
-                      <div className="flex-grow text-right">
-                        <div className="text-foreground">
-                            <span className="font-semibold text-primary">{ingredient.name}</span>
-                            : {Number((ingredient.amount).toFixed(2))} {getDisplayUnit(ingredient.amount, ingredient.unit)}
-                            {ingredient.isOptional && <span className="text-xs text-muted-foreground mr-1">(אופציונלי)</span>}
+                    <div key={ingredient.id} className="block text-right p-3 bg-background rounded-md shadow-sm hover:bg-secondary/20 transition-colors ingredient-item-print">
+                      <div className="flex items-center justify-between">
+                         <div className="flex-grow text-right">
+                            <div className="text-foreground">
+                                <span className="font-semibold text-primary">{ingredient.name}</span>
+                                : {Number((ingredient.amount).toFixed(2))} {getDisplayUnit(ingredient.amount, ingredient.unit)}
+                                {ingredient.isOptional && <span className="text-xs text-muted-foreground mr-1">(אופציונלי)</span>}
+                            </div>
+                         </div>
+                        <div className="flex-shrink-0">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="no-print text-muted-foreground hover:text-primary hover:bg-primary/10 h-8 w-8" 
+                            onClick={() => handleAddSingleIngredientToShoppingList(ingredient)}
+                            aria-label={`הוסף ${ingredient.name} לרשימת הקניות`}
+                            title={`הוסף ${ingredient.name} לרשימת הקניות`}
+                          >
+                            <PlusSquare size={20} />
+                          </Button>
                         </div>
-                         <div className="text-xs text-gray-400 italic no-print mr-1">
-                          {multiplier !== 1 && `(מקורי: ${Number((ingredient.amount / multiplier).toFixed(2))} ${getDisplayUnit(ingredient.amount/multiplier, ingredient.unit)})`}
-                        </div>
-                         {ingredient.notes && (
-                          <div className="pr-4 pt-1 text-xs text-muted-foreground/80 flex items-center justify-end">
-                              <Info size={12} className="ml-1.5 text-accent"/>
-                              <span>{ingredient.notes}</span>
-                          </div>
-                        )}
                       </div>
+                       <div className="text-xs text-gray-400 italic no-print mr-1">
+                        {multiplier !== 1 && `(מקורי: ${Number((ingredient.amount / multiplier).toFixed(2))} ${getDisplayUnit(ingredient.amount/multiplier, ingredient.unit)})`}
+                      </div>
+                       {ingredient.notes && (
+                        <div className="pr-4 pt-1 text-xs text-muted-foreground/80 flex items-center justify-end">
+                            <Info size={12} className="ml-1.5 text-accent"/>
+                            <span>{ingredient.notes}</span>
+                        </div>
+                      )}
                     </div>
                   )
                 ))}
@@ -674,7 +676,3 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
     </div>
   );
 }
-
-    
-
-    
