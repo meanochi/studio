@@ -398,7 +398,7 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
             )}
             <div className={`print-header-overlay ${hasImage ? "absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-6 flex flex-col justify-end items-end" : "p-6 bg-primary/10 text-right"}`}>
               <div className="flex items-center gap-4 justify-end">
-                <CardTitle className={`text-4xl md:text-5xl font-headline print-title text-right ${hasImage ? 'text-white' : 'text-primary'}`}>{recipe.name}</CardTitle>
+                <CardTitle className={`w-full text-4xl md:text-5xl font-headline print-title text-right ${hasImage ? 'text-white' : 'text-primary'}`}>{recipe.name}</CardTitle>
                 <Button asChild variant="outline" size="icon" className={`no-print rounded-full ${hasImage ? 'bg-white/20 text-white hover:bg-white/30 border-white/50' : 'bg-primary/20 text-primary hover:bg-primary/30 border-primary/50'}`}>
                     <Link href={`/recipes/edit/${recipe.id}`} title="ערוך מתכון">
                         <Edit3 size={18} />
@@ -477,7 +477,7 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
                     </h4>
                   ) : (
                     <div key={ingredient.id} className="flex items-center justify-between p-3 bg-background rounded-md shadow-sm hover:bg-secondary/20 transition-colors ingredient-item-print">
-                      <div>
+                      <div className="flex-shrink-0">
                         <Button 
                           variant="ghost" 
                           size="icon" 
@@ -490,11 +490,11 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
                         </Button>
                       </div>
                       <div className="flex-grow text-right">
-                        <span className="text-foreground">
+                        <div className="text-foreground">
                             <span className="font-semibold text-primary">{ingredient.name}</span>
                             : {Number((ingredient.amount).toFixed(2))} {getDisplayUnit(ingredient.amount, ingredient.unit)}
                             {ingredient.isOptional && <span className="text-xs text-muted-foreground mr-1">(אופציונלי)</span>}
-                        </span>
+                        </div>
                          <div className="text-xs text-gray-400 italic no-print mr-1">
                           {multiplier !== 1 && `(מקורי: ${Number((ingredient.amount / multiplier).toFixed(2))} ${getDisplayUnit(ingredient.amount/multiplier, ingredient.unit)})`}
                         </div>
@@ -674,5 +674,7 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
     </div>
   );
 }
+
+    
 
     
