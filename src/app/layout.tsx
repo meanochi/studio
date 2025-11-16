@@ -7,7 +7,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import type { Metadata, Viewport } from 'next';
 import { Providers } from './providers';
-import { HeaderProvider } from '@/contexts/HeaderContext';
+import { HeaderProvider, useHeader } from '@/contexts/HeaderContext';
 import { Tabs } from '@/components/ui/tabs';
 import { Belleza, Rubik } from 'next/font/google';
 import { Suspense } from 'react';
