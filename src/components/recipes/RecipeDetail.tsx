@@ -396,14 +396,14 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
                     <span className="text-primary font-headline text-7xl">{recipe.name.charAt(0)}</span>
                 </div>
             )}
-            <div className={`print-header-overlay ${hasImage ? "absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-6 flex flex-col justify-end" : "p-6 bg-primary/10 text-right"}`}>
-              <div className="flex items-center gap-4 justify-start">
+            <div className={`print-header-overlay ${hasImage ? "absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-6 flex flex-col justify-end items-end" : "p-6 bg-primary/10 text-right"}`}>
+              <div className="flex items-center gap-4 justify-end">
+                <CardTitle className={`text-4xl md:text-5xl font-headline print-title ${hasImage ? 'text-white' : 'text-primary'}`}>{recipe.name}</CardTitle>
                 <Button asChild variant="outline" size="icon" className={`no-print rounded-full ${hasImage ? 'bg-white/20 text-white hover:bg-white/30 border-white/50' : 'bg-primary/20 text-primary hover:bg-primary/30 border-primary/50'}`}>
                     <Link href={`/recipes/edit/${recipe.id}`} title="ערוך מתכון">
                         <Edit3 size={18} />
                     </Link>
                 </Button>
-                <CardTitle className={`text-4xl md:text-5xl font-headline print-title ${hasImage ? 'text-white' : 'text-primary'}`}>{recipe.name}</CardTitle>
               </div>
               {recipe.source && <CardDescription className={`mt-1 text-lg print-source ${hasImage ? 'text-gray-200' : 'text-muted-foreground'} font-body italic`}>מקור: {recipe.source}</CardDescription>}
             </div>
@@ -428,7 +428,7 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
             </div>
 
             {recipe.tags && recipe.tags.length > 0 && (
-              <div className="flex flex-wrap justify-start gap-2">
+              <div className="flex flex-wrap justify-end gap-2">
                 {recipe.tags.map((tag, index) => (
                   <Badge key={`${tag}-${index}`} variant="default" className="font-body text-sm bg-accent text-accent-foreground border border-accent hover:bg-accent/90">{tag}</Badge>
                 ))}
@@ -437,7 +437,7 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
             
             {recipe.notes && (
                 <div className="text-right">
-                  <h3 className="text-2xl font-headline text-primary mb-2 flex items-center justify-start gap-2">
+                  <h3 className="text-2xl font-headline text-primary mb-2 flex items-center justify-end gap-2">
                     <StickyNote size={22} />
                     הערות
                   </h3>
@@ -452,9 +452,7 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
             <div className="text-right">
               <div className="flex flex-col sm:flex-row-reverse justify-between items-center mb-3 gap-2 no-print">
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" size="icon" onClick={() => setMultiplier(1)} title="אפס מכפיל" className="h-9 w-9">
-                    <RefreshCw size={16}/>
-                  </Button>
+                  <Label htmlFor="multiplier" className="font-body">הכפל כמויות ב:</Label>
                   <Input
                     id="multiplier"
                     type="number"
@@ -464,32 +462,26 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
                     step="0.1"
                     className="w-20 h-9 text-center"
                   />
-                  <Label htmlFor="multiplier" className="font-body">הכפל כמויות ב:</Label>
+                  <Button variant="outline" size="icon" onClick={() => setMultiplier(1)} title="אפס מכפיל" className="h-9 w-9">
+                    <RefreshCw size={16}/>
+                  </Button>
                 </div>
                 <h3 className="text-2xl font-headline text-primary">רכיבים</h3>
               </div>
               <div className="space-y-1 font-body">
                 {displayedIngredients.map(ingredient => (
                   ingredient.isHeading ? (
-                    <h4 key={ingredient.id} className="text-lg font-semibold text-accent mt-4 mb-2 pt-2 border-t border-dashed flex items-center justify-start gap-2 ingredient-heading-print">
-                      {ingredient.name}
+                    <h4 key={ingredient.id} className="text-lg font-semibold text-accent mt-4 mb-2 pt-2 border-t border-dashed flex items-center justify-end gap-2 ingredient-heading-print">
                       <Heading2 size={18} className="inline-block align-middle" />
+                      {ingredient.name}
                     </h4>
                   ) : (
-                    <div key={ingredient.id} className="flex flex-col p-3 bg-background rounded-md shadow-sm hover:bg-secondary/20 transition-colors ingredient-item-print">
-                      <div className="flex items-center w-full">
-                         <span className="text-xs text-gray-400 flex-1 text-left italic no-print ms-4">
-                          {multiplier !== 1 && `(מקורי: ${Number((ingredient.amount / multiplier).toFixed(2))} ${getDisplayUnit(ingredient.amount/multiplier, ingredient.unit)})`}
-                        </span>
-                         <span className="text-foreground text-right">
-                            {ingredient.isOptional && <span className="text-xs text-muted-foreground ms-1">(אופציונלי)</span>}
-                            <span className="font-semibold text-primary"> {ingredient.name}</span>
-                            <span>: {Number((ingredient.amount).toFixed(2))} {getDisplayUnit(ingredient.amount, ingredient.unit)} </span>
-                        </span>
+                    <div key={ingredient.id} className="flex items-center justify-between p-3 bg-background rounded-md shadow-sm hover:bg-secondary/20 transition-colors ingredient-item-print">
+                      <div>
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="ms-2 no-print text-muted-foreground hover:text-primary hover:bg-primary/10 h-8 w-8" 
+                          className="no-print text-muted-foreground hover:text-primary hover:bg-primary/10 h-8 w-8" 
                           onClick={() => handleAddSingleIngredientToShoppingList(ingredient)}
                           aria-label={`הוסף ${ingredient.name} לרשימת הקניות`}
                           title={`הוסף ${ingredient.name} לרשימת הקניות`}
@@ -497,12 +489,22 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
                           <PlusSquare size={20} />
                         </Button>
                       </div>
-                      {ingredient.notes && (
-                        <div className="pe-10 pt-1 text-xs text-muted-foreground/80 flex items-center justify-end">
-                            <span>{ingredient.notes}</span>
-                            <Info size={12} className="ms-1.5 text-accent"/>
+                      <div className="flex-grow text-right">
+                        <span className="text-foreground">
+                            <span className="font-semibold text-primary">{ingredient.name}</span>
+                            : {Number((ingredient.amount).toFixed(2))} {getDisplayUnit(ingredient.amount, ingredient.unit)}
+                            {ingredient.isOptional && <span className="text-xs text-muted-foreground mr-1">(אופציונלי)</span>}
+                        </span>
+                         <div className="text-xs text-gray-400 italic no-print mr-1">
+                          {multiplier !== 1 && `(מקורי: ${Number((ingredient.amount / multiplier).toFixed(2))} ${getDisplayUnit(ingredient.amount/multiplier, ingredient.unit)})`}
                         </div>
-                      )}
+                         {ingredient.notes && (
+                          <div className="pr-4 pt-1 text-xs text-muted-foreground/80 flex items-center justify-end">
+                              <Info size={12} className="ml-1.5 text-accent"/>
+                              <span>{ingredient.notes}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )
                 ))}
@@ -517,21 +519,21 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
                 {recipe.instructions.map((step, index) => {
                   if (step.isHeading) {
                     return (
-                      <h4 key={step.id} className="text-lg font-semibold text-accent mt-4 mb-2 pt-2 border-t border-dashed flex justify-start items-center gap-2">
-                        {step.text}
+                      <h4 key={step.id} className="text-lg font-semibold text-accent mt-4 mb-2 pt-2 border-t border-dashed flex justify-end items-center gap-2">
                         <Heading2 size={18} className="inline-block align-middle" />
+                        {step.text}
                       </h4>
                     );
                   }
                   instructionStepCounter++;
                   return (
-                    <li key={step.id} className="pe-2 border-e-2 border-primary/50 py-2 hover:bg-primary/5 transition-colors rounded-s-md space-y-2 instruction-step-print">
-                      <div className="flex justify-end">
+                    <li key={step.id} className="pr-2 border-r-2 border-primary/50 py-2 hover:bg-primary/5 transition-colors rounded-r-md space-y-2 instruction-step-print">
+                      <div className="flex justify-start">
+                         <span className="font-headline text-xl text-primary mr-3">{instructionStepCounter}.</span>
                         <p className="max-w-prose">{step.text}</p>
-                        <span className="font-headline text-xl text-primary ms-3">{instructionStepCounter}.</span>
                       </div>
                       {step.imageUrl && step.id && (
-                        <div className="mt-2 me-10 space-y-2 flex flex-col items-end">
+                        <div className="mt-2 ml-10 space-y-2 flex flex-col items-start">
                           <Button 
                             variant="outline" 
                             size="sm" 
@@ -564,12 +566,7 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
         </Card>
       </div>
       
-      <div className="p-6 flex flex-col sm:flex-row justify-between items-center gap-3 border-t no-print mt-4 rounded-b-lg bg-card">
-        <div className="flex-grow sm:flex-grow-0 flex items-center gap-2">
-          <Button variant="outline" onClick={handleAddAllToShoppingList} className="flex-grow sm:flex-grow-0 flex items-center gap-2">
-              <ShoppingCart size={18} /> הוסף הכל לרשימת קניות
-          </Button>
-        </div>
+      <div className="p-6 flex flex-col sm:flex-row-reverse justify-between items-center gap-3 border-t no-print mt-4 rounded-b-lg bg-card">
         <div className="flex-grow sm:flex-grow-0 flex items-center gap-2">
             <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -667,6 +664,11 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+        </div>
+         <div className="flex-grow sm:flex-grow-0 flex items-center gap-2">
+          <Button variant="outline" onClick={handleAddAllToShoppingList} className="flex-grow sm:flex-grow-0 flex items-center gap-2">
+              <ShoppingCart size={18} /> הוסף הכל לרשימת קניות
+          </Button>
         </div>
         </div>
     </div>
