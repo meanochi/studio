@@ -28,6 +28,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { format } from 'date-fns';
 import { generateId, cn } from '@/lib/utils';
+import { useHeader } from '@/contexts/HeaderContext';
+import { useRouter } from 'next/navigation';
 
 const MEAL_PLANS_COLLECTION = 'mealPlans';
 
@@ -38,9 +40,34 @@ export default function MealPlansPage() {
   const [newPlanName, setNewPlanName] = useState('');
   const [popoverOpen, setPopoverOpen] = useState<Record<string, boolean>>({});
   
-  const { recipes, loading: recipesLoading } = useRecipes();
+  const { recipes, loading: recipesLoading, getRecipeById } = useRecipes();
   const { addIngredientsToShoppingList } = useShoppingList();
   const { toast } = useToast();
+  const { setActiveTab, setOpenTabs } = useHeader();
+  const router = useRouter();
+
+
+  const handleOpenRecipeTab = (recipeId: string, multiplier: number) => {
+    const recipe = getRecipeById(recipeId);
+    if (!recipe) return;
+
+    setOpenTabs(prev => {
+        if (!prev.some(tab => tab.id === recipeId)) {
+            return [...prev, recipe];
+        }
+        return prev;
+    });
+    
+    // Navigate to home page and set active tab
+    // The query param will be picked up by the RecipeDetail component
+    const url = `/?recipeId=${recipeId}&multiplier=${multiplier}`;
+    router.push('/');
+    
+    // Needs a slight delay to allow the router to navigate before setting the active tab
+    setTimeout(() => {
+        setActiveTab(recipeId);
+    }, 100);
+  };
 
   useEffect(() => {
     const plansQuery = query(collection(db, MEAL_PLANS_COLLECTION), orderBy('createdAt', 'desc'));
@@ -224,7 +251,7 @@ export default function MealPlansPage() {
     <div className="max-w-4xl mx-auto space-y-8">
       <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle className="text-3xl font-headline text-primary flex items-center gap-3 flex-row">
+          <CardTitle className="text-3xl font-headline text-primary flex items-center gap-3 flex-row-reverse">
             <CalendarDays size={30} />
             צור תכנית ארוחות חדשה
           </CardTitle>
@@ -260,14 +287,14 @@ export default function MealPlansPage() {
         ) : mealPlans.length > 0 ? (
           mealPlans.map(plan => (
             <Card key={plan.id} className="shadow-md">
-              <CardHeader className="flex flex-col sm:flex-row justify-between items-start gap-2">
-                  <div className="text-right">
+              <CardHeader className="flex flex-col sm:flex-row-reverse justify-between items-start gap-2">
+                  <div className="text-right w-full">
                     <CardTitle className="text-2xl font-headline text-accent">{plan.name}</CardTitle>
                     <p className="text-xs text-muted-foreground mt-1">
                       נוצר ב: {format(plan.createdAt, 'dd/MM/yyyy')}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     <Button variant="outline" size="sm" onClick={() => handleAddPlanToShoppingList(plan)} className="flex items-center gap-1.5">
                       <ShoppingCart size={16} /> הוסף הכל לרשימת קניות
                     </Button>
@@ -301,8 +328,8 @@ export default function MealPlansPage() {
                             aria-expanded={popoverOpen[plan.id]}
                             className="w-full justify-between"
                         >
+                            <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
                             הוסף מתכון לתכנית...
-                            <ChevronsUpDown className="me-auto h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
@@ -337,25 +364,25 @@ export default function MealPlansPage() {
                         {getPlanItemsWithRecipeData(plan).map(({ id: itemId, recipe, multiplier }) => {
                             if (!recipe) return null;
                             return (
-                                <li key={itemId} className="flex items-center justify-between p-2 bg-secondary/20 rounded-md">
-                                    <div className="flex items-center gap-1">
-                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleRemoveRecipeFromPlan(plan, itemId)} title="הסר את המתכון מהתכנית">
-                                          <Trash2 size={16} />
+                                <li key={itemId} className="flex items-center justify-end p-2 bg-secondary/20 rounded-md gap-4">
+                                     <div className="flex-shrink-0 flex items-center gap-1">
+                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-primary/80" onClick={() => handleUpdateRecipeMultiplier(plan, itemId, 1)} title="הוסף עוד אחד">
+                                          <Plus size={16} />
                                       </Button>
                                        <Button variant="ghost" size="icon" className="h-7 w-7 text-primary/80" onClick={() => handleUpdateRecipeMultiplier(plan, itemId, -1)} title="הסר אחד">
                                           <Minus size={16} />
                                       </Button>
-                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-primary/80" onClick={() => handleUpdateRecipeMultiplier(plan, itemId, 1)} title="הוסף עוד אחד">
-                                          <Plus size={16} />
+                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleRemoveRecipeFromPlan(plan, itemId)} title="הסר את המתכון מהתכנית">
+                                          <Trash2 size={16} />
                                       </Button>
                                     </div>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex-grow flex items-center gap-2 justify-end">
+                                        <button onClick={() => handleOpenRecipeTab(recipe.id, multiplier)} className="font-semibold text-primary hover:underline flex items-center gap-2 text-right">
+                                            <BookOpen size={16}/> {recipe.name}
+                                        </button>
                                         <span className="text-xs font-bold text-accent bg-accent/20 px-1.5 py-0.5 rounded-full">
                                             x{multiplier}
                                         </span>
-                                        <Link href={`/recipes/${recipe.id}?multiplier=${multiplier}`} className="font-semibold text-primary hover:underline flex items-center gap-2" target="_blank" rel="noopener noreferrer">
-                                            {recipe.name} <BookOpen size={16}/>
-                                        </Link>
                                     </div>
                                 </li>
                             )
@@ -378,7 +405,3 @@ export default function MealPlansPage() {
     </div>
   );
 }
-
-    
-
-    

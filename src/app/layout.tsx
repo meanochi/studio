@@ -7,9 +7,10 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import type { Metadata, Viewport } from 'next';
 import { Providers } from './providers';
-import { HeaderProvider, useHeader } from '@/contexts/HeaderContext';
+import { HeaderProvider } from '@/contexts/HeaderContext';
 import { Tabs } from '@/components/ui/tabs';
 import { Belleza, Rubik } from 'next/font/google';
+import { Suspense } from 'react';
 
 // Font configuration
 const belleza = Belleza({
@@ -43,17 +44,27 @@ export const viewport: Viewport = {
 };
 */
 
+function AppContent({ children }: { children: React.ReactNode }) {
+    const { activeTab, setActiveTab } = useHeader();
+    return (
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col min-h-screen">
+            <Header />
+            <main className="flex-grow container mx-auto px-4 py-8">
+                {children}
+            </main>
+            <Footer />
+            <Toaster />
+        </Tabs>
+    )
+}
+
 function AppLayout({ children }: { children: React.ReactNode }) {
-  const { activeTab, setActiveTab } = useHeader();
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col min-h-screen">
-      <Header />
-      <main className="flex-grow container mx-auto px-4 py-8">
-        {children}
-      </main>
-      <Footer />
-      <Toaster />
-    </Tabs>
+      <HeaderProvider>
+        <AppContent>
+          {children}
+        </AppContent>
+      </HeaderProvider>
   );
 }
 
@@ -74,11 +85,11 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <Providers>
-          <HeaderProvider>
+           <Suspense fallback={<div>Loading...</div>}>
             <AppLayout>
               {children}
             </AppLayout>
-          </HeaderProvider>
+          </Suspense>
         </Providers>
       </body>
     </html>

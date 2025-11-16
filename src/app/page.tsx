@@ -12,13 +12,22 @@ import { TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Recipe } from '@/types';
 import RecipeDetail from '@/components/recipes/RecipeDetail';
 import { useHeader } from '@/contexts/HeaderContext';
+import { useSearchParams } from 'next/navigation';
 
 export default function HomePage() {
   const { recipes, loading, getRecipeById } = useRecipes();
   const [searchTerm, setSearchTerm] = useState('');
+  const searchParams = useSearchParams();
   
-  const [openTabs, setOpenTabs] = useState<Recipe[]>([]);
-  const { activeTab, setActiveTab, setHeaderContent } = useHeader();
+  const { activeTab, setActiveTab, openTabs, setOpenTabs, setHeaderContent } = useHeader();
+  
+  // Effect to handle opening recipe from URL param
+  useEffect(() => {
+    const recipeId = searchParams.get('recipeId');
+    if (recipeId) {
+      handleOpenRecipeTab(recipeId);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const headerTabs = (
