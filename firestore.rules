@@ -1,10 +1,8 @@
 
 /**
- * Core Philosophy: This ruleset enforces a multi-tenant security model where all user-generated content
- * is segregated within a `user_group`. Access to content like recipes and shopping lists is granted
- * based on a user's membership within that group. Each group has a designated administrator, identified
- * by the `adminUserId` field on the group document, who holds special privileges for managing the group
- * and its members.
+ * Core Philosophy: This ruleset enforces a security model where a single 'superAdmin'
+ * has full control over managing user groups and memberships. Regular users' access is
+ * scoped to the content within their assigned group.
  *
  * Data Structure: The core data is organized hierarchically under the `/user_groups/{userGroupId}` path.
  * This includes subcollections for `/users`, `/recipes`, and `/shopping_lists`, ensuring that all data
@@ -13,28 +11,27 @@
  * the group-specific security constraints.
  *
  * Key Security Decisions:
+ * - Super-Admin Control: A user with the `superAdmin` custom claim set to `true` has exclusive
+ *   privileges to create, update, or delete `user_groups` and manage user memberships within them.
  * - Group Isolation: A user's primary authorization comes from their membership in a group. Users can
  *   only access data within the groups they belong to. The existence of their user document in the
  *   `/user_groups/{userGroupId}/users/{userId}` subcollection serves as proof of membership.
- * - Admin Privilege: A special user, the group administrator, has elevated permissions to manage group
- *   settings, add or remove users, and moderate content within their group.
- * - No User Listing: Listing all `user_groups` is explicitly disallowed to prevent enumeration of different
- *   family groups on the platform.
+ * - No Group Listing: Listing all `user_groups` is explicitly disallowed to prevent enumeration of different
+ *   family groups on the platform. Regular users can only read the group document they belong to.
  * - Append-Only Logs: The `/recipe_views` and `/activity_logs` collections are designed to be append-only
- *   for clients, ensuring the integrity of analytics and audit trails. Direct client-side reads and
- *   modifications of these logs are denied.
+ *   for clients, ensuring the integrity of analytics and audit trails.
  *
- * Denormalization for Authorization: To ensure performant and secure rules, authorization data is denormalized.
- * - The `adminUserId` is stored directly on each `UserGroup` document, allowing for a fast `get()` call
- *   to verify admin status without querying other collections.
- * - A user's membership is determined by the existence of their document in a group's `users` subcollection,
- *   which can be checked efficiently with `exists()`.
+ * Denormalization for Authorization:
+ * - The super-admin status is checked via a custom claim (`request.auth.token.superAdmin`), avoiding
+ *   any database reads to verify administrative permissions for group management.
+ * - A user's group membership is determined by a fast `exists()` call on their user document within a
+ *   group's `users` subcollection.
  *
- * Structural Segregation: The design separates private group data from public-facing analytics.
+ * Structural Segregation:
  * - Private Content: All collaborative data (recipes, shopping lists) is nested under `/user_groups`,
  *   inheriting strict, membership-based access controls.
  * - Public/Analytics Data: Collections like `/recipe_views` are at the top level to allow for different,
- *   more open write permissions (e.g., for guest users) without compromising the security of private group data.
+ *   more open write permissions (e.g., for guest users).
  */
 rules_version = '2';
 service cloud.firestore {
@@ -59,27 +56,27 @@ service cloud.firestore {
     }
 
     /**
+     * Checks if the user is the application-wide super administrator.
+     * This relies on a custom claim being set on the user's auth token.
+     */
+    function isSuperAdmin() {
+        return isSignedIn() && request.auth.token.superAdmin == true;
+    }
+
+    /**
      * Checks if the requesting user is a member of a specific group by verifying
      * the existence of their user document in the group's `users` subcollection.
      */
     function isGroupMember(userGroupId) {
       return isSignedIn() && exists(/databases/$(database)/documents/user_groups/$(userGroupId)/users/$(request.auth.uid));
     }
-
-    /**
-     * Checks if the requesting user is the administrator of a specific group by
-     * reading the `adminUserId` field from the group's document.
-     */
-    function isGroupAdmin(userGroupId) {
-      return isSignedIn() && get(/databases/$(database)/documents/user_groups/$(userGroupId)).data.adminUserId == request.auth.uid;
-    }
     
     /**
      * Checks if a user can manage (update/delete) a resource. True if they are the
-     * resource creator OR the group administrator. Also verifies the resource exists.
+     * resource creator OR the super admin. Also verifies the resource exists.
      */
-    function canManageContent(userGroupId, existingData) {
-        return resource != null && (isOwner(existingData.userId) || isGroupAdmin(userGroupId));
+    function canManageContent(existingData) {
+        return resource != null && (isOwner(existingData.userId) || isSuperAdmin());
     }
 
 
@@ -88,55 +85,49 @@ service cloud.firestore {
     // --------------------------------
 
     /**
-     * @description Manages user groups. Groups can be created by any signed-in user,
-     * who then becomes the admin. Only the admin can update or delete their group.
-     * Reading group info is restricted to its members.
+     * @description Manages user groups. Only the super-admin can create, update, or delete groups.
+     * Members can read the details of the group they belong to, but cannot list all groups.
      * @path /user_groups/{userGroupId}
-     * @allow (create) An authenticated user creates a new group, setting themselves as the admin.
-     * @deny (list) A user tries to list all user groups in the database.
-     * @principle Enforces admin ownership for group management and membership for reads.
+     * @allow (create) The super-admin creates a new group.
+     * @deny (list) A regular user tries to list all user groups.
+     * @principle Centralizes group management under a single administrative role.
      */
     match /user_groups/{userGroupId} {
-      allow get: if isGroupMember(userGroupId);
-      allow list: if false;
-      allow create: if isSignedIn() && request.resource.data.adminUserId == request.auth.uid;
-      allow update: if isGroupAdmin(userGroupId) && resource != null;
-      allow delete: if isGroupAdmin(userGroupId) && resource != null;
+      allow get: if isGroupMember(userGroupId) || isSuperAdmin();
+      allow list: if false; // Prevent listing all groups
+      allow create, update, delete: if isSuperAdmin();
 
       /**
-       * @description Manages users within a group. The group admin can add, update,
-       * or remove users. A user can update their own profile. All group members can see
-       * the list of other members.
+       * @description Manages users within a group. Only the super-admin can add, update,
+       * or remove users. Group members can view the list of other members.
        * @path /user_groups/{userGroupId}/users/{userId}
-       * @allow (create) The group admin adds a new user to their group.
-       * @deny (delete) A regular user tries to remove another user from the group.
-       * @principle Segregates users by group and grants management control to the group admin.
+       * @allow (create) The super-admin adds a new user to a group.
+       * @deny (delete) A regular user tries to remove another user.
+       * @principle Restricts user management to the super-admin, while allowing read access for members.
        */
       match /users/{userId} {
-        allow get, list: if isGroupMember(userGroupId);
-        allow create: if isGroupAdmin(userGroupId) && request.resource.data.userGroupId == userGroupId;
-        allow update: if (isOwner(userId) || isGroupAdmin(userGroupId)) && resource != null;
-        allow delete: if isGroupAdmin(userGroupId) && resource != null;
+        allow get, list: if isGroupMember(userGroupId) || isSuperAdmin();
+        allow create, update, delete: if isSuperAdmin();
       }
 
       /**
        * @description Manages recipes within a group. Any group member can create and view recipes.
-       * Only the recipe's creator or the group admin can update or delete it.
+       * Only the recipe's creator or the super-admin can update or delete it.
        * @path /user_groups/{userGroupId}/recipes/{recipeId}
        * @allow (create) A member of the group creates a new recipe.
-       * @deny (update) A user tries to edit a recipe in a group they do not belong to.
-       * @principle Enforces collaborative access within a group, with ownership for modification.
+       * @deny (update) A user tries to edit a recipe they didn't create (and is not super-admin).
+       * @principle Enforces collaborative access within a group, with ownership/admin rights for modification.
        */
       match /recipes/{recipeId} {
         allow get, list: if isGroupMember(userGroupId);
         allow create: if isGroupMember(userGroupId) && request.resource.data.userId == request.auth.uid && request.resource.data.userGroupId == userGroupId;
-        allow update: if canManageContent(userGroupId, resource.data) && request.resource.data.userId == resource.data.userId && request.resource.data.userGroupId == resource.data.userGroupId;
-        allow delete: if canManageContent(userGroupId, resource.data);
+        allow update: if canManageContent(resource.data) && request.resource.data.userId == resource.data.userId && request.resource.data.userGroupId == resource.data.userGroupId;
+        allow delete: if canManageContent(resource.data);
       }
 
       /**
        * @description Manages shopping lists within a group. Any group member can create and view lists.
-       * Only the list's creator or the group admin can update or delete the main list document.
+       * Only the list's creator or the super-admin can update or delete the main list document.
        * @path /user_groups/{userGroupId}/shopping_lists/{shoppingListId}
        * @allow (get) A group member views a shopping list.
        * @deny (delete) A group member tries to delete a list created by another member.
@@ -145,8 +136,8 @@ service cloud.firestore {
       match /shopping_lists/{shoppingListId} {
         allow get, list: if isGroupMember(userGroupId);
         allow create: if isGroupMember(userGroupId) && request.resource.data.userId == request.auth.uid && request.resource.data.userGroupId == userGroupId;
-        allow update: if canManageContent(userGroupId, resource.data) && request.resource.data.userId == resource.data.userId && request.resource.data.userGroupId == resource.data.userGroupId;
-        allow delete: if canManageContent(userGroupId, resource.data);
+        allow update: if canManageContent(resource.data) && request.resource.data.userId == resource.data.userId && request.resource.data.userGroupId == resource.data.userGroupId;
+        allow delete: if canManageContent(resource.data);
 
         /**
          * @description Manages items on a shopping list. Any member of the group can add,
@@ -157,10 +148,7 @@ service cloud.firestore {
          * @principle Provides open, collaborative write access for all members of the parent group.
          */
         match /items/{itemId} {
-          allow get, list: if isGroupMember(userGroupId);
-          allow create: if isGroupMember(userGroupId);
-          allow update: if isGroupMember(userGroupId) && resource != null;
-          allow delete: if isGroupMember(userGroupId) && resource != null;
+          allow read, write: if isGroupMember(userGroupId);
         }
       }
     }
@@ -171,15 +159,12 @@ service cloud.firestore {
      * users, to track views from shared links.
      * @path /recipe_views/{recipeViewId}
      * @allow (create) An anonymous guest user views a recipe, triggering a log write.
-     * @deny (get, list, update, delete) Any user attempts to read or modify existing log entries.
+     * @deny (read, update, delete) Any user attempts to read or modify existing log entries.
      * @principle Secures analytics data by making it append-only and inaccessible to clients.
      */
     match /recipe_views/{recipeViewId} {
-      allow get: if false;
-      allow list: if false;
+      allow read, update, delete: if false;
       allow create: if true;
-      allow update: if false;
-      allow delete: if false;
     }
 
     /**
@@ -187,15 +172,14 @@ service cloud.firestore {
      * for any authenticated user to create log entries about their own actions.
      * @path /activity_logs/{activityLogId}
      * @allow (create) An authenticated user adds a recipe, and the client writes an accompanying log entry.
-     * @deny (get, list, update, delete) Any user attempts to read or modify existing log entries.
+     * @deny (read, update, delete) Any user attempts to read or modify existing log entries.
      * @principle Secures audit trail data by making it append-only and inaccessible to clients.
      */
     match /activity_logs/{activityLogId} {
-      allow get: if false;
-      allow list: if false;
+      allow read, update, delete: if false;
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update: if false;
-      allow delete: if false;
     }
   }
 }
+
+    
