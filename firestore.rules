@@ -1,3 +1,4 @@
+
 /**
  * Core Philosophy: This ruleset enforces a multi-tenant security model where all user-generated content
  * is segregated within a `user_group`. Access to content like recipes and shopping lists is granted
