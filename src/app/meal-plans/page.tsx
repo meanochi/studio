@@ -288,6 +288,14 @@ export default function MealPlansPage() {
           mealPlans.map(plan => (
             <Card key={plan.id} className="shadow-md">
               <CardHeader className="flex flex-row-reverse justify-between items-center gap-2">
+                  <div className="flex-grow text-right">
+                    <CardTitle className="text-2xl font-headline text-accent">{plan.name}</CardTitle>
+                    {plan.createdAt && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        נוצר ב: {format(plan.createdAt, 'dd/MM/yyyy')}
+                      </p>
+                    )}
+                  </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <Button variant="outline" size="sm" onClick={() => handleAddPlanToShoppingList(plan)} className="flex items-center gap-1.5">
                       <ShoppingCart size={16} /> הוסף הכל לרשימת קניות
@@ -311,14 +319,6 @@ export default function MealPlansPage() {
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
-                  </div>
-                  <div className="text-right flex-grow">
-                    <CardTitle className="text-2xl font-headline text-accent">{plan.name}</CardTitle>
-                    {plan.createdAt && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        נוצר ב: {format(plan.createdAt, 'dd/MM/yyyy')}
-                      </p>
-                    )}
                   </div>
               </CardHeader>
               <CardContent className="space-y-4">
