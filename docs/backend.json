@@ -14,11 +14,19 @@
         "name": {
           "type": "string",
           "description": "Name of the user group."
+        },
+        "adminIds": {
+          "type": "array",
+          "description": "An array of user IDs who are administrators for this group.",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "required": [
         "id",
-        "name"
+        "name",
+        "adminIds"
       ]
     },
     "User": {
@@ -338,7 +346,7 @@
           "schema": {
             "$ref": "#/backend/entities/UserGroup"
           },
-          "description": "Represents a group of users. Managed by a super-admin.",
+          "description": "Represents a group of users. Managed by group admins or a super-admin.",
           "params": [
             {
               "name": "userGroupId",
@@ -354,7 +362,7 @@
           "schema": {
             "$ref": "#/backend/entities/User"
           },
-          "description": "Represents a user within a specific user group. Inherits group-level access control via the parent group.",
+          "description": "Represents a user within a specific user group. Inherits group-level access control.",
           "params": [
             {
               "name": "userGroupId",
@@ -464,8 +472,6 @@
         }
       }
     ],
-    "reasoning": "This design prioritizes security and scalability for the Family Cookbook application. User data and group affiliations are explicitly stored to avoid complex security rules that rely on hierarchical `get()` calls. This ensures Authorization Independence, crucial for atomic operations and debuggability. The use of path-based ownership and membership maps facilitates simple and robust security rules. Segregation of user groups into separate subcollections provides a homogeneous security posture for each group.\n\nKey design choices and justifications:\n\n*   **/user_groups/{userGroupId}:** Each group is a top-level document. This allows for easy management of group-level settings and data. Management is restricted to a super-admin.\n*   **/user_groups/{userGroupId}/users/{userId}:**  Users are stored as subcollections of their respective groups. This enforces group-level access control and simplifies user management within a group.\n*   **/user_groups/{userGroupId}/recipes/{recipeId}:** Recipes are stored as subcollections of user groups. This ensures that recipes are only accessible to members of the group. The `userId` field indicates the creator of the recipe.\n*   **/user_groups/{userGroupId}/shopping_lists/{shoppingListId}:** Shopping lists are stored as subcollections of user groups, making them accessible only to group members. Each shopping list has a `userId` to track its creator.\n*   **/user_groups/{userGroupId}/shopping_lists/{shoppingListId}/items/{itemId}:** Shopping list items are stored as subcollections, maintaining a clear hierarchy.\n*   **/recipe_views/{recipeViewId}:** This collection stores recipe view events, which can be used to track guest access and analytics. Note: this collection lives separately from the user group data because it's intended for broader tracking/analytics and guest access, and it should not be governed by the same security rules as the group-specific content.\n*   **/activity_logs/{activityLogId}:** This top-level collection stores activity logs. It avoids storing activity logs as a subcollection of a group to facilitate centralized monitoring and auditing across all groups. This separation ensures that activity logs are not inadvertently deleted or restricted by group-specific security rules.\n\n**Authorization Independence (CRITICAL):** Denormalization is used to avoid `get()` calls in security rules. For example, the `recipes` subcollection of a `user_group` does *not* need to `get()` the parent `user_group` to determine authorization.  Instead, the rules can directly evaluate `request.auth.uid` against the `userId` property on the `recipe`. Similarly, recipes shown via guest access are handled via the separate `recipe_views` collection, bypassing group security constraints. All collections assume authentication relies solely on `request.auth.uid` or the existence of an anonymous auth token.\n\n**QAPs (Rules are not Filters):**\n\n*   **List Operations:** The structure supports secure `list` operations because data is segregated by user group. Rules can allow listing recipes within a specific group based on the user's membership in that group, without the need to filter based on data content.\n*   **Guest Access:** The separate `recipe_views` collection and corresponding rules allow for controlled access to individual recipes via a unique link without affecting group security. This mechanism enables secure listing of public/shared recipes while protecting group-private content.\n*   **Admin Role:** The super-admin role, enforced via custom claims, allows a single user to manage all groups and users across the application."
+    "reasoning": "This design supports a two-tiered administrative system. A global 'super-admin' (identified by a custom claim) has universal privileges. Additionally, each 'user_group' has a list of 'adminIds' who can manage that specific group. This hybrid model allows for both centralized control and delegated group management.\n\nKey design choices and justifications:\n\n*   **/user_groups/{userGroupId}:** Each group is a top-level document. Management (create, update, delete) is restricted to the super-admin or group admins.\n*   **adminIds Field:** The `adminIds` array within each `user_group` document explicitly lists the UIDs of its administrators, avoiding costly `get()` calls in security rules.\n*   **/user_groups/{userGroupId}/users/{userId}:**  User membership is managed as a subcollection. Adding or removing users is restricted to group admins or the super-admin.\n*   **Content Segregation:** All group-specific content (recipes, shopping lists) is nested within the group's subcollections, ensuring data isolation and simplified security rules based on group membership.\n*   **/recipe_views and /activity_logs:** These top-level collections are for application-wide analytics and auditing. They are intentionally kept separate from group security constraints to allow for different, more open access patterns (e.g., append-only writes for guests or any authenticated user).\n\n**Authorization Independence (CRITICAL):**\n\n*   **Super-Admin:** The super-admin status is verified via the `request.auth.token.superAdmin` custom claim, which is fast and does not require a database read.\n*   **Group Admin:** A user's admin status for a group is checked by reading the `adminIds` array of the `user_group` document they are trying to manage.\n*   **Group Member:** A user's membership is confirmed by a fast `exists()` check on their user document within the group's `users` subcollection."
   }
 }
-
-    
