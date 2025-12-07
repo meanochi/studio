@@ -287,22 +287,14 @@ export default function MealPlansPage() {
         ) : mealPlans.length > 0 ? (
           mealPlans.map(plan => (
             <Card key={plan.id} className="shadow-md">
-              <CardHeader className="flex flex-col sm:flex-row-reverse justify-between items-start gap-2">
-                  <div className="text-right w-full">
-                    <CardTitle className="text-2xl font-headline text-accent">{plan.name}</CardTitle>
-                    {plan.createdAt && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        נוצר ב: {format(plan.createdAt, 'dd/MM/yyyy')}
-                      </p>
-                    )}
-                  </div>
+              <CardHeader className="flex flex-col sm:flex-row-reverse justify-between items-start sm:items-center gap-2">
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <Button variant="outline" size="sm" onClick={() => handleAddPlanToShoppingList(plan)} className="flex items-center gap-1.5">
                       <ShoppingCart size={16} /> הוסף הכל לרשימת קניות
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10">
+                        <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 h-9 w-9">
                           <Trash2 size={18} />
                         </Button>
                       </AlertDialogTrigger>
@@ -319,6 +311,14 @@ export default function MealPlansPage() {
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
+                  </div>
+                  <div className="text-right w-full">
+                    <CardTitle className="text-2xl font-headline text-accent">{plan.name}</CardTitle>
+                    {plan.createdAt && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        נוצר ב: {format(plan.createdAt, 'dd/MM/yyyy')}
+                      </p>
+                    )}
                   </div>
               </CardHeader>
               <CardContent className="space-y-4">

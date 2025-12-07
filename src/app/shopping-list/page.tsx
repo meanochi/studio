@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Trash2, ShoppingBasket, XCircle, Loader2, Printer, PlusCircle } from 'lucide-react';
+import { Trash2, ShoppingBasket, XCircle, Loader2, Printer, PlusCircle, Share2 } from 'lucide-react';
 import { getDisplayUnit } from '@/lib/utils';
 import {
   AlertDialog,
@@ -21,6 +21,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
@@ -109,6 +115,26 @@ export default function ShoppingListPage() {
   const handlePrint = () => {
     window.print();
   };
+
+  const generateShoppingListText = () => {
+    let text = '*רשימת קניות*\n\n';
+    groupedItems.forEach(group => {
+      text += `- ${group.name} (${group.displayAmount})\n`;
+    });
+    return text;
+  };
+  
+  const handleShare = (platform: 'whatsapp' | 'email') => {
+    const listText = generateShoppingListText();
+    const encodedText = encodeURIComponent(listText);
+    
+    if (platform === 'whatsapp') {
+      window.open(`https://wa.me/?text=${encodedText}`, '_blank');
+    } else if (platform === 'email') {
+      const subject = encodeURIComponent('רשימת קניות');
+      window.location.href = `mailto:?subject=${subject}&body=${encodedText}`;
+    }
+  };
   
   const handleAddManualItem = (e: React.FormEvent) => {
     e.preventDefault();
@@ -153,30 +179,48 @@ export default function ShoppingListPage() {
           </CardTitle>
           <div className="flex items-center gap-2 no-print">
             {groupedItems.length > 0 && (
-              <Button variant="outline" size="sm" onClick={handlePrint} className="flex items-center gap-1.5">
-                <Printer size={16} /> הדפס רשימה
-              </Button>
-            )}
-            {groupedItems.length > 0 && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm" className="flex items-center gap-1.5">
-                    <XCircle size={16} /> נקה הכל
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>לנקות את רשימת הקניות?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      פעולה זו תסיר את כל הפריטים מרשימת הקניות שלך. לא ניתן לבטל פעולה זו.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>ביטול</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleClearList}>נקה רשימה</AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              <>
+                 <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="flex items-center gap-1.5">
+                        <Share2 size={16} /> שתף
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem onClick={() => handleShare('whatsapp')}>
+                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="me-2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                         שתף ב-WhatsApp
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleShare('email')}>
+                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="me-2"><rect width="20" height="16" x="2" y="4" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>
+                         שלח באימייל
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                <Button variant="outline" size="sm" onClick={handlePrint} className="flex items-center gap-1.5">
+                  <Printer size={16} /> הדפס
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="sm" className="flex items-center gap-1.5">
+                      <XCircle size={16} /> נקה
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>לנקות את רשימת הקניות?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        פעולה זו תסיר את כל הפריטים מרשימת הקניות שלך. לא ניתן לבטל פעולה זו.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>ביטול</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleClearList}>נקה רשימה</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </>
             )}
           </div>
         </CardHeader>
@@ -202,7 +246,7 @@ export default function ShoppingListPage() {
             </div>
           </form>
 
-          {groupedItems.length > 0 && <Separator className="my-6" />}
+          {groupedItems.length > 0 && <Separator className="my-4" />}
           
           {groupedItems.length === 0 ? (
             <div className="text-center py-10">
@@ -212,27 +256,25 @@ export default function ShoppingListPage() {
               </Button>
             </div>
           ) : (
-            <ul className="space-y-3 font-body">
+            <ul className="space-y-1 font-body">
               {groupedItems.map(group => (
-                <li key={group.name} className="flex items-center justify-between p-3 bg-secondary/20 rounded-md shadow-sm hover:bg-secondary/40 transition-colors">
-                  <div className="flex-grow text-right">
-                    <span className="font-semibold text-lg text-primary item-name-print">{group.name}</span>
-                    <div className="text-sm text-muted-foreground item-amount-unit-print">
-                      {group.displayAmount}
-                    </div>
-                    {group.recipeName && <span className="text-xs text-muted-foreground/80 block italic item-recipe-print"> (עבור {group.recipeName})</span>}
-                  </div>
-                  <div className="no-print">
+                <li key={group.name} className="flex items-center justify-between p-2 border-b border-dashed">
+                  <div className="flex-shrink-0 no-print">
                     <Button 
                       variant="ghost" 
                       size="icon" 
                       onClick={() => handleRemoveGroup(group.name)} 
                       aria-label={`הסר את כל הפריטים של ${group.name}`} 
-                      className="text-destructive hover:bg-destructive/10"
+                      className="text-destructive/60 hover:text-destructive hover:bg-destructive/10 h-7 w-7"
                       title={`הסר את ${group.name}`}
                     >
-                      <Trash2 size={18} />
+                      <Trash2 size={16} />
                     </Button>
+                  </div>
+                  <div className="flex-grow text-right me-2">
+                     <span className="font-semibold text-primary item-name-print">{group.name}</span>
+                     <span className="text-muted-foreground item-amount-unit-print"> - {group.displayAmount}</span>
+                     {group.recipeName && <span className="text-xs text-muted-foreground/80 block italic item-recipe-print"> (עבור {group.recipeName})</span>}
                   </div>
                 </li>
               ))}
@@ -240,9 +282,9 @@ export default function ShoppingListPage() {
           )}
         </CardContent>
         {groupedItems.length > 0 && (
-          <CardFooter className="border-t pt-6 no-print">
-            <p className="text-sm text-muted-foreground font-body">
-              סך הפריטים (לפני איחוד יחידות): {shoppingList.length}. סוגי פריטים (מאוחדים לפי שם): {groupedItems.length}.
+          <CardFooter className="border-t pt-4 mt-4 no-print">
+            <p className="text-xs text-muted-foreground font-body">
+              סה"כ {groupedItems.length} סוגי פריטים.
             </p>
           </CardFooter>
         )}

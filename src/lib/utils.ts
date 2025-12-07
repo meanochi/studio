@@ -16,11 +16,13 @@ export function getDisplayUnit(amount: number, unit: string): string {
   if (!unit) return '';
   const lowerUnit = unit.toLowerCase();
   
+  // Always use 'גרם' for grams
+  if (['גרם', 'גרמים'].includes(lowerUnit)) return 'גרם';
+
   if (amount === 1 || (amount > 0 && amount < 1) || (amount < 0 && amount > -1) ) { // Handle singular for 1, 0.x, -0.x
     if (['כוסות'].includes(lowerUnit)) return 'כוס';
     if (['כפיות'].includes(lowerUnit)) return 'כפית';
     if (['כפות'].includes(lowerUnit)) return 'כף';
-    if (['גרמים'].includes(lowerUnit)) return 'גרם';
     if (['שקיות', 'שקית'].includes(lowerUnit)) return 'שקית';
     if (['חבילות', 'חבילת'].includes(lowerUnit)) return 'חבילה';
     if (['שיניים', 'שיני'].includes(lowerUnit)) return 'שן';
@@ -30,7 +32,6 @@ export function getDisplayUnit(amount: number, unit: string): string {
     if (['כוס'].includes(lowerUnit)) return 'כוסות';
     if (['כפית'].includes(lowerUnit)) return 'כפיות';
     if (['כף'].includes(lowerUnit)) return 'כפות';
-    if (['גרם'].includes(lowerUnit)) return 'גרמים';
     if (['שקית'].includes(lowerUnit)) return 'שקיות';
     if (['חבילה', 'חבילת'].includes(lowerUnit)) return 'חבילות';
     if (['שן', 'שיני'].includes(lowerUnit)) return 'שיניים';
