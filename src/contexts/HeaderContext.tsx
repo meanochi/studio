@@ -5,8 +5,6 @@ import React, { createContext, useContext, useState, ReactNode, Dispatch, SetSta
 import type { Recipe } from '@/types';
 
 interface HeaderContextType {
-  headerContent: ReactNode | null;
-  setHeaderContent: (content: ReactNode | null) => void;
   activeTab: string;
   setActiveTab: Dispatch<SetStateAction<string>>;
   openTabs: Recipe[];
@@ -17,7 +15,6 @@ interface HeaderContextType {
 const HeaderContext = createContext<HeaderContextType | undefined>(undefined);
 
 export const HeaderProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [headerContent, setHeaderContent] = useState<ReactNode | null>(null);
   const [activeTab, setActiveTab] = useState('home');
   const [openTabs, setOpenTabs] = useState<Recipe[]>([]);
 
@@ -44,7 +41,7 @@ export const HeaderProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   }, [activeTab, openTabs, setActiveTab, setOpenTabs]);
 
   return (
-    <HeaderContext.Provider value={{ headerContent, setHeaderContent, activeTab, setActiveTab, openTabs, setOpenTabs, handleCloseTab }}>
+    <HeaderContext.Provider value={{ activeTab, setActiveTab, openTabs, setOpenTabs, handleCloseTab }}>
       {children}
     </HeaderContext.Provider>
   );

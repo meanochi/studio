@@ -14,9 +14,12 @@ import RecipeDetail from '@/components/recipes/RecipeDetail';
 import { useHeader } from '@/contexts/HeaderContext';
 import { useSearchParams, useRouter } from 'next/navigation';
 
-function HeaderTabs() {
-  const { activeTab, setActiveTab, openTabs, handleCloseTab } = useHeader();
-
+function HeaderTabs({ activeTab, setActiveTab, openTabs, handleCloseTab }: {
+  activeTab: string;
+  setActiveTab: (id: string) => void;
+  openTabs: Recipe[];
+  handleCloseTab: (id: string, e: React.MouseEvent) => void;
+}) {
   return (
       <div className="flex justify-start items-center gap-2 p-1 bg-card rounded-lg shadow overflow-x-auto">
          <TabsList className="grid-flow-col auto-cols-max justify-start">
@@ -47,7 +50,7 @@ export default function HomePage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   
-  const { activeTab, setActiveTab, openTabs, setOpenTabs, setHeaderContent } = useHeader();
+  const { activeTab, setActiveTab, openTabs, setOpenTabs, handleCloseTab } = useHeader();
   
   // Effect to handle opening recipe from URL param
   useEffect(() => {
@@ -59,16 +62,6 @@ export default function HomePage() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
-
-  useEffect(() => {
-    setHeaderContent(<HeaderTabs />);
-
-    // Cleanup function
-    return () => {
-        setHeaderContent(null);
-    }
-  }, [openTabs, activeTab, setHeaderContent]);
-
 
   const handleOpenRecipeTab = (recipeId: string) => {
     const recipe = getRecipeById(recipeId);
@@ -115,7 +108,14 @@ export default function HomePage() {
   }
 
   return (
-    <Tabs value={activeTab} className="w-full">
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <HeaderTabs 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab}
+        openTabs={openTabs}
+        handleCloseTab={handleCloseTab}
+      />
+
       <TabsContent value="home" className="mt-6">
           <div className="flex flex-col sm:flex-row-reverse justify-between items-center gap-4 mb-6 text-right">
             <Button asChild className="w-auto flex-shrink-0">
