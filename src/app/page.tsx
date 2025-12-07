@@ -14,50 +14,10 @@ import RecipeDetail from '@/components/recipes/RecipeDetail';
 import { useHeader } from '@/contexts/HeaderContext';
 import { useSearchParams, useRouter } from 'next/navigation';
 
-export default function HomePage() {
-  const { recipes, loading, getRecipeById } = useRecipes();
-  const [searchTerm, setSearchTerm] = useState('');
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  
-  const { activeTab, setActiveTab, openTabs, setOpenTabs, setHeaderContent } = useHeader();
-  
-  // Effect to handle opening recipe from URL param
-  useEffect(() => {
-    const recipeId = searchParams.get('recipeId');
-    if (recipeId) {
-      handleOpenRecipeTab(recipeId);
-      // Clean the URL
-      router.replace('/', { scroll: false });
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+function HeaderTabs() {
+  const { activeTab, setActiveTab, openTabs, handleCloseTab } = useHeader();
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const handleCloseTab = useCallback((recipeId: string, e: React.MouseEvent) => {
-    e.stopPropagation(); 
-    
-    const tabIndex = openTabs.findIndex(tab => tab.id === recipeId);
-    if (tabIndex === -1) return;
-
-    // After closing a tab, determine the new active tab
-    if (activeTab === recipeId) {
-       const newOpenTabs = openTabs.filter(tab => tab.id !== recipeId);
-       if (newOpenTabs.length > 0) {
-         // If there was a tab before the closed one, activate it. Otherwise, activate the new first tab.
-         const newActiveIndex = tabIndex > 0 ? tabIndex - 1 : 0;
-         setActiveTab(newOpenTabs[newActiveIndex]?.id || 'home');
-       } else {
-         // If no tabs are left, go to home
-         setActiveTab('home');
-       }
-    }
-    
-    setOpenTabs(prev => prev.filter(tab => tab.id !== recipeId));
-  }, [activeTab, openTabs, setActiveTab, setOpenTabs]);
-
-  useEffect(() => {
-    const headerTabs = (
+  return (
       <div className="flex justify-start items-center gap-2 p-1 bg-card rounded-lg shadow overflow-x-auto">
          <TabsList className="grid-flow-col auto-cols-max justify-start">
             <TabsTrigger value="home" className="flex items-center gap-2" onClick={() => setActiveTab('home')}>
@@ -78,15 +38,36 @@ export default function HomePage() {
             ))}
          </TabsList>
       </div>
-    );
-    
-    setHeaderContent(headerTabs);
+  );
+}
+
+export default function HomePage() {
+  const { recipes, loading, getRecipeById } = useRecipes();
+  const [searchTerm, setSearchTerm] = useState('');
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  
+  const { activeTab, setActiveTab, openTabs, setOpenTabs, setHeaderContent } = useHeader();
+  
+  // Effect to handle opening recipe from URL param
+  useEffect(() => {
+    const recipeId = searchParams.get('recipeId');
+    if (recipeId) {
+      handleOpenRecipeTab(recipeId);
+      // Clean the URL
+      router.replace('/', { scroll: false });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  useEffect(() => {
+    setHeaderContent(<HeaderTabs />);
 
     // Cleanup function
     return () => {
         setHeaderContent(null);
     }
-  }, [openTabs, setHeaderContent, activeTab, handleCloseTab, setActiveTab]);
+  }, [openTabs, activeTab, setHeaderContent]);
 
 
   const handleOpenRecipeTab = (recipeId: string) => {
@@ -134,7 +115,7 @@ export default function HomePage() {
   }
 
   return (
-    <Tabs value={activeTab}>
+    <Tabs value={activeTab} className="w-full">
       <TabsContent value="home" className="mt-6">
           <div className="flex flex-col sm:flex-row-reverse justify-between items-center gap-4 mb-6 text-right">
             <Button asChild className="w-auto flex-shrink-0">
