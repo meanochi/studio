@@ -172,7 +172,7 @@
   }
 
   .recipe-detail-print .instruction-step-print {
-    padding: 0 !important;
+    padding: 0.1rem 0 !important;
     margin-bottom: 0.1rem !important;
     border-right-width: 0 !important;
   }
@@ -286,3 +286,6 @@
 
 
 
+
+
+    
