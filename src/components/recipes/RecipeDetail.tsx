@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
@@ -54,7 +53,7 @@ import {
 import {
   Clock, Users, Edit3, Trash2, Printer, ShoppingCart, Utensils, Snowflake, Loader2, AlertTriangle, HomeIcon, RefreshCw, PlusSquare, Info, EyeIcon, EyeOffIcon, Heading2, Share2, ClipboardCopy, StickyNote, MoreVertical, CalendarPlus
 } from 'lucide-react';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import { collection, doc, onSnapshot, query, updateDoc, getDoc, arrayUnion } from 'firebase/firestore';
 
 interface RecipeDetailProps {
@@ -67,6 +66,7 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
   const { getRecipeById, deleteRecipe, loading: recipesLoading, addRecentlyViewed } = useRecipes();
   const { addIngredientsToShoppingList } = useShoppingList();
   const { toast } = useToast();
+  const db = useFirestore();
 
   const [recipe, setRecipe] = useState<Recipe | null | undefined>(undefined); 
   const [multiplier, setMultiplier] = useState(1);
@@ -118,7 +118,7 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
       }
     });
     return () => unsubscribe();
-  }, [selectedPlanId]);
+  }, [selectedPlanId, db]);
   
   const servingsDisplay = useMemo(() => {
     if (!recipe) return '';

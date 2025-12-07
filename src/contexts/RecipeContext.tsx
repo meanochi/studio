@@ -1,10 +1,9 @@
-
 'use client';
 
 import type { Recipe, Ingredient, InstructionStep } from '@/types';
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { generateId } from '@/lib/utils';
-import { db } from '@/lib/firebase'; // Import Firestore instance
+import { useFirestore } from '@/firebase'; // Import Firestore instance hook
 import { 
   collection, 
   onSnapshot, 
@@ -44,6 +43,8 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const { toast } = useToast();
   const [recentlyViewed, setRecentlyViewed] = useState<Recipe[]>([]);
   const [recentlyViewedIds, setRecentlyViewedIds] = useState<string[]>([]);
+  const db = useFirestore();
+
 
   // Load recently viewed from localStorage on initial load
   useEffect(() => {
@@ -132,7 +133,7 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     });
 
     return () => unsubscribe();
-  }, [toast]);
+  }, [toast, db]);
 
 
   const addRecipe = async (recipeData: RecipeFormData): Promise<Recipe | null> => {

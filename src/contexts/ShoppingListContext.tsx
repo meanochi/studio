@@ -1,9 +1,8 @@
-
 'use client';
 
 import type { ShoppingListItem, Ingredient } from '@/types';
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import {
   collection,
   onSnapshot,
@@ -41,6 +40,7 @@ export const ShoppingListProvider: React.FC<{ children: ReactNode }> = ({ childr
   const [shoppingList, setShoppingList] = useState<ShoppingListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const db = useFirestore();
 
   useEffect(() => {
     setLoading(true);
@@ -74,7 +74,7 @@ export const ShoppingListProvider: React.FC<{ children: ReactNode }> = ({ childr
     });
 
     return () => unsubscribe();
-  }, [toast]);
+  }, [toast, db]);
 
   const addIngredientsToShoppingList = async (ingredients: Ingredient[], recipeId?: string, recipeName?: string) => {
     const batch = writeBatch(db);

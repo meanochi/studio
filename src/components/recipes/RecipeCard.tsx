@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { Recipe, MealPlan } from '@/types';
@@ -23,7 +22,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import React, { useState, useEffect, useMemo } from 'react';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import { collection, onSnapshot, query, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { generateId } from '@/lib/utils';
 
@@ -36,6 +35,7 @@ interface RecipeCardProps {
 export default function RecipeCard({ recipe, onOpen }: RecipeCardProps) {
   const { deleteRecipe } = useRecipes();
   const { toast } = useToast();
+  const db = useFirestore();
 
   const [isPlanDialogOpen, setIsPlanDialogOpen] = useState(false);
   const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
@@ -56,7 +56,7 @@ export default function RecipeCard({ recipe, onOpen }: RecipeCardProps) {
       });
       return () => unsubscribe();
     }
-  }, [isPlanDialogOpen, selectedPlanId]);
+  }, [isPlanDialogOpen, selectedPlanId, db]);
 
 
   const handleDelete = () => {

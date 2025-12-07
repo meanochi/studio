@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Trash2, PlusCircle, AlertTriangle, CalendarDays, BookOpen, ShoppingCart, Minus, Plus, Check, ChevronsUpDown } from 'lucide-react';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import { collection, onSnapshot, addDoc, deleteDoc, doc, query, orderBy, Timestamp, updateDoc } from 'firebase/firestore';
 import type { MealPlan, Recipe, Ingredient, MealPlanItem } from '@/types';
 import { useRecipes } from '@/contexts/RecipeContext';
@@ -45,6 +45,7 @@ function MealPlansPageContent() {
   const { toast } = useToast();
   const { setActiveTab, setOpenTabs } = useHeader();
   const router = useRouter();
+  const db = useFirestore();
 
 
   const handleOpenRecipeTab = (recipeId: string, multiplier: number) => {
@@ -95,7 +96,7 @@ function MealPlansPageContent() {
     });
 
     return () => unsubscribe();
-  }, [toast]);
+  }, [toast, db]);
 
   const handleAddPlan = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -197,7 +198,7 @@ function MealPlansPageContent() {
        console.error("Error updating recipe multiplier:", error);
        toast({ title: 'שגיאה', description: 'לא ניתן היה לעדכן את כמות המתכון.', variant: 'destructive' });
     }
-  }, [toast]);
+  }, [toast, db]);
   
   const handleRemoveRecipeFromPlan = useCallback(async (plan: MealPlan, itemId: string) => {
     const planRef = doc(db, MEAL_PLANS_COLLECTION, plan.id);
@@ -213,7 +214,7 @@ function MealPlansPageContent() {
         console.error("Error removing recipe from plan:", error);
         toast({ title: 'שגיאה', description: 'לא ניתן היה להסיר את המתכון.', variant: 'destructive' });
     }
-  }, [toast]);
+  }, [toast, db]);
 
 
   const handleAddPlanToShoppingList = (plan: MealPlan) => {

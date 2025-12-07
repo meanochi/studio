@@ -14,7 +14,7 @@ import Link from 'next/link';
 import { Loader2, UserPlus } from 'lucide-react';
 import { getAuth, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirestore } from '@/firebase';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const signupSchema = z
@@ -38,6 +38,7 @@ export default function SignupPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const db = useFirestore();
 
   const {
     register,
