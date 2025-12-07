@@ -60,6 +60,11 @@ const nextConfig: NextConfig = {
     "@radix-ui/react-dropdown-menu",
     "@radix-ui/react-slot"
   ],
+  webpack: (config, { isServer }) => {
+    // This is to fix a bug with genkit and handlebars
+    config.externals.push('handlebars');
+    return config;
+  },
 };
 
 export default withPWA(nextConfig);
