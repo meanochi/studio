@@ -367,24 +367,24 @@ export default function MealPlansPage() {
                             if (!recipe) return null;
                             return (
                                 <li key={itemId} className="flex items-center justify-between p-2 bg-secondary/20 rounded-md gap-4">
-                                    <div className="flex-shrink-0 flex items-center gap-1">
-                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-primary/80" onClick={() => handleUpdateRecipeMultiplier(plan, itemId, -1)} title="הסר אחד">
-                                          <Minus size={16} />
-                                      </Button>
-                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-primary/80" onClick={() => handleUpdateRecipeMultiplier(plan, itemId, 1)} title="הוסף עוד אחד">
-                                          <Plus size={16} />
-                                      </Button>
-                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleRemoveRecipeFromPlan(plan, itemId)} title="הסר את המתכון מהתכנית">
-                                          <Trash2 size={16} />
-                                      </Button>
-                                    </div>
-                                     <div className="flex-grow flex items-center gap-2 justify-end">
+                                    <div className="flex-grow flex items-center gap-2 justify-end">
                                         <button onClick={() => handleOpenRecipeTab(recipe.id, multiplier)} className="font-semibold text-primary hover:underline flex items-center gap-2 text-right">
                                             <BookOpen size={16}/> {recipe.name}
                                         </button>
                                         <span className="text-xs font-bold text-accent bg-accent/20 px-1.5 py-0.5 rounded-full">
                                             x{multiplier}
                                         </span>
+                                    </div>
+                                    <div className="flex-shrink-0 flex items-center gap-1">
+                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-primary/80" onClick={() => handleUpdateRecipeMultiplier(plan, itemId, 1)} title="הוסף עוד אחד">
+                                          <Plus size={16} />
+                                      </Button>
+                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-primary/80" onClick={() => handleUpdateRecipeMultiplier(plan, itemId, -1)} title="הסר אחד">
+                                          <Minus size={16} />
+                                      </Button>
+                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleRemoveRecipeFromPlan(plan, itemId)} title="הסר את המתכון מהתכנית">
+                                          <Trash2 size={16} />
+                                      </Button>
                                     </div>
                                 </li>
                             )
