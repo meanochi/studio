@@ -1,0 +1,472 @@
+{
+  "entities": {
+    "UserGroup": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserGroup",
+      "type": "object",
+      "description": "Represents a group of users within the family cookbook application, where members share recipes and other content.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user group."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the user group."
+        },
+        "adminUserId": {
+          "type": "string",
+          "description": "Reference to the User who is the administrator of this group. (Relationship: User 1:N UserGroup)"
+        },
+        "authenticationType": {
+          "type": "string",
+          "description": "The type of authentication used for this group (e.g., email/password, social login)."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "adminUserId",
+        "authenticationType"
+      ]
+    },
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user account within the family cookbook application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        },
+        "username": {
+          "type": "string",
+          "description": "The user's username."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address.",
+          "format": "email"
+        },
+        "userGroupId": {
+          "type": "string",
+          "description": "Reference to the UserGroup this user belongs to. (Relationship: UserGroup 1:N User)"
+        }
+      },
+      "required": [
+        "id",
+        "username",
+        "email",
+        "userGroupId"
+      ]
+    },
+    "Recipe": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Recipe",
+      "type": "object",
+      "description": "Represents a recipe within the family cookbook application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the recipe."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the recipe."
+        },
+        "source": {
+          "type": "string",
+          "description": "Source of the recipe (e.g., family member, cookbook)."
+        },
+        "prepTime": {
+          "type": "string",
+          "description": "The prep time for the recipe."
+        },
+        "cookTime": {
+          "type": "string",
+          "description": "The cook time for the recipe."
+        },
+        "totalTime": {
+          "type": "string",
+          "description": "Total time needed for the recipe."
+        },
+        "servings": {
+          "type": "number",
+          "description": "Number of servings the recipe makes."
+        },
+        "servingSize": {
+          "type": "string",
+          "description": "Size of each serving."
+        },
+        "freezable": {
+          "type": "boolean",
+          "description": "Indicates whether the recipe is suitable for freezing."
+        },
+        "instructions": {
+          "type": "string",
+          "description": "Instructions for preparing the recipe."
+        },
+        "pictureUrl": {
+          "type": "string",
+          "description": "URL of the recipe picture.",
+          "format": "uri"
+        },
+        "userGroupId": {
+          "type": "string",
+          "description": "Reference to the UserGroup this recipe belongs to. (Relationship: UserGroup 1:N Recipe)"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who created this recipe. (Relationship: User 1:N Recipe)"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "instructions",
+        "userGroupId",
+        "userId"
+      ]
+    },
+    "Ingredient": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Ingredient",
+      "type": "object",
+      "description": "Represents an ingredient used in a recipe.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ingredient."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the ingredient."
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
+    },
+    "RecipeIngredient": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "RecipeIngredient",
+      "type": "object",
+      "description": "Represents the relationship between a recipe and its ingredients, including the amount needed.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the RecipeIngredient entry."
+        },
+        "recipeId": {
+          "type": "string",
+          "description": "Reference to the Recipe. (Relationship: Recipe 1:N RecipeIngredient)"
+        },
+        "ingredientId": {
+          "type": "string",
+          "description": "Reference to the Ingredient. (Relationship: Ingredient 1:N RecipeIngredient)"
+        },
+        "amount": {
+          "type": "string",
+          "description": "Amount of the ingredient needed for the recipe."
+        },
+        "unit": {
+          "type": "string",
+          "description": "Unit of measurement for the ingredient amount (e.g., cup, tbsp)."
+        }
+      },
+      "required": [
+        "id",
+        "recipeId",
+        "ingredientId",
+        "amount"
+      ]
+    },
+    "ShoppingList": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ShoppingList",
+      "type": "object",
+      "description": "Represents a shopping list for a user group.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the shopping list."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the shopping list."
+        },
+        "userGroupId": {
+          "type": "string",
+          "description": "Reference to the UserGroup this shopping list belongs to. (Relationship: UserGroup 1:N ShoppingList)"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who created this shopping list. (Relationship: User 1:N ShoppingList)"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "userGroupId",
+        "userId"
+      ]
+    },
+    "ShoppingListItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ShoppingListItem",
+      "type": "object",
+      "description": "Represents an item on a shopping list.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the shopping list item."
+        },
+        "shoppingListId": {
+          "type": "string",
+          "description": "Reference to the ShoppingList. (Relationship: ShoppingList 1:N ShoppingListItem)"
+        },
+        "ingredientId": {
+          "type": "string",
+          "description": "Reference to the Ingredient. (Relationship: Ingredient 1:N ShoppingListItem)"
+        },
+        "amount": {
+          "type": "string",
+          "description": "Amount of the ingredient needed."
+        },
+        "unit": {
+          "type": "string",
+          "description": "Unit of measurement for the ingredient amount (e.g., cup, tbsp)."
+        },
+        "recipeId": {
+          "type": "string",
+          "description": "Reference to the Recipe this ingredient is for (optional). (Relationship: Recipe 1:N ShoppingListItem)"
+        }
+      },
+      "required": [
+        "id",
+        "shoppingListId",
+        "ingredientId",
+        "amount"
+      ]
+    },
+    "RecipeView": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "RecipeView",
+      "type": "object",
+      "description": "Stores information about recipe views by guest users.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the RecipeView entry."
+        },
+        "recipeId": {
+          "type": "string",
+          "description": "Reference to the Recipe being viewed. (Relationship: Recipe 1:N RecipeView)"
+        },
+        "viewedAt": {
+          "type": "string",
+          "description": "Timestamp of when the recipe was viewed.",
+          "format": "date-time"
+        },
+        "guestIdentifier": {
+          "type": "string",
+          "description": "Unique identifier for the guest user (e.g., IP address, session ID)."
+        }
+      },
+      "required": [
+        "id",
+        "recipeId",
+        "viewedAt",
+        "guestIdentifier"
+      ]
+    },
+    "ActivityLog": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ActivityLog",
+      "type": "object",
+      "description": "Logs user activities within the application, such as adding or editing recipes.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the activity log entry."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User performing the action. (Relationship: User 1:N ActivityLog)"
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp of when the activity occurred.",
+          "format": "date-time"
+        },
+        "actionType": {
+          "type": "string",
+          "description": "Type of action performed (e.g., addRecipe, editRecipe, addToShoppingList)."
+        },
+        "recipeId": {
+          "type": "string",
+          "description": "Reference to the Recipe involved in the activity (if applicable). (Relationship: Recipe 1:N ActivityLog)"
+        },
+        "shoppingListId": {
+          "type": "string",
+          "description": "Reference to the ShoppingList involved in the activity (if applicable). (Relationship: ShoppingList 1:N ActivityLog)"
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of the activity."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "timestamp",
+        "actionType"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/user_groups/{userGroupId}",
+        "definition": {
+          "entityName": "UserGroup",
+          "schema": {
+            "$ref": "#/backend/entities/UserGroup"
+          },
+          "description": "Represents a group of users, with an admin user. Includes 'adminUserId' for authorization.",
+          "params": [
+            {
+              "name": "userGroupId",
+              "description": "The unique identifier of the user group."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/user_groups/{userGroupId}/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Represents a user within a specific user group. Inherits group-level access control via the parent group.",
+          "params": [
+            {
+              "name": "userGroupId",
+              "description": "The unique identifier of the user group."
+            },
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/user_groups/{userGroupId}/recipes/{recipeId}",
+        "definition": {
+          "entityName": "Recipe",
+          "schema": {
+            "$ref": "#/backend/entities/Recipe"
+          },
+          "description": "Represents a recipe within a specific user group. Includes 'userId' for tracking the creator.",
+          "params": [
+            {
+              "name": "userGroupId",
+              "description": "The unique identifier of the user group."
+            },
+            {
+              "name": "recipeId",
+              "description": "The unique identifier of the recipe."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/user_groups/{userGroupId}/shopping_lists/{shoppingListId}",
+        "definition": {
+          "entityName": "ShoppingList",
+          "schema": {
+            "$ref": "#/backend/entities/ShoppingList"
+          },
+          "description": "Represents a shopping list within a specific user group. Includes 'userId' for tracking the creator.",
+          "params": [
+            {
+              "name": "userGroupId",
+              "description": "The unique identifier of the user group."
+            },
+            {
+              "name": "shoppingListId",
+              "description": "The unique identifier of the shopping list."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/user_groups/{userGroupId}/shopping_lists/{shoppingListId}/items/{itemId}",
+        "definition": {
+          "entityName": "ShoppingListItem",
+          "schema": {
+            "$ref": "#/backend/entities/ShoppingListItem"
+          },
+          "description": "Represents an item on a shopping list.",
+          "params": [
+            {
+              "name": "userGroupId",
+              "description": "The unique identifier of the user group."
+            },
+            {
+              "name": "shoppingListId",
+              "description": "The unique identifier of the shopping list."
+            },
+            {
+              "name": "itemId",
+              "description": "The unique identifier of the shopping list item."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/recipe_views/{recipeViewId}",
+        "definition": {
+          "entityName": "RecipeView",
+          "schema": {
+            "$ref": "#/backend/entities/RecipeView"
+          },
+          "description": "Stores information about recipe views by guest users. No group association.",
+          "params": [
+            {
+              "name": "recipeViewId",
+              "description": "The unique identifier of the recipe view event."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/activity_logs/{activityLogId}",
+        "definition": {
+          "entityName": "ActivityLog",
+          "schema": {
+            "$ref": "#/backend/entities/ActivityLog"
+          },
+          "description": "Logs user activities within the application. No group association.",
+          "params": [
+            {
+              "name": "activityLogId",
+              "description": "The unique identifier of the activity log entry."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "This design prioritizes security and scalability for the Family Cookbook application. User data and group affiliations are explicitly stored to avoid complex security rules that rely on hierarchical `get()` calls. This ensures Authorization Independence, crucial for atomic operations and debuggability. The use of path-based ownership and membership maps facilitates simple and robust security rules. Segregation of user groups into separate subcollections provides a homogeneous security posture for each group.\n\nKey design choices and justifications:\n\n*   **/user_groups/{userGroupId}:** Each group is a top-level document. This allows for easy management of group-level settings and data. The `adminUserId` field is crucial for identifying the group administrator.\n*   **/user_groups/{userGroupId}/users/{userId}:**  Users are stored as subcollections of their respective groups. This enforces group-level access control and simplifies user management within a group.\n*   **/user_groups/{userGroupId}/recipes/{recipeId}:** Recipes are stored as subcollections of user groups. This ensures that recipes are only accessible to members of the group. The `userId` field indicates the creator of the recipe.\n*   **/user_groups/{userGroupId}/shopping_lists/{shoppingListId}:** Shopping lists are stored as subcollections of user groups, making them accessible only to group members. Each shopping list has a `userId` to track its creator.\n*   **/user_groups/{userGroupId}/shopping_lists/{shoppingListId}/items/{itemId}:** Shopping list items are stored as subcollections, maintaining a clear hierarchy.\n*   **/recipe_views/{recipeViewId}:** This collection stores recipe view events, which can be used to track guest access and analytics. Note: this collection lives separately from the user group data because it's intended for broader tracking/analytics and guest access, and it should not be governed by the same security rules as the group-specific content.\n*   **/activity_logs/{activityLogId}:** This top-level collection stores activity logs. It avoids storing activity logs as a subcollection of a group to facilitate centralized monitoring and auditing across all groups. This separation ensures that activity logs are not inadvertently deleted or restricted by group-specific security rules.\n\n**Authorization Independence (CRITICAL):** Denormalization is used to avoid `get()` calls in security rules. For example, the `recipes` subcollection of a `user_group` does *not* need to `get()` the parent `user_group` to determine authorization.  Instead, the rules can directly evaluate `request.auth.uid` against the `userId` property on the `recipe`. Similarly, recipes shown via guest access are handled via the separate `recipe_views` collection, bypassing group security constraints. All collections assume authentication relies solely on `request.auth.uid` or the existence of an anonymous auth token.\n\n**QAPs (Rules are not Filters):**\n\n*   **List Operations:** The structure supports secure `list` operations because data is segregated by user group. Rules can allow listing recipes within a specific group based on the user's membership in that group, without the need to filter based on data content.\n*   **Guest Access:** The separate `recipe_views` collection and corresponding rules allow for controlled access to individual recipes via a unique link without affecting group security. This mechanism enables secure listing of public/shared recipes while protecting group-private content.\n*   **Admin Role:** The `adminUserId` field in the `user_groups` collection, combined with security rules, allows for easy enforcement of administrator privileges within each group."
+  }
+}
