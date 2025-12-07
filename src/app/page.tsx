@@ -12,12 +12,13 @@ import { TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Recipe } from '@/types';
 import RecipeDetail from '@/components/recipes/RecipeDetail';
 import { useHeader } from '@/contexts/HeaderContext';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 export default function HomePage() {
   const { recipes, loading, getRecipeById } = useRecipes();
   const [searchTerm, setSearchTerm] = useState('');
   const searchParams = useSearchParams();
+  const router = useRouter();
   
   const { activeTab, setActiveTab, openTabs, setOpenTabs, setHeaderContent } = useHeader();
   
@@ -26,7 +27,10 @@ export default function HomePage() {
     const recipeId = searchParams.get('recipeId');
     if (recipeId) {
       handleOpenRecipeTab(recipeId);
+      // Clean the URL
+      router.replace('/', { scroll: false });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   useEffect(() => {
@@ -59,7 +63,7 @@ export default function HomePage() {
     return () => {
         setHeaderContent(null);
     }
-  }, [openTabs, setHeaderContent, activeTab]);
+  }, [openTabs, setHeaderContent, activeTab, handleCloseTab, setActiveTab]);
 
 
   const handleOpenRecipeTab = (recipeId: string) => {
@@ -72,7 +76,8 @@ export default function HomePage() {
     setActiveTab(recipeId);
   };
   
-  const handleCloseTab = (recipeId: string, e: React.MouseEvent) => {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  function handleCloseTab(recipeId: string, e: React.MouseEvent) {
     e.stopPropagation(); 
     
     const tabIndex = openTabs.findIndex(tab => tab.id === recipeId);

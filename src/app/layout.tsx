@@ -86,9 +86,7 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <Providers>
            <Suspense fallback={<div>Loading...</div>}>
-            <AppLayout>
-              {children}
-            </AppLayout>
+            {children}
           </Suspense>
         </Providers>
       </body>

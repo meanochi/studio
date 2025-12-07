@@ -62,7 +62,9 @@ const nextConfig: NextConfig = {
   ],
   webpack: (config, { isServer }) => {
     // This is to fix a bug with genkit and handlebars
-    config.externals.push('handlebars');
+    if (isServer) {
+        config.externals.push('handlebars');
+    }
     return config;
   },
 };
