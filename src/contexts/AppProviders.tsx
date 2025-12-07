@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { ReactNode } from 'react';
@@ -7,11 +8,13 @@ import { HeaderProvider } from './HeaderContext';
 
 const ClientProviders: React.FC<{ children: ReactNode }> = ({ children }) => {
   return (
-    <RecipeProvider>
-      <ShoppingListProvider>
-          {children}
-      </ShoppingListProvider>
-    </RecipeProvider>
+    <HeaderProvider>
+      <RecipeProvider>
+        <ShoppingListProvider>
+            {children}
+        </ShoppingListProvider>
+      </RecipeProvider>
+    </HeaderProvider>
   );
 };
 

@@ -7,8 +7,8 @@ import { useRecipes } from '@/contexts/RecipeContext';
 import { Input } from '@/components/ui/input';
 import { PlusCircle, Search, Loader2, BookOpen, X, Home } from 'lucide-react';
 import Link from 'next/link';
-import { useState, useMemo, useEffect } from 'react';
-import { TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Recipe } from '@/types';
 import RecipeDetail from '@/components/recipes/RecipeDetail';
 import { useHeader } from '@/contexts/HeaderContext';
@@ -33,15 +33,38 @@ export default function HomePage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const handleCloseTab = useCallback((recipeId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); 
+    
+    const tabIndex = openTabs.findIndex(tab => tab.id === recipeId);
+    if (tabIndex === -1) return;
+
+    // After closing a tab, determine the new active tab
+    if (activeTab === recipeId) {
+       const newOpenTabs = openTabs.filter(tab => tab.id !== recipeId);
+       if (newOpenTabs.length > 0) {
+         // If there was a tab before the closed one, activate it. Otherwise, activate the new first tab.
+         const newActiveIndex = tabIndex > 0 ? tabIndex - 1 : 0;
+         setActiveTab(newOpenTabs[newActiveIndex]?.id || 'home');
+       } else {
+         // If no tabs are left, go to home
+         setActiveTab('home');
+       }
+    }
+    
+    setOpenTabs(prev => prev.filter(tab => tab.id !== recipeId));
+  }, [activeTab, openTabs, setActiveTab, setOpenTabs]);
+
   useEffect(() => {
     const headerTabs = (
       <div className="flex justify-start items-center gap-2 p-1 bg-card rounded-lg shadow overflow-x-auto">
          <TabsList className="grid-flow-col auto-cols-max justify-start">
-            <TabsTrigger value="home" className="flex items-center gap-2">
+            <TabsTrigger value="home" className="flex items-center gap-2" onClick={() => setActiveTab('home')}>
                 <Home size={16}/> בית
             </TabsTrigger>
             {openTabs.map(recipe => (
-                <TabsTrigger key={recipe.id} value={recipe.id} className="relative group pe-8">
+                <TabsTrigger key={recipe.id} value={recipe.id} className="relative group pe-8" onClick={() => setActiveTab(recipe.id)}>
                    <span className="truncate max-w-[150px]">{recipe.name}</span>
                    <div
                      role="button"
@@ -74,29 +97,6 @@ export default function HomePage() {
       setOpenTabs(prev => [...prev, recipe]);
     }
     setActiveTab(recipeId);
-  };
-  
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  function handleCloseTab(recipeId: string, e: React.MouseEvent) {
-    e.stopPropagation(); 
-    
-    const tabIndex = openTabs.findIndex(tab => tab.id === recipeId);
-    if (tabIndex === -1) return;
-
-    // After closing a tab, determine the new active tab
-    if (activeTab === recipeId) {
-       const newOpenTabs = openTabs.filter(tab => tab.id !== recipeId);
-       if (newOpenTabs.length > 0) {
-         // If there was a tab before the closed one, activate it. Otherwise, activate the new first tab.
-         const newActiveIndex = tabIndex > 0 ? tabIndex - 1 : 0;
-         setActiveTab(newOpenTabs[newActiveIndex]?.id || 'home');
-       } else {
-         // If no tabs are left, go to home
-         setActiveTab('home');
-       }
-    }
-    
-    setOpenTabs(prev => prev.filter(tab => tab.id !== recipeId));
   };
 
 
@@ -134,7 +134,7 @@ export default function HomePage() {
   }
 
   return (
-    <>
+    <Tabs value={activeTab}>
       <TabsContent value="home" className="mt-6">
           <div className="flex flex-col sm:flex-row-reverse justify-between items-center gap-4 mb-6 text-right">
             <Button asChild className="w-auto flex-shrink-0">
@@ -189,6 +189,6 @@ export default function HomePage() {
             <RecipeDetail recipeId={recipe.id} />
         </TabsContent>
       ))}
-    </>
+    </Tabs>
   );
 }

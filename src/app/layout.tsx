@@ -7,8 +7,6 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import type { Metadata, Viewport } from 'next';
 import { Providers } from './providers';
-import { HeaderProvider, useHeader } from '@/contexts/HeaderContext';
-import { Tabs } from '@/components/ui/tabs';
 import { Belleza, Rubik } from 'next/font/google';
 import { Suspense } from 'react';
 
@@ -23,7 +21,6 @@ const rubik = Rubik({
   subsets: ['latin', 'hebrew'],
   variable: '--font-rubik',
 });
-
 
 // Metadata and Viewport cannot be used in a client component.
 // We will keep them here, but for them to work, we'd need a different structure.
@@ -44,30 +41,6 @@ export const viewport: Viewport = {
 };
 */
 
-function AppContent({ children }: { children: React.ReactNode }) {
-    const { activeTab, setActiveTab } = useHeader();
-    return (
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col min-h-screen">
-            <Header />
-            <main className="flex-grow container mx-auto px-4 py-8">
-                {children}
-            </main>
-            <Footer />
-            <Toaster />
-        </Tabs>
-    )
-}
-
-function AppLayout({ children }: { children: React.ReactNode }) {
-  return (
-      <HeaderProvider>
-        <AppContent>
-          {children}
-        </AppContent>
-      </HeaderProvider>
-  );
-}
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -85,9 +58,16 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <Providers>
-           <Suspense fallback={<div>Loading...</div>}>
-            {children}
-          </Suspense>
+           <div className="flex flex-col min-h-screen">
+            <Header />
+            <main className="flex-grow container mx-auto px-4 py-8">
+              <Suspense fallback={<div>Loading...</div>}>
+                {children}
+              </Suspense>
+            </main>
+            <Footer />
+            <Toaster />
+          </div>
         </Providers>
       </body>
     </html>
