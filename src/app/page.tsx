@@ -97,10 +97,14 @@ export default function HomePage() {
 
   const filteredRecipes = useMemo(() => {
     if (!searchTerm) return recipes;
+    const lowerCaseSearchTerm = searchTerm.toLowerCase();
     return recipes.filter(recipe =>
-      recipe.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (recipe.tags && recipe.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))) ||
-      recipe.ingredients.some(ingredient => ingredient.name.toLowerCase().includes(searchTerm.toLowerCase()))
+      recipe.name.toLowerCase().includes(lowerCaseSearchTerm) ||
+      (recipe.source && recipe.source.toLowerCase().includes(lowerCaseSearchTerm)) ||
+      (recipe.tags && recipe.tags.some(tag => tag.toLowerCase().includes(lowerCaseSearchTerm))) ||
+      recipe.ingredients.some(ingredient => ingredient.name.toLowerCase().includes(lowerCaseSearchTerm)) ||
+      (recipe.notes && recipe.notes.toLowerCase().includes(lowerCaseSearchTerm)) ||
+      recipe.instructions.some(instruction => instruction.text.toLowerCase().includes(lowerCaseSearchTerm))
     );
   }, [recipes, searchTerm]);
 

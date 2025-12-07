@@ -119,7 +119,7 @@
     direction: "rtl";
     width: 100% !important;
     margin: 0 !important;
-    padding: 1rem !important; /* Add some padding for print */
+    padding: 0.5rem !important; /* Reduced padding for print */
     box-shadow: none !important;
     border: none !important;
   }
@@ -143,14 +143,16 @@
     border: 1px solid #ccc !important;
     background-color: white !important;
     color: black !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
   
   .recipe-detail-print .print-main-content {
-      padding-top: 1rem !important;
+      padding: 0.5rem !important;
   }
 
   .recipe-detail-print h3 {
-     font-size: 1.2rem !important;
+     font-size: 1.1rem !important;
      margin-bottom: 0.1rem !important;
      margin-top: 0.5rem !important;
   }
@@ -158,6 +160,9 @@
   .recipe-detail-print .ingredient-item-print {
     padding: 1px 2px !important;
     margin-bottom: 1px !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
   }
   
   .recipe-detail-print .ingredient-heading-print {
@@ -167,9 +172,9 @@
   }
 
   .recipe-detail-print .instruction-step-print {
-    padding-top: 0rem !important;
-    padding-bottom: 0rem !important;
+    padding: 0 !important;
     margin-bottom: 0.1rem !important;
+    border-right-width: 0 !important;
   }
   
   /* Make all text inside black, except for specific elements */
@@ -183,27 +188,28 @@
   .recipe-detail-print .print-header-overlay {
     position: relative !important;
     background: white !important;
+    padding: 0.5rem !important;
   }
   
   .recipe-detail-print .print-image-container {
     display: block !important; /* Ensure main image is visible */
+    height: 300px !important;
   }
   
   .recipe-detail-print .print-title {
     color: black !important;
-    background-color: rgba(255, 255, 255, 0.7) !important; /* Semi-transparent white background */
-    padding: 0.5rem;
-    border-radius: 0.25rem;
-    width: fit-content;
+    background-color: transparent !important;
+    padding: 0;
+    width: 100%;
     position: relative;
-    bottom: 1rem;
-    left: 2rem; /* Adjusted from 'right' for better rtl placement */
+    bottom: 0;
+    left: 0;
     box-decoration-break: clone;
     -webkit-box-decoration-break: clone;
   }
 
   html[dir="rtl"] .recipe-detail-print .print-title {
-    right: 2rem;
+    right: 0;
     left: auto;
   }
   
@@ -211,17 +217,17 @@
     color: #333 !important;
   }
 
-  .recipe-detail-print .text-primary { color: #E07A5F !important; }
-  .recipe-detail-print .text-accent { color: #BE95C4 !important; }
-  .recipe-detail-print .text-muted-foreground { color: #71717a !important; }
-  .recipe-detail-print .bg-secondary\/30 { background-color: rgba(224, 198, 236, 0.3) !important; }
-  .recipe-detail-print .border-primary\/50 { border-color: rgba(224, 122, 95, 0.5) !important; }
+  .recipe-detail-print .text-primary { color: black !important; }
+  .recipe-detail-print .text-accent { color: black !important; font-weight: bold; }
+  .recipe-detail-print .text-muted-foreground { color: #555 !important; }
+  .recipe-detail-print .bg-secondary\/30 { background-color: transparent !important; }
+  .recipe-detail-print .border-primary\/50 { border-color: #ccc !important; }
 
   /* Ensure step images are visible */
   .recipe-detail-print .step-image-container {
     display: block !important;
-    width: 300px !important; /* Fixed width for consistency */
-    height: 225px !important;
+    width: 250px !important; /* smaller width for consistency */
+    height: auto !important;
     page-break-inside: avoid;
   }
 
@@ -232,7 +238,7 @@
 
   /* Shopping List Print Styles */
   .shopping-list-print-container {
-    padding: 1rem;
+    padding: 0 !important;
     box-shadow: none !important;
     border: none !important;
   }
@@ -250,15 +256,15 @@
     list-style: none;
     padding: 0;
     columns: 2;
-    column-gap: 2rem;
+    column-gap: 1.5rem;
   }
   .shopping-list-print-container li {
-    padding: 0.1rem 0; /* Reduced padding */
-    border-bottom: 1px dashed #999;
-    font-size: 10pt; /* smaller font */
+    padding: 0;
+    border: none;
+    font-size: 10pt;
     page-break-inside: avoid;
-    display: flex;
-    justify-content: space-between;
+    display: block;
+    line-height: 1.4;
   }
   .shopping-list-print-container .item-name-print {
     font-weight: bold;
@@ -275,6 +281,7 @@
 }
 
     
+
 
 
 

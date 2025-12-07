@@ -398,12 +398,12 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
             )}
             <div className={`print-header-overlay ${hasImage ? "absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-6 flex flex-col justify-end items-end" : "p-6 bg-primary/10 text-right"}`}>
               <div className="flex items-center gap-4 justify-end w-full">
+                <CardTitle className={`w-full text-4xl md:text-5xl font-headline print-title text-right ${hasImage ? 'text-white' : 'text-primary'}`}>{recipe.name}</CardTitle>
                 <Button asChild variant="outline" size="icon" className={`no-print rounded-full ${hasImage ? 'bg-white/20 text-white hover:bg-white/30 border-white/50' : 'bg-primary/20 text-primary hover:bg-primary/30 border-primary/50'}`}>
                     <Link href={`/recipes/edit/${recipe.id}`} title="ערוך מתכון">
                         <Edit3 size={18} />
                     </Link>
                 </Button>
-                <CardTitle className={`w-full text-4xl md:text-5xl font-headline print-title text-right ${hasImage ? 'text-white' : 'text-primary'}`}>{recipe.name}</CardTitle>
               </div>
               {recipe.source && <CardDescription className={`w-full mt-1 text-lg print-source text-right ${hasImage ? 'text-gray-200' : 'text-muted-foreground'} font-body italic`}>מקור: {recipe.source}</CardDescription>}
             </div>
@@ -428,7 +428,7 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
             </div>
 
             {recipe.tags && recipe.tags.length > 0 && (
-              <div className="flex flex-wrap justify-start gap-2">
+              <div className="flex flex-wrap justify-end gap-2">
                 {recipe.tags.map((tag, index) => (
                   <Badge key={`${tag}-${index}`} variant="default" className="font-body text-sm bg-accent text-accent-foreground border border-accent hover:bg-accent/90">{tag}</Badge>
                 ))}
@@ -480,7 +480,7 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
                       <div className="flex items-center justify-between">
                          <div className="flex-grow text-right">
                             <div className="text-foreground">
-                                {Number((ingredient.amount).toFixed(2))} {getDisplayUnit(ingredient.amount, ingredient.unit)} <span className="font-semibold text-primary">{ingredient.name}</span>
+                                <span className="font-semibold text-primary">{Number((ingredient.amount).toFixed(2))}</span> {getDisplayUnit(ingredient.amount, ingredient.unit)} {ingredient.name}
                                 {ingredient.isOptional && <span className="text-xs text-muted-foreground mr-1">(אופציונלי)</span>}
                             </div>
                          </div>
