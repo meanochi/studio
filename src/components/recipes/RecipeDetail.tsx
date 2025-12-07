@@ -471,10 +471,10 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
               <div className="space-y-1 font-body">
                 {displayedIngredients.map(ingredient => (
                   ingredient.isHeading ? (
-                    <h4 key={ingredient.id} className="text-lg font-semibold text-accent mt-4 mb-2 pt-2 border-t border-dashed w-full flex items-center justify-end gap-2 ingredient-heading-print">
-                      <Heading2 size={18} className="inline-block align-middle" />
+                    <h2 key={ingredient.id} className="text-lg font-semibold text-accent mt-4 mb-2 pt-2 border-t border-dashed w-full flex items-center justify-start gap-2 ingredient-heading-print">
+                      <Heading2 size={20} className="inline-block align-middle" />
                       {ingredient.name}
-                    </h4>
+                    </h2>
                   ) : (
                     <div key={ingredient.id} className="block text-right p-3 bg-background rounded-md shadow-sm hover:bg-secondary/20 transition-colors ingredient-item-print">
                       <div className="flex items-center justify-between">
