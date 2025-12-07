@@ -1,4 +1,3 @@
-
 'use client';
 
 import RecipeCard from '@/components/recipes/RecipeCard';
@@ -13,6 +12,7 @@ import type { Recipe } from '@/types';
 import RecipeDetail from '@/components/recipes/RecipeDetail';
 import { useHeader } from '@/contexts/HeaderContext';
 import { useSearchParams, useRouter } from 'next/navigation';
+import PrivateRoute from '@/components/auth/PrivateRoute';
 
 function HeaderTabs({ activeTab, setActiveTab, openTabs, handleCloseTab }: {
   activeTab: string;
@@ -44,7 +44,7 @@ function HeaderTabs({ activeTab, setActiveTab, openTabs, handleCloseTab }: {
   );
 }
 
-export default function HomePage() {
+function HomePageContent() {
   const { recipes, loading, getRecipeById } = useRecipes();
   const [searchTerm, setSearchTerm] = useState('');
   const searchParams = useSearchParams();
@@ -172,4 +172,12 @@ export default function HomePage() {
       ))}
     </Tabs>
   );
+}
+
+export default function HomePage() {
+    return (
+        <PrivateRoute>
+            <HomePageContent />
+        </PrivateRoute>
+    )
 }

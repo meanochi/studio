@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -30,10 +29,11 @@ import { format } from 'date-fns';
 import { generateId, cn } from '@/lib/utils';
 import { useHeader } from '@/contexts/HeaderContext';
 import { useRouter } from 'next/navigation';
+import PrivateRoute from '@/components/auth/PrivateRoute';
 
 const MEAL_PLANS_COLLECTION = 'mealPlans';
 
-export default function MealPlansPage() {
+function MealPlansPageContent() {
   const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -406,4 +406,12 @@ export default function MealPlansPage() {
       </div>
     </div>
   );
+}
+
+export default function MealPlansPage() {
+    return (
+        <PrivateRoute>
+            <MealPlansPageContent />
+        </PrivateRoute>
+    )
 }

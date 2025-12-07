@@ -1,16 +1,15 @@
-
 'use client';
 
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
-import type { Metadata, Viewport } from 'next';
 import { Providers } from './providers';
 import { Belleza, Rubik } from 'next/font/google';
 import { Suspense } from 'react';
+import { FirebaseClientProvider } from '@/firebase';
 
-// Font configuration
+
 const belleza = Belleza({
   subsets: ['latin'],
   weight: '400',
@@ -21,25 +20,6 @@ const rubik = Rubik({
   subsets: ['latin', 'hebrew'],
   variable: '--font-rubik',
 });
-
-// Metadata and Viewport cannot be used in a client component.
-// We will keep them here, but for them to work, we'd need a different structure.
-// This is a tradeoff for the dynamic header content.
-/*
-export const metadata: Metadata = {
-  title: "Lopiansky's Cookbook",
-  description: 'מקום לכל המתכונים המשפחתיים שלך',
-  manifest: '/manifest.json',
-  icons: {
-    icon: '/icons/iconi.png',
-    apple: '/icons/iconi.png',
-  },
-};
-
-export const viewport: Viewport = {
-  themeColor: '#E07A5F',
-};
-*/
 
 export default function RootLayout({
   children,
@@ -57,18 +37,20 @@ export default function RootLayout({
         <meta name="theme-color" content="#E07A5F" />
       </head>
       <body className="font-body antialiased">
-        <Providers>
-           <div className="flex flex-col min-h-screen">
-            <Header />
-            <main className="flex-grow container mx-auto px-4 py-8">
-              <Suspense fallback={<div>Loading...</div>}>
-                {children}
-              </Suspense>
-            </main>
-            <Footer />
-            <Toaster />
-          </div>
-        </Providers>
+       <FirebaseClientProvider>
+          <Providers>
+            <div className="flex flex-col min-h-screen">
+              <Header />
+              <main className="flex-grow container mx-auto px-4 py-8">
+                <Suspense fallback={<div>Loading...</div>}>
+                  {children}
+                </Suspense>
+              </main>
+              <Footer />
+              <Toaster />
+            </div>
+          </Providers>
+        </FirebaseClientProvider>
       </body>
     </html>
   );

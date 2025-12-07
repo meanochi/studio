@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useRef, useState } from 'react';
@@ -30,6 +29,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
+import PrivateRoute from '@/components/auth/PrivateRoute';
 
 interface GroupedShoppingItem {
   name: string; 
@@ -38,7 +38,7 @@ interface GroupedShoppingItem {
   recipeName?: string; 
 }
 
-export default function ShoppingListPage() {
+function ShoppingListPageContent() {
   const { shoppingList, removeItemsByNameFromShoppingList, clearShoppingList, loading, addManualItemToShoppingList } = useShoppingList();
   const { toast } = useToast();
   const printRef = useRef<HTMLDivElement>(null);
@@ -291,4 +291,13 @@ export default function ShoppingListPage() {
       </Card>
     </div>
   );
+}
+
+
+export default function ShoppingListPage() {
+    return (
+        <PrivateRoute>
+            <ShoppingListPageContent />
+        </PrivateRoute>
+    )
 }
