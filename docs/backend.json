@@ -48,6 +48,10 @@
           "description": "The user's email address.",
           "format": "email"
         },
+        "avatar": {
+          "type": "string",
+          "description": "An emoji or URL representing the user's avatar."
+        },
         "userGroupId": {
           "type": "string",
           "description": "Reference to the UserGroup this user belongs to. (Relationship: UserGroup 1:N User)"

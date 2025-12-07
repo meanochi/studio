@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useToast } from '@/hooks/use-toast';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 
 const navItems = [
@@ -76,8 +77,12 @@ export default function Header() {
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="flex items-center gap-2 hover:bg-primary-foreground/10 text-primary-foreground">
-                            <UserCircle size={20}/>
-                           <span className="hidden sm:inline">{user.email}</span>
+                            <Avatar className="h-8 w-8">
+                                <AvatarFallback className="bg-primary-foreground text-primary text-lg">
+                                    {user.photoURL || user.displayName?.charAt(0) || <UserCircle size={20}/>}
+                                </AvatarFallback>
+                            </Avatar>
+                           <span className="hidden sm:inline">{user.displayName || user.email}</span>
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-56">
