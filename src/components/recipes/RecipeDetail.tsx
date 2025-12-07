@@ -471,12 +471,10 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
               <div className="space-y-1 font-body">
                 {displayedIngredients.map(ingredient => (
                   ingredient.isHeading ? (
-                    <div key={ingredient.id} className="w-full flex justify-end">
-                      <h4 className="text-lg font-semibold text-accent mt-4 mb-2 pt-2 border-t border-dashed flex items-center gap-2 ingredient-heading-print">
-                        <Heading2 size={18} className="inline-block align-middle" />
-                        {ingredient.name}
-                      </h4>
-                    </div>
+                    <h4 key={ingredient.id} className="text-lg font-semibold text-accent mt-4 mb-2 pt-2 border-t border-dashed flex items-center justify-end gap-2 ingredient-heading-print">
+                      <Heading2 size={18} className="inline-block align-middle" />
+                      {ingredient.name}
+                    </h4>
                   ) : (
                     <div key={ingredient.id} className="block text-right p-3 bg-background rounded-md shadow-sm hover:bg-secondary/20 transition-colors ingredient-item-print">
                       <div className="flex items-center justify-between">
@@ -522,12 +520,10 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
                 {recipe.instructions.map((step, index) => {
                   if (step.isHeading) {
                     return (
-                      <div key={step.id} className="w-full flex justify-end">
-                        <h4 className="text-lg font-semibold text-accent mt-4 mb-2 pt-2 border-t border-dashed flex items-center gap-2">
-                          <Heading2 size={18} className="inline-block align-middle" />
-                          {step.text}
-                        </h4>
-                      </div>
+                      <h4 key={step.id} className="text-lg font-semibold text-accent mt-4 mb-2 pt-2 border-t border-dashed flex items-center justify-end gap-2">
+                        <Heading2 size={18} className="inline-block align-middle" />
+                        {step.text}
+                      </h4>
                     );
                   }
                   instructionStepCounter++;
