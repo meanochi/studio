@@ -70,6 +70,7 @@ export default function MealPlansPage() {
   };
 
   useEffect(() => {
+    if (!db) return;
     const plansQuery = query(collection(db, MEAL_PLANS_COLLECTION), orderBy('createdAt', 'desc'));
 
     const unsubscribe = onSnapshot(plansQuery, (snapshot) => {
@@ -107,6 +108,7 @@ export default function MealPlansPage() {
       });
       return;
     }
+    if (!db) return;
     
     setIsSaving(true);
     try {
@@ -133,6 +135,7 @@ export default function MealPlansPage() {
   };
 
   const handleDeletePlan = async (planId: string) => {
+    if (!db) return;
     try {
       await deleteDoc(doc(db, MEAL_PLANS_COLLECTION, planId));
       toast({
@@ -150,7 +153,7 @@ export default function MealPlansPage() {
   };
   
   const handleAddRecipeToPlan = async (plan: MealPlan, recipeId: string) => {
-    if (!recipeId) return;
+    if (!recipeId || !db) return;
     try {
         const planRef = doc(db, MEAL_PLANS_COLLECTION, plan.id);
         const existingItemIndex = plan.items.findIndex(item => item.recipeId === recipeId);
@@ -176,6 +179,7 @@ export default function MealPlansPage() {
   };
 
   const handleUpdateRecipeMultiplier = useCallback(async (plan: MealPlan, itemId: string, change: number) => {
+    if (!db) return;
     const planRef = doc(db, MEAL_PLANS_COLLECTION, plan.id);
     const itemIndex = plan.items.findIndex(item => item.id === itemId);
 
@@ -200,6 +204,7 @@ export default function MealPlansPage() {
   }, [toast, db]);
   
   const handleRemoveRecipeFromPlan = useCallback(async (plan: MealPlan, itemId: string) => {
+    if (!db) return;
     const planRef = doc(db, MEAL_PLANS_COLLECTION, plan.id);
     const updatedItems = plan.items.filter(item => item.id !== itemId);
     
@@ -224,9 +229,9 @@ export default function MealPlansPage() {
           .filter(ing => !ing.isOptional && !ing.isHeading)
           .map(ing => ({
             ...ing,
-            amount: ing.amount * item.multiplier,
+            amount: (ing.amount ?? 0) * item.multiplier,
           }));
-        addIngredientsToShoppingList(scaledIngredients, recipe.id, recipe.name);
+        addIngredientsToShoppingList(scaledIngredients as Ingredient[], recipe.id, recipe.name);
       }
     });
 

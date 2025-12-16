@@ -2,8 +2,8 @@
 export interface Ingredient {
   id: string;
   name: string;
-  amount: number; 
-  unit: string;   
+  amount?: number; 
+  unit?: string;   
   isOptional?: boolean | null;
   notes?: string | null;
   isHeading?: boolean | null;

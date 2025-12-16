@@ -84,6 +84,7 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
 
   useEffect(() => {
+    if (!db) return;
     setLoading(true);
     const recipesCollectionRef = collection(db, 'recipes');
     const q = query(recipesCollectionRef, orderBy('name', 'asc')); 
@@ -107,8 +108,8 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             id: ing.id || generateId(),
             name: ing.name || "",
             isHeading: typeof ing.isHeading === 'boolean' ? ing.isHeading : false,
-            amount: (typeof ing.isHeading === 'boolean' && ing.isHeading) ? 0 : (typeof ing.amount === 'number' ? ing.amount : 0), // Amount is 0 for heading
-            unit: (typeof ing.isHeading === 'boolean' && ing.isHeading) ? "" : (ing.unit || ""), // Unit is "" for heading
+            amount: (typeof ing.isHeading === 'boolean' && ing.isHeading) ? undefined : (typeof ing.amount === 'number' ? ing.amount : 0), // Amount is undefined for heading
+            unit: (typeof ing.isHeading === 'boolean' && ing.isHeading) ? undefined : (ing.unit || ""), // Unit is undefined for heading
             isOptional: (typeof ing.isHeading === 'boolean' && ing.isHeading) ? false : (typeof ing.isOptional === 'boolean' ? ing.isOptional : false),
             notes: (typeof ing.isHeading === 'boolean' && ing.isHeading) ? null : (ing.notes ?? null),
           })),
@@ -137,6 +138,10 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
 
   const addRecipe = async (recipeData: RecipeFormData): Promise<Recipe | null> => {
+    if (!db) {
+      toast({ title: "שגיאת מסד נתונים", description: "לא ניתן להתחבר למסד הנתונים.", variant: "destructive" });
+      return null;
+    }
     
     const isDuplicate = recipes.some(
       (recipe) => recipe.name.toLowerCase() === recipeData.name.toLowerCase() && recipe.source?.toLowerCase() === (recipeData.source || '').toLowerCase()
@@ -177,6 +182,7 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       };
 
       const docRef = await addDoc(collection(db, 'recipes'), recipeForFirestore);
+      
       const newRecipe: Recipe = {
         id: docRef.id,
         name: recipeForFirestore.name,
@@ -192,17 +198,17 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         ingredients: recipeForFirestore.ingredients.map(ing => ({
             ...ing,
             id: ing.id!,
-            amount: ing.amount || 0,
-            unit: ing.unit || '',
-            isOptional: ing.isOptional || false,
-            notes: ing.notes || null,
-            isHeading: ing.isHeading || false,
+            amount: ing.amount,
+            unit: ing.unit,
+            isOptional: ing.isOptional,
+            notes: ing.notes,
+            isHeading: ing.isHeading,
         })),
         instructions: recipeForFirestore.instructions.map(instr => ({
             ...instr,
             id: instr.id!,
-            imageUrl: instr.imageUrl || null,
-            isHeading: instr.isHeading || false,
+            imageUrl: instr.imageUrl,
+            isHeading: instr.isHeading,
         })),
       };
       return newRecipe;
@@ -218,6 +224,10 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   };
 
   const updateRecipe = async (updatedRecipe: Recipe) => {
+     if (!db) {
+      toast({ title: "שגיאת מסד נתונים", description: "לא ניתן להתחבר למסד הנתונים.", variant: "destructive" });
+      return;
+    }
     try {
       const recipeRef = doc(db, 'recipes', updatedRecipe.id);
       const dataToUpdate = {
@@ -260,6 +270,10 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   };
 
   const deleteRecipe = async (recipeId: string) => {
+     if (!db) {
+      toast({ title: "שגיאת מסד נתונים", description: "לא ניתן להתחבר למסד הנתונים.", variant: "destructive" });
+      return;
+    }
     try {
       const recipeRef = doc(db, 'recipes', recipeId);
       await deleteDoc(recipeRef);

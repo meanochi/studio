@@ -43,6 +43,7 @@ export const ShoppingListProvider: React.FC<{ children: ReactNode }> = ({ childr
   const db = useFirestore();
 
   useEffect(() => {
+    if (!db) return;
     setLoading(true);
     const shoppingListCollectionRef = collection(db, 'shoppingListItems');
     // Optional: Add orderBy if needed, e.g., by name or a timestamp
@@ -77,10 +78,11 @@ export const ShoppingListProvider: React.FC<{ children: ReactNode }> = ({ childr
   }, [toast, db]);
 
   const addIngredientsToShoppingList = async (ingredients: Ingredient[], recipeId?: string, recipeName?: string) => {
+    if (!db) return;
     const batch = writeBatch(db);
     ingredients.forEach(ingredient => {
-      if (ingredient.isHeading) {
-        return; // Skip headings
+      if (ingredient.isHeading || ingredient.amount === undefined || ingredient.unit === undefined) {
+        return; // Skip headings and ingredients without amount/unit
       }
       const newItem: Omit<ShoppingListItem, 'id'> = {
         name: ingredient.name,
@@ -107,6 +109,7 @@ export const ShoppingListProvider: React.FC<{ children: ReactNode }> = ({ childr
   };
 
   const addManualItemToShoppingList = async (item: ManualShoppingListItem) => {
+    if (!db) return;
     try {
       const newItem: Omit<ShoppingListItem, 'id'> = {
         name: item.name,
@@ -126,6 +129,7 @@ export const ShoppingListProvider: React.FC<{ children: ReactNode }> = ({ childr
   }
 
   const removeFromShoppingList = async (itemId: string) => {
+    if (!db) return;
     try {
       const itemRef = doc(db, 'shoppingListItems', itemId);
       await deleteDoc(itemRef);
@@ -140,6 +144,7 @@ export const ShoppingListProvider: React.FC<{ children: ReactNode }> = ({ childr
   };
 
   const removeItemsByNameFromShoppingList = async (itemName: string) => {
+    if (!db) return;
     const q = query(collection(db, 'shoppingListItems'), where('name', '==', itemName));
     try {
       const querySnapshot = await getDocs(q);
@@ -159,6 +164,7 @@ export const ShoppingListProvider: React.FC<{ children: ReactNode }> = ({ childr
   };
 
   const clearShoppingList = async () => {
+    if (!db) return;
     try {
       const shoppingListCollectionRef = collection(db, 'shoppingListItems');
       const querySnapshot = await getDocs(shoppingListCollectionRef);
@@ -178,6 +184,7 @@ export const ShoppingListProvider: React.FC<{ children: ReactNode }> = ({ childr
   };
   
   const updateItemAmount = async (itemId: string, newAmount: number) => {
+    if (!db) return;
     if (newAmount <= 0) {
       // If new amount is zero or less, remove the item
       await removeFromShoppingList(itemId);
