@@ -4,16 +4,16 @@ export interface Ingredient {
   name: string;
   amount?: number; 
   unit?: string;   
-  isOptional?: boolean | null;
-  notes?: string | null;
-  isHeading?: boolean | null;
+  isOptional: boolean;
+  notes: string | null;
+  isHeading: boolean;
 }
 
 export interface InstructionStep {
   id: string;
   text: string;
-  imageUrl?: string | null;
-  isHeading?: boolean | null;
+  imageUrl: string | null;
+  isHeading: boolean;
 }
 
 export interface Recipe {
@@ -27,9 +27,9 @@ export interface Recipe {
   freezable: boolean;
   ingredients: Ingredient[];
   instructions: InstructionStep[];
-  imageUrl?: string | null;
-  tags?: string[] | null;
-  notes?: string | null;
+  imageUrl: string | null;
+  tags: string[] | null;
+  notes: string | null;
 }
 
 export interface ShoppingListItem {
@@ -37,9 +37,9 @@ export interface ShoppingListItem {
   name: string;
   amount: number;
   unit: string;
-  originalIngredientId?: string | null; 
-  recipeId?: string | null; 
-  recipeName?: string | null; 
+  originalIngredientId: string | null; 
+  recipeId: string | null; 
+  recipeName: string | null; 
 }
 
 export interface Note {
