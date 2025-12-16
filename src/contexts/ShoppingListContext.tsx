@@ -2,7 +2,7 @@
 
 import type { ShoppingListItem, Ingredient } from '@/types';
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useFirestore } from '@/firebase';
+import { useFirestore } from '@/firebase/provider';
 import {
   collection,
   onSnapshot,

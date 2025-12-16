@@ -3,7 +3,7 @@
 import type { Recipe, Ingredient, InstructionStep } from '@/types';
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { generateId } from '@/lib/utils';
-import { useFirestore } from '@/firebase'; // Import Firestore instance hook
+import { useFirestore } from '@/firebase/provider'; // Import Firestore instance hook
 import { 
   collection, 
   onSnapshot, 

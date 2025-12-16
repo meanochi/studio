@@ -29,7 +29,6 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
-import PrivateRoute from '@/components/auth/PrivateRoute';
 
 interface GroupedShoppingItem {
   name: string; 
@@ -38,7 +37,7 @@ interface GroupedShoppingItem {
   recipeName?: string; 
 }
 
-function ShoppingListPageContent() {
+export default function ShoppingListPage() {
   const { shoppingList, removeItemsByNameFromShoppingList, clearShoppingList, loading, addManualItemToShoppingList } = useShoppingList();
   const { toast } = useToast();
   const printRef = useRef<HTMLDivElement>(null);
@@ -291,13 +290,4 @@ function ShoppingListPageContent() {
       </Card>
     </div>
   );
-}
-
-
-export default function ShoppingListPage() {
-    return (
-        <PrivateRoute>
-            <ShoppingListPageContent />
-        </PrivateRoute>
-    )
 }

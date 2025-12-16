@@ -12,7 +12,6 @@ import type { Recipe } from '@/types';
 import RecipeDetail from '@/components/recipes/RecipeDetail';
 import { useHeader } from '@/contexts/HeaderContext';
 import { useSearchParams, useRouter } from 'next/navigation';
-import PrivateRoute from '@/components/auth/PrivateRoute';
 
 function HeaderTabs({ activeTab, setActiveTab, openTabs, handleCloseTab }: {
   activeTab: string;
@@ -44,7 +43,7 @@ function HeaderTabs({ activeTab, setActiveTab, openTabs, handleCloseTab }: {
   );
 }
 
-function HomePageContent() {
+export default function HomePage() {
   const { recipes, loading, getRecipeById } = useRecipes();
   const [searchTerm, setSearchTerm] = useState('');
   const searchParams = useSearchParams();
@@ -172,12 +171,4 @@ function HomePageContent() {
       ))}
     </Tabs>
   );
-}
-
-export default function HomePage() {
-    return (
-        <PrivateRoute>
-            <HomePageContent />
-        </PrivateRoute>
-    )
 }

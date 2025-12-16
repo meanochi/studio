@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Trash2, PlusCircle, AlertTriangle, CalendarDays, BookOpen, ShoppingCart, Minus, Plus, Check, ChevronsUpDown } from 'lucide-react';
-import { useFirestore } from '@/firebase';
+import { useFirestore } from '@/firebase/provider';
 import { collection, onSnapshot, addDoc, deleteDoc, doc, query, orderBy, Timestamp, updateDoc } from 'firebase/firestore';
 import type { MealPlan, Recipe, Ingredient, MealPlanItem } from '@/types';
 import { useRecipes } from '@/contexts/RecipeContext';
@@ -29,11 +29,10 @@ import { format } from 'date-fns';
 import { generateId, cn } from '@/lib/utils';
 import { useHeader } from '@/contexts/HeaderContext';
 import { useRouter } from 'next/navigation';
-import PrivateRoute from '@/components/auth/PrivateRoute';
 
 const MEAL_PLANS_COLLECTION = 'mealPlans';
 
-function MealPlansPageContent() {
+export default function MealPlansPage() {
   const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -407,12 +406,4 @@ function MealPlansPageContent() {
       </div>
     </div>
   );
-}
-
-export default function MealPlansPage() {
-    return (
-        <PrivateRoute>
-            <MealPlansPageContent />
-        </PrivateRoute>
-    )
 }

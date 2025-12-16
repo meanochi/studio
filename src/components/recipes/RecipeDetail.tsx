@@ -53,7 +53,7 @@ import {
 import {
   Clock, Users, Edit3, Trash2, Printer, ShoppingCart, Utensils, Snowflake, Loader2, AlertTriangle, HomeIcon, RefreshCw, PlusSquare, Info, EyeIcon, EyeOffIcon, Heading2, Share2, ClipboardCopy, StickyNote, MoreVertical, CalendarPlus
 } from 'lucide-react';
-import { useFirestore } from '@/firebase';
+import { useFirestore } from '@/firebase/provider';
 import { collection, doc, onSnapshot, query, updateDoc, getDoc, arrayUnion } from 'firebase/firestore';
 
 interface RecipeDetailProps {

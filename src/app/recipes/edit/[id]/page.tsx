@@ -11,9 +11,8 @@ import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { generateId } from '@/lib/utils';
-import PrivateRoute from '@/components/auth/PrivateRoute';
 
-function EditRecipePageContent() {
+export default function EditRecipePage() {
   const { getRecipeById, updateRecipe, loading: recipesLoading } = useRecipes();
   const router = useRouter();
   const params = useParams();
@@ -110,12 +109,4 @@ function EditRecipePageContent() {
       <RecipeForm initialData={initialDataForForm} onSubmit={handleSubmit} isEditing={true} />
     </div>
   );
-}
-
-export default function EditRecipePage(){
-    return (
-        <PrivateRoute>
-            <EditRecipePageContent />
-        </PrivateRoute>
-    )
 }

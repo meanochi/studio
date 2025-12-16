@@ -5,9 +5,8 @@ import { useRecipes } from '@/contexts/RecipeContext';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import type { RecipeFormData } from '@/components/recipes/RecipeSchema';
-import PrivateRoute from '@/components/auth/PrivateRoute';
 
-function AddRecipePageContent() {
+export default function AddRecipePage() {
   const { addRecipe } = useRecipes();
   const router = useRouter();
   const { toast } = useToast();
@@ -32,13 +31,4 @@ function AddRecipePageContent() {
       />
     </div>
   );
-}
-
-
-export default function AddRecipePage() {
-    return (
-        <PrivateRoute>
-            <AddRecipePageContent />
-        </PrivateRoute>
-    )
 }

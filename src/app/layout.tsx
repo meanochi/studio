@@ -7,7 +7,7 @@ import Footer from '@/components/layout/Footer';
 import { Providers } from './providers';
 import { Belleza, Rubik } from 'next/font/google';
 import { Suspense } from 'react';
-import { FirebaseClientProvider } from '@/firebase';
+import { FirebaseProvider } from '@/firebase/provider';
 
 
 const belleza = Belleza({
@@ -37,7 +37,7 @@ export default function RootLayout({
         <meta name="theme-color" content="#E07A5F" />
       </head>
       <body className="font-body antialiased">
-       <FirebaseClientProvider>
+        <FirebaseProvider>
           <Providers>
             <div className="flex flex-col min-h-screen">
               <Header />
@@ -50,7 +50,7 @@ export default function RootLayout({
               <Toaster />
             </div>
           </Providers>
-        </FirebaseClientProvider>
+        </FirebaseProvider>
       </body>
     </html>
   );

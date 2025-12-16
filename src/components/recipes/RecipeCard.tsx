@@ -22,7 +22,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import React, { useState, useEffect, useMemo } from 'react';
-import { useFirestore } from '@/firebase';
+import { useFirestore } from '@/firebase/provider';
 import { collection, onSnapshot, query, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { generateId } from '@/lib/utils';
 
