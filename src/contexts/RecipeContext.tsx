@@ -13,7 +13,7 @@ import {
   deleteDoc, 
   query,
   orderBy,
-  // Timestamp // Optional: if you want to use server timestamps
+  Timestamp
 } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
@@ -108,8 +108,8 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             id: ing.id || generateId(),
             name: ing.name || "",
             isHeading: typeof ing.isHeading === 'boolean' ? ing.isHeading : false,
-            amount: (typeof ing.isHeading === 'boolean' && ing.isHeading) ? undefined : (typeof ing.amount === 'number' ? ing.amount : 0), // Amount is undefined for heading
-            unit: (typeof ing.isHeading === 'boolean' && ing.isHeading) ? undefined : (ing.unit || ""), // Unit is undefined for heading
+            amount: (typeof ing.isHeading === 'boolean' && ing.isHeading) ? undefined : (typeof ing.amount === 'number' ? ing.amount : 0),
+            unit: (typeof ing.isHeading === 'boolean' && ing.isHeading) ? undefined : (ing.unit || ""),
             isOptional: (typeof ing.isHeading === 'boolean' && ing.isHeading) ? false : (typeof ing.isOptional === 'boolean' ? ing.isOptional : false),
             notes: (typeof ing.isHeading === 'boolean' && ing.isHeading) ? null : (ing.notes ?? null),
           })),
@@ -198,8 +198,8 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         ingredients: recipeForFirestore.ingredients.map(ing => ({
             ...ing,
             id: ing.id!,
-            amount: ing.amount,
-            unit: ing.unit,
+            amount: ing.amount ?? undefined,
+            unit: ing.unit ?? undefined,
             isOptional: ing.isOptional,
             notes: ing.notes,
             isHeading: ing.isHeading,

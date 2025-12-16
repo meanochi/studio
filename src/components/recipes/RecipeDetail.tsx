@@ -109,15 +109,17 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
   }, [recipeId, getRecipeById, recipesLoading, addRecentlyViewed, initializeImageVisibility, searchParams]);
 
   useEffect(() => {
-    const plansQuery = query(collection(db, 'mealPlans'));
-    const unsubscribe = onSnapshot(plansQuery, (snapshot) => {
-      const plansData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as MealPlan));
-      setMealPlans(plansData);
-      if (plansData.length > 0 && !selectedPlanId) {
-        setSelectedPlanId(plansData[0].id);
-      }
-    });
-    return () => unsubscribe();
+    if(db) {
+      const plansQuery = query(collection(db, 'mealPlans'));
+      const unsubscribe = onSnapshot(plansQuery, (snapshot) => {
+        const plansData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as MealPlan));
+        setMealPlans(plansData);
+        if (plansData.length > 0 && !selectedPlanId) {
+          setSelectedPlanId(plansData[0].id);
+        }
+      });
+      return () => unsubscribe();
+    }
   }, [selectedPlanId, db]);
   
   const servingsDisplay = useMemo(() => {
@@ -131,7 +133,7 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
     if (!recipe) return [];
     return recipe.ingredients.map(ing => ({
       ...ing,
-      amount: ing.isHeading ? 0 : ing.amount * multiplier, // Don't multiply amount for headings
+      amount: ing.isHeading ? 0 : (ing.amount ?? 0) * multiplier,
     }));
   }, [recipe, multiplier]);
 
@@ -172,11 +174,11 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
   };
 
   const handleAddSingleIngredientToShoppingList = (ingredient: Ingredient) => {
-    if (recipe && !ingredient.isHeading) {
+    if (recipe && !ingredient.isHeading && ingredient.amount) {
       addIngredientsToShoppingList([ingredient], recipe.id, recipe.name);
       toast({
         title: "נוסף לרשימת הקניות",
-        description: `${Number(ingredient.amount.toFixed(2))} ${getDisplayUnit(ingredient.amount, ingredient.unit)} של ${ingredient.name} נוספו.`,
+        description: `${Number(ingredient.amount.toFixed(2))} ${getDisplayUnit(ingredient.amount, ingredient.unit || '')} של ${ingredient.name} נוספו.`,
       });
     }
   };
@@ -207,7 +209,7 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
     displayedIngredients.forEach(ing => {
       if(ing.isHeading) {
         textToCopy += `\n_${ing.name}_\n`;
-      } else {
+      } else if (ing.amount !== undefined && ing.unit !== undefined) {
         const amount = Number(ing.amount.toFixed(2));
         const unit = getDisplayUnit(ing.amount, ing.unit);
         textToCopy += `- ${amount} ${unit} ${ing.name}${ing.isOptional ? ' (אופציונלי)' : ''}\n`;
@@ -248,7 +250,7 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
           displayedIngredients.forEach(ing => {
               if(ing.isHeading) {
                   htmlToCopy += `</ul><h3>${ing.name}</h3><ul>`;
-              } else {
+              } else if (ing.amount !== undefined && ing.unit !== undefined){
                   const amount = Number(ing.amount.toFixed(2));
                   const unit = getDisplayUnit(ing.amount, ing.unit);
                   htmlToCopy += `<li>${amount} ${unit} <b>${ing.name}</b>${ing.isOptional ? ' (אופציונלי)' : ''}${ing.notes ? ` <em>(${ing.notes})</em>` : ''}</li>`;
@@ -291,7 +293,7 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
   };
   
   const handleAddToPlan = async () => {
-    if (!selectedPlanId || !recipeId) {
+    if (!selectedPlanId || !recipeId || !db) {
       toast({ title: "שגיאה", description: "אנא בחר תכנית.", variant: "destructive" });
       return;
     }
@@ -480,7 +482,7 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
                       <div className="flex items-center justify-between">
                          <div className="flex-grow text-right">
                             <div className="text-foreground">
-                                <span className="font-semibold text-primary">{Number((ingredient.amount).toFixed(2))}</span> {getDisplayUnit(ingredient.amount, ingredient.unit)} {ingredient.name}
+                                <span className="font-semibold text-primary">{Number((ingredient.amount ?? 0).toFixed(2))}</span> {getDisplayUnit(ingredient.amount ?? 0, ingredient.unit || '')} {ingredient.name}
                                 {ingredient.isOptional && <span className="text-xs text-muted-foreground mr-1">(אופציונלי)</span>}
                             </div>
                          </div>
@@ -498,7 +500,7 @@ export default function RecipeDetail({ recipeId }: RecipeDetailProps) {
                         </div>
                       </div>
                        <div className="text-xs text-gray-400 italic no-print mr-1">
-                        {multiplier !== 1 && `(מקורי: ${Number((ingredient.amount / multiplier).toFixed(2))} ${getDisplayUnit(ingredient.amount/multiplier, ingredient.unit)})`}
+                        {multiplier !== 1 && `(מקורי: ${Number(((ingredient.amount ?? 0) / multiplier).toFixed(2))} ${getDisplayUnit((ingredient.amount ?? 0)/multiplier, ingredient.unit || '')})`}
                       </div>
                        {ingredient.notes && (
                         <div className="pr-4 pt-1 text-xs text-muted-foreground/80 flex items-center justify-end">

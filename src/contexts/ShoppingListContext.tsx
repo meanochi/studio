@@ -46,13 +46,12 @@ export const ShoppingListProvider: React.FC<{ children: ReactNode }> = ({ childr
     if (!db) return;
     setLoading(true);
     const shoppingListCollectionRef = collection(db, 'shoppingListItems');
-    // Optional: Add orderBy if needed, e.g., by name or a timestamp
-    // const q = query(shoppingListCollectionRef, orderBy('name', 'asc'));
+    const q = query(shoppingListCollectionRef);
 
-    const unsubscribe = onSnapshot(shoppingListCollectionRef, (querySnapshot) => {
-      const listData = querySnapshot.docs.map(docSnapshot => { // Renamed doc to docSnapshot
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const listData = querySnapshot.docs.map(docSnapshot => {
         const data = docSnapshot.data();
-        return { // Explicitly constructing the ShoppingListItem
+        return {
           id: docSnapshot.id,
           name: data.name || "Unknown Item",
           amount: typeof data.amount === 'number' ? data.amount : 0,

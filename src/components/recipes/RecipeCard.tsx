@@ -45,7 +45,7 @@ export default function RecipeCard({ recipe, onOpen }: RecipeCardProps) {
 
   // Fetch meal plans when the dialog is about to open
   useEffect(() => {
-    if (isPlanDialogOpen) {
+    if (isPlanDialogOpen && db) {
       const plansQuery = query(collection(db, 'mealPlans'));
       const unsubscribe = onSnapshot(plansQuery, (snapshot) => {
         const plansData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as MealPlan));
@@ -69,7 +69,7 @@ export default function RecipeCard({ recipe, onOpen }: RecipeCardProps) {
   };
   
   const handleAddToPlan = async () => {
-    if (!selectedPlanId || !recipe.id) {
+    if (!selectedPlanId || !recipe.id || !db) {
       toast({ title: "שגיאה", description: "אנא בחר תכנית.", variant: "destructive" });
       return;
     }
