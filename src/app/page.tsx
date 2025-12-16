@@ -12,6 +12,7 @@ import type { Recipe } from '@/types';
 import RecipeDetail from '@/components/recipes/RecipeDetail';
 import { useHeader } from '@/contexts/HeaderContext';
 import { useSearchParams, useRouter } from 'next/navigation';
+import EmptyState from '@/components/recipes/EmptyState';
 
 function HeaderTabs({ activeTab, setActiveTab, openTabs, handleCloseTab }: {
   activeTab: string;
@@ -150,18 +151,7 @@ export default function HomePage() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-10">
-              <p className="text-xl text-muted-foreground font-body">
-                {searchTerm ? `לא נמצאו מתכונים עבור "${searchTerm}".` : "עדיין לא הוספת מתכונים."}
-              </p>
-              {!searchTerm && (
-                <Button asChild variant="link" className="mt-4 text-lg">
-                  <Link href="/recipes/add">
-                    רוצה להוסיף את הראשון שלך?
-                  </Link>
-                </Button>
-              )}
-            </div>
+            <EmptyState showSearchReset={!!searchTerm} onSearchReset={() => setSearchTerm('')} />
           )}
       </TabsContent>
       {openTabs.map(recipe => (
