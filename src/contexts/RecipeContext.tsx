@@ -3,37 +3,24 @@
 import type { Recipe, Ingredient, InstructionStep } from '@/types';
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { generateId } from '@/lib/utils';
-import { useFirestore } from '@/firebase/provider'; // Import Firestore instance hook
-import { 
-  collection, 
-  onSnapshot, 
-  addDoc, 
-  doc, 
-  updateDoc, 
-  deleteDoc, 
-  query,
-  orderBy,
-  Timestamp
-} from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-
+import type { RecipeFormData } from '@/components/recipes/RecipeSchema';
+import initialRecipes from '@/lib/initial-recipes';
 
 interface RecipeContextType {
   recipes: Recipe[];
   addRecipe: (recipeData: RecipeFormData) => Promise<Recipe | null>;
-  updateRecipe: (updatedRecipe: Recipe) => Promise<void>; // Return type changed to Promise
-  deleteRecipe: (recipeId: string) => Promise<void>; // Return type changed to Promise
+  updateRecipe: (updatedRecipe: Recipe) => Promise<void>;
+  deleteRecipe: (recipeId: string) => Promise<void>;
   getRecipeById: (recipeId: string) => Recipe | undefined;
   loading: boolean;
   recentlyViewed: Recipe[];
   addRecentlyViewed: (recipeId: string) => void;
 }
-// Note: Changed addRecipe to accept RecipeFormData for consistency
-import type { RecipeFormData } from '@/components/recipes/RecipeSchema';
-
 
 const RecipeContext = createContext<RecipeContextType | undefined>(undefined);
 
+const RECIPES_STORAGE_KEY = 'recipes';
 const RECENTLY_VIEWED_KEY = 'recentlyViewedRecipeIds';
 const MAX_RECENTLY_VIEWED = 8;
 
@@ -43,10 +30,31 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const { toast } = useToast();
   const [recentlyViewed, setRecentlyViewed] = useState<Recipe[]>([]);
   const [recentlyViewedIds, setRecentlyViewedIds] = useState<string[]>([]);
-  const db = useFirestore();
 
+  useEffect(() => {
+    try {
+      const storedRecipes = localStorage.getItem(RECIPES_STORAGE_KEY);
+      if (storedRecipes) {
+        setRecipes(JSON.parse(storedRecipes));
+      } else {
+        // If no recipes in storage, load initial ones
+        setRecipes(initialRecipes);
+      }
+    } catch (error) {
+      console.error("Failed to load recipes from localStorage", error);
+      setRecipes(initialRecipes); // Fallback to initial data
+    }
+    setLoading(false);
+  }, []);
 
-  // Load recently viewed from localStorage on initial load
+  useEffect(() => {
+    try {
+      localStorage.setItem(RECIPES_STORAGE_KEY, JSON.stringify(recipes));
+    } catch (error) {
+      console.error("Failed to save recipes to localStorage", error);
+    }
+  }, [recipes]);
+  
   useEffect(() => {
     try {
       const storedIds = localStorage.getItem(RECENTLY_VIEWED_KEY);
@@ -58,7 +66,6 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
   }, []);
 
-  // Update recently viewed recipes when IDs or the main recipes list change
   useEffect(() => {
     if (recipes.length > 0) {
       const viewedRecipes = recentlyViewedIds
@@ -83,66 +90,7 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   }, []);
 
 
-  useEffect(() => {
-    if (!db) return;
-    setLoading(true);
-    const recipesCollectionRef = collection(db, 'recipes');
-    const q = query(recipesCollectionRef, orderBy('name', 'asc')); 
-
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const recipesData = querySnapshot.docs.map(docSnapshot => {
-        const data = docSnapshot.data();
-        return {
-          id: docSnapshot.id,
-          name: data.name || "Unnamed Recipe",
-          source: data.source || null,
-          prepTime: data.prepTime || "N/A",
-          cookTime: data.cookTime || null,
-          servings: typeof data.servings === 'number' ? data.servings : 1,
-          servingUnit: data.servingUnit || "unit",
-          freezable: typeof data.freezable === 'boolean' ? data.freezable : false,
-          imageUrl: data.imageUrl || null,
-          tags: Array.isArray(data.tags) ? data.tags : [],
-          notes: data.notes || null,
-          ingredients: (Array.isArray(data.ingredients) ? data.ingredients : []).map((ing: any): Ingredient => ({
-            id: ing.id || generateId(),
-            name: ing.name || "",
-            isHeading: !!ing.isHeading,
-            amount: ing.isHeading ? undefined : (typeof ing.amount === 'number' ? ing.amount : 0),
-            unit: ing.isHeading ? undefined : (ing.unit || ""),
-            isOptional: ing.isHeading ? false : !!ing.isOptional,
-            notes: ing.isHeading ? null : (ing.notes || null),
-          })),
-          instructions: (Array.isArray(data.instructions) ? data.instructions : []).map((instr: any): InstructionStep => ({
-            id: instr.id || generateId(),
-            text: instr.text || "",
-            isHeading: !!instr.isHeading,
-            imageUrl: instr.isHeading ? null : (instr.imageUrl || null),
-          })),
-        } as Recipe;
-      });
-      setRecipes(recipesData);
-      setLoading(false);
-    }, (error) => {
-      console.error("Error fetching recipes from Firestore: ", error);
-      toast({
-        title: "שגיאה בטעינת מתכונים",
-        description: "לא ניתן היה לטעון מתכונים ממסד הנתונים. נסה שוב מאוחר יותר.",
-        variant: "destructive",
-      });
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [toast, db]);
-
-
   const addRecipe = async (recipeData: RecipeFormData): Promise<Recipe | null> => {
-    if (!db) {
-      toast({ title: "שגיאת מסד נתונים", description: "לא ניתן להתחבר למסד הנתונים.", variant: "destructive" });
-      return null;
-    }
-    
     const isDuplicate = recipes.some(
       (recipe) => recipe.name.toLowerCase() === recipeData.name.toLowerCase() && recipe.source?.toLowerCase() === (recipeData.source || '').toLowerCase()
     );
@@ -155,128 +103,41 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       });
       return null;
     }
-
-    try {
-      const recipeForFirestore = {
-        ...recipeData,
-        source: recipeData.source || null,
-        cookTime: recipeData.cookTime || null,
-        imageUrl: recipeData.imageUrl || null,
-        tags: recipeData.tags || [],
-        notes: recipeData.notes || null,
-        ingredients: (recipeData.ingredients || []).map(ing => ({
-          id: ing.id || generateId(),
-          name: ing.name || "",
-          isHeading: ing.isHeading || false,
-          amount: ing.isHeading ? null : (ing.amount ?? null),
-          unit: ing.isHeading ? null : (ing.unit ?? null),
-          isOptional: ing.isHeading ? false : (ing.isOptional ?? false),
-          notes: ing.isHeading ? null : (ing.notes ?? null),
-        })),
-        instructions: (recipeData.instructions || []).map(instr => ({
-          id: instr.id || generateId(),
-          text: instr.text || "",
-          isHeading: instr.isHeading || false,
-          imageUrl: instr.isHeading ? null : (instr.imageUrl ?? null),
-        })),
-      };
-
-      const docRef = await addDoc(collection(db, 'recipes'), recipeForFirestore);
-      
-      const newRecipe: Recipe = {
-        id: docRef.id,
-        ...recipeForFirestore,
-        ingredients: recipeForFirestore.ingredients.map(ing => ({
-            ...ing,
-            id: ing.id!,
-            amount: ing.amount ?? undefined,
-            unit: ing.unit ?? undefined,
-            isOptional: ing.isOptional,
-            notes: ing.notes,
-            isHeading: ing.isHeading,
-        })),
-        instructions: recipeForFirestore.instructions.map(instr => ({
-            ...instr,
-            id: instr.id!,
-            imageUrl: instr.imageUrl,
-            isHeading: instr.isHeading,
-        })),
-      };
-      return newRecipe;
-    } catch (error) {
-      console.error("Error adding recipe to Firestore: ", error);
-      toast({
-        title: "שגיאה בהוספת מתכון",
-        description: "לא ניתן היה לשמור את המתכון. בדוק את כל השדות ונסה שוב.",
-        variant: "destructive",
-      });
-      return null;
-    }
+    
+    const newRecipe: Recipe = {
+      id: generateId(),
+      ...recipeData,
+      source: recipeData.source || null,
+      cookTime: recipeData.cookTime || null,
+      imageUrl: recipeData.imageUrl || null,
+      tags: recipeData.tags || [],
+      notes: recipeData.notes || null,
+      ingredients: (recipeData.ingredients || []).map(ing => ({
+        ...ing,
+        id: ing.id || generateId(),
+        amount: ing.isHeading ? undefined : (ing.amount ?? 0),
+        unit: ing.isHeading ? undefined : (ing.unit ?? ''),
+        notes: ing.isHeading ? null : (ing.notes || null),
+      })),
+      instructions: (recipeData.instructions || []).map(instr => ({
+        ...instr,
+        id: instr.id || generateId(),
+        imageUrl: instr.isHeading ? null : (instr.imageUrl || null)
+      }))
+    };
+    
+    setRecipes(prevRecipes => [...prevRecipes, newRecipe]);
+    return newRecipe;
   };
 
   const updateRecipe = async (updatedRecipe: Recipe) => {
-     if (!db) {
-      toast({ title: "שגיאת מסד נתונים", description: "לא ניתן להתחבר למסד הנתונים.", variant: "destructive" });
-      return;
-    }
-    try {
-      const recipeRef = doc(db, 'recipes', updatedRecipe.id);
-      const dataToUpdate = {
-        name: updatedRecipe.name,
-        source: updatedRecipe.source ?? null,
-        prepTime: updatedRecipe.prepTime,
-        cookTime: updatedRecipe.cookTime ?? null,
-        servings: updatedRecipe.servings,
-        servingUnit: updatedRecipe.servingUnit,
-        freezable: updatedRecipe.freezable ?? false,
-        imageUrl: updatedRecipe.imageUrl ?? null,
-        tags: updatedRecipe.tags || [],
-        notes: updatedRecipe.notes ?? null,
-        ingredients: (updatedRecipe.ingredients || []).map(ing => ({
-          id: ing.id || generateId(),
-          name: ing.name || "",
-          isHeading: ing.isHeading || false,
-          amount: ing.isHeading ? null : (ing.amount ?? null),
-          unit: ing.isHeading ? null : (ing.unit ?? null),
-          isOptional: ing.isHeading ? false : (ing.isOptional ?? false),
-          notes: ing.isHeading ? null : (ing.notes ?? null),
-        })),
-        instructions: (updatedRecipe.instructions || []).map(instr => ({
-          id: instr.id || generateId(),
-          text: instr.text || "",
-          isHeading: instr.isHeading || false,
-          imageUrl: instr.isHeading ? null : (instr.imageUrl ?? null),
-        })),
-      };
-      
-      await updateDoc(recipeRef, dataToUpdate);
-    } catch (error) {
-      console.error("Error updating recipe in Firestore: ", error);
-      toast({
-        title: "שגיאה בעדכון מתכון",
-        description: "לא ניתן היה לעדכן את המתכון. נסה שוב מאוחר יותר.",
-        variant: "destructive",
-      });
-    }
+    setRecipes(prevRecipes =>
+      prevRecipes.map(recipe => (recipe.id === updatedRecipe.id ? updatedRecipe : recipe))
+    );
   };
 
   const deleteRecipe = async (recipeId: string) => {
-     if (!db) {
-      toast({ title: "שגיאת מסד נתונים", description: "לא ניתן להתחבר למסד הנתונים.", variant: "destructive" });
-      return;
-    }
-    try {
-      const recipeRef = doc(db, 'recipes', recipeId);
-      await deleteDoc(recipeRef);
-    } catch (error)
-       {
-      console.error("Error deleting recipe from Firestore: ", error);
-       toast({
-        title: "שגיאה במחיקת מתכון",
-        description: "לא ניתן היה למחוק את המתכון. נסה שוב מאוחר יותר.",
-        variant: "destructive",
-      });
-    }
+    setRecipes(prevRecipes => prevRecipes.filter(recipe => recipe.id !== recipeId));
   };
 
   const getRecipeById = useCallback((recipeId: string): Recipe | undefined => {

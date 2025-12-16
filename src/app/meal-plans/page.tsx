@@ -7,8 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Trash2, PlusCircle, AlertTriangle, CalendarDays, BookOpen, ShoppingCart, Minus, Plus, Check, ChevronsUpDown } from 'lucide-react';
-import { useFirestore } from '@/firebase/provider';
-import { collection, onSnapshot, addDoc, deleteDoc, doc, query, orderBy, Timestamp, updateDoc } from 'firebase/firestore';
 import type { MealPlan, Recipe, Ingredient, MealPlanItem } from '@/types';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { useShoppingList } from '@/contexts/ShoppingListContext';
@@ -35,7 +33,6 @@ const MEAL_PLANS_COLLECTION = 'mealPlans';
 export default function MealPlansPage() {
   const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [newPlanName, setNewPlanName] = useState('');
   const [popoverOpen, setPopoverOpen] = useState<Record<string, boolean>>({});
   
@@ -44,7 +41,6 @@ export default function MealPlansPage() {
   const { toast } = useToast();
   const { setActiveTab, setOpenTabs } = useHeader();
   const router = useRouter();
-  const db = useFirestore();
 
 
   const handleOpenRecipeTab = (recipeId: string, multiplier: number) => {
@@ -68,37 +64,23 @@ export default function MealPlansPage() {
         setActiveTab(recipeId);
     }, 100);
   };
+  
+  useEffect(() => {
+    const storedPlans = localStorage.getItem(MEAL_PLANS_COLLECTION);
+    if (storedPlans) {
+      setMealPlans(JSON.parse(storedPlans));
+    }
+    setIsLoading(false);
+  }, []);
 
   useEffect(() => {
-    if (!db) return;
-    const plansQuery = query(collection(db, MEAL_PLANS_COLLECTION), orderBy('createdAt', 'desc'));
+    if (!isLoading) {
+      localStorage.setItem(MEAL_PLANS_COLLECTION, JSON.stringify(mealPlans));
+    }
+  }, [mealPlans, isLoading]);
 
-    const unsubscribe = onSnapshot(plansQuery, (snapshot) => {
-      const plansData = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          name: data.name,
-          items: data.items || [],
-          createdAt: data.createdAt?.toDate(),
-        } as MealPlan;
-      });
-      setMealPlans(plansData);
-      setIsLoading(false);
-    }, (error) => {
-      console.error('Failed to load meal plans from Firestore', error);
-      toast({
-        title: 'שגיאה',
-        description: 'לא ניתן היה לטעון את תכניות הארוחות.',
-        variant: 'destructive',
-      });
-      setIsLoading(false);
-    });
 
-    return () => unsubscribe();
-  }, [toast, db]);
-
-  const handleAddPlan = async (e: React.FormEvent) => {
+  const handleAddPlan = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPlanName.trim()) {
       toast({
@@ -108,117 +90,85 @@ export default function MealPlansPage() {
       });
       return;
     }
-    if (!db) return;
     
-    setIsSaving(true);
-    try {
-      await addDoc(collection(db, MEAL_PLANS_COLLECTION), {
-        name: newPlanName,
-        createdAt: Timestamp.now(),
-        items: [],
-      });
-      setNewPlanName('');
-      toast({
-        title: 'תכנית חדשה נוצרה!',
-        description: `תכנית "${newPlanName}" נוספה.`,
-      });
-    } catch (error) {
-      console.error('Failed to save plan to Firestore', error);
-      toast({
-        title: 'שגיאת שמירה',
-        description: 'לא ניתן היה לשמור את התכנית. נסה שוב.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSaving(false);
-    }
+    const newPlan: MealPlan = {
+      id: generateId(),
+      name: newPlanName,
+      createdAt: new Date(),
+      items: [],
+    };
+
+    setMealPlans(prev => [newPlan, ...prev]);
+    setNewPlanName('');
+    toast({
+      title: 'תכנית חדשה נוצרה!',
+      description: `תכנית "${newPlanName}" נוספה.`,
+    });
   };
 
-  const handleDeletePlan = async (planId: string) => {
-    if (!db) return;
-    try {
-      await deleteDoc(doc(db, MEAL_PLANS_COLLECTION, planId));
-      toast({
-        title: 'התכנית נמחקה',
-        variant: 'destructive'
-      });
-    } catch (error) {
-      console.error('Failed to delete plan:', error);
-      toast({
-        title: 'שגיאת מחיקה',
-        description: 'לא ניתן היה למחוק את התכנית.',
-        variant: 'destructive',
-      });
-    }
+  const handleDeletePlan = (planId: string) => {
+    setMealPlans(prev => prev.filter(p => p.id !== planId));
+    toast({
+      title: 'התכנית נמחקה',
+      variant: 'destructive'
+    });
   };
   
-  const handleAddRecipeToPlan = async (plan: MealPlan, recipeId: string) => {
-    if (!recipeId || !db) return;
-    try {
-        const planRef = doc(db, MEAL_PLANS_COLLECTION, plan.id);
+  const handleAddRecipeToPlan = (planId: string, recipeId: string) => {
+    if (!recipeId) return;
+
+    setMealPlans(prev => prev.map(plan => {
+      if (plan.id === planId) {
         const existingItemIndex = plan.items.findIndex(item => item.recipeId === recipeId);
-
+        let updatedItems: MealPlanItem[];
         if (existingItemIndex > -1) {
-            // If item already exists, just increment its multiplier
-            const updatedItems = [...plan.items];
-            updatedItems[existingItemIndex].multiplier += 1;
-            await updateDoc(planRef, { items: updatedItems });
+          updatedItems = [...plan.items];
+          updatedItems[existingItemIndex].multiplier += 1;
         } else {
-            // Otherwise, add a new item
-            const newItem: MealPlanItem = { id: generateId(), recipeId, multiplier: 1 };
-            const updatedItems = [...plan.items, newItem];
-            await updateDoc(planRef, { items: updatedItems });
+          updatedItems = [...plan.items, { id: generateId(), recipeId, multiplier: 1 }];
         }
+        return { ...plan, items: updatedItems };
+      }
+      return plan;
+    }));
         
-        setPopoverOpen(prev => ({...prev, [plan.id]: false}));
-        toast({ title: "מתכון נוסף לתכנית" });
-    } catch (error) {
-        console.error("Error adding recipe to plan:", error);
-        toast({ title: 'שגיאה', description: 'לא ניתן היה להוסיף את המתכון.', variant: 'destructive' });
-    }
+    setPopoverOpen(prev => ({...prev, [planId]: false}));
+    toast({ title: "מתכון נוסף לתכנית" });
   };
 
-  const handleUpdateRecipeMultiplier = useCallback(async (plan: MealPlan, itemId: string, change: number) => {
-    if (!db) return;
-    const planRef = doc(db, MEAL_PLANS_COLLECTION, plan.id);
-    const itemIndex = plan.items.findIndex(item => item.id === itemId);
+  const handleUpdateRecipeMultiplier = useCallback((planId: string, itemId: string, change: number) => {
+    setMealPlans(prev => prev.map(plan => {
+      if (plan.id === planId) {
+        const itemIndex = plan.items.findIndex(item => item.id === itemId);
+        if (itemIndex === -1) return plan;
 
-    if (itemIndex === -1) return;
+        const updatedItems = [...plan.items];
+        const newMultiplier = updatedItems[itemIndex].multiplier + change;
 
-    const updatedItems = [...plan.items];
-    const newMultiplier = updatedItems[itemIndex].multiplier + change;
-
-    if (newMultiplier <= 0) {
-      // Remove item if multiplier is 0 or less
-      updatedItems.splice(itemIndex, 1);
-    } else {
-      updatedItems[itemIndex].multiplier = newMultiplier;
-    }
-    
-    try {
-      await updateDoc(planRef, { items: updatedItems });
-    } catch (error) {
-       console.error("Error updating recipe multiplier:", error);
-       toast({ title: 'שגיאה', description: 'לא ניתן היה לעדכן את כמות המתכון.', variant: 'destructive' });
-    }
-  }, [toast, db]);
+        if (newMultiplier <= 0) {
+          updatedItems.splice(itemIndex, 1);
+        } else {
+          updatedItems[itemIndex].multiplier = newMultiplier;
+        }
+        return { ...plan, items: updatedItems };
+      }
+      return plan;
+    }));
+  }, []);
   
-  const handleRemoveRecipeFromPlan = useCallback(async (plan: MealPlan, itemId: string) => {
-    if (!db) return;
-    const planRef = doc(db, MEAL_PLANS_COLLECTION, plan.id);
-    const updatedItems = plan.items.filter(item => item.id !== itemId);
-    
-    try {
-        await updateDoc(planRef, { items: updatedItems });
-        toast({
-            title: "המתכון הוסר מהתכנית",
-            variant: "destructive"
-        });
-    } catch (error) {
-        console.error("Error removing recipe from plan:", error);
-        toast({ title: 'שגיאה', description: 'לא ניתן היה להסיר את המתכון.', variant: 'destructive' });
-    }
-  }, [toast, db]);
+  const handleRemoveRecipeFromPlan = useCallback((planId: string, itemId: string) => {
+    setMealPlans(prev => prev.map(plan => {
+      if (plan.id === planId) {
+        return { ...plan, items: plan.items.filter(item => item.id !== itemId) };
+      }
+      return plan;
+    }));
+
+    toast({
+        title: "המתכון הוסר מהתכנית",
+        variant: "destructive"
+    });
+  }, []);
 
 
   const handleAddPlanToShoppingList = (plan: MealPlan) => {
@@ -272,11 +222,10 @@ export default function MealPlansPage() {
                 onChange={(e) => setNewPlanName(e.target.value)}
                 placeholder="שם התכנית"
                 className="text-base"
-                disabled={isSaving}
                 />
-                 <Button type="submit" disabled={isSaving}>
-                    {isSaving ? <Loader2 className="animate-spin" /> : <PlusCircle />}
-                    {isSaving ? 'יוצר...' : 'צור תכנית'}
+                 <Button type="submit">
+                    <PlusCircle />
+                    צור תכנית
                 </Button>
             </div>
           </CardContent>
@@ -297,7 +246,7 @@ export default function MealPlansPage() {
                     <CardTitle className="text-2xl font-headline text-accent">{plan.name}</CardTitle>
                     {plan.createdAt && (
                       <p className="text-xs text-muted-foreground mt-1">
-                        נוצר ב: {format(plan.createdAt, 'dd/MM/yyyy')}
+                        נוצר ב: {format(new Date(plan.createdAt), 'dd/MM/yyyy')}
                       </p>
                     )}
                   </div>
@@ -349,7 +298,7 @@ export default function MealPlansPage() {
                                         <CommandItem
                                             key={recipe.id}
                                             value={recipe.name}
-                                            onSelect={() => handleAddRecipeToPlan(plan, recipe.id)}
+                                            onSelect={() => handleAddRecipeToPlan(plan.id, recipe.id)}
                                         >
                                             <Check
                                                 className={cn(
@@ -381,13 +330,13 @@ export default function MealPlansPage() {
                                         </span>
                                     </div>
                                     <div className="flex-shrink-0 flex items-center gap-1">
-                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-primary/80" onClick={() => handleUpdateRecipeMultiplier(plan, itemId, 1)} title="הוסף עוד אחד">
+                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-primary/80" onClick={() => handleUpdateRecipeMultiplier(plan.id, itemId, 1)} title="הוסף עוד אחד">
                                           <Plus size={16} />
                                       </Button>
-                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-primary/80" onClick={() => handleUpdateRecipeMultiplier(plan, itemId, -1)} title="הסר אחד">
+                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-primary/80" onClick={() => handleUpdateRecipeMultiplier(plan.id, itemId, -1)} title="הסר אחד">
                                           <Minus size={16} />
                                       </Button>
-                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleRemoveRecipeFromPlan(plan, itemId)} title="הסר את המתכון מהתכנית">
+                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleRemoveRecipeFromPlan(plan.id, itemId)} title="הסר את המתכון מהתכנית">
                                           <Trash2 size={16} />
                                       </Button>
                                     </div>

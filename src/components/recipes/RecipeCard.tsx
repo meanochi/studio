@@ -1,30 +1,26 @@
 'use client';
 
-import type { Recipe, MealPlan } from '@/types';
+import type { Recipe } from '@/types';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Clock, Users, Edit3, Trash2, Eye, CalendarPlus, Loader2, MoreVertical } from 'lucide-react';
+import { Clock, Users, Edit3, Trash2, Eye, CalendarPlus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { useToast } from '@/hooks/use-toast';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-  DialogClose,
-} from "@/components/ui/dialog";
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import React, { useState, useEffect, useMemo } from 'react';
-import { useFirestore } from '@/firebase/provider';
-import { collection, onSnapshot, query, doc, getDoc, updateDoc } from 'firebase/firestore';
-import { generateId } from '@/lib/utils';
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import React from 'react';
 
 
 interface RecipeCardProps {
@@ -35,29 +31,6 @@ interface RecipeCardProps {
 export default function RecipeCard({ recipe, onOpen }: RecipeCardProps) {
   const { deleteRecipe } = useRecipes();
   const { toast } = useToast();
-  const db = useFirestore();
-
-  const [isPlanDialogOpen, setIsPlanDialogOpen] = useState(false);
-  const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
-  const [selectedPlanId, setSelectedPlanId] = useState<string>('');
-  const [isAddingToPlan, setIsAddingToPlan] = useState(false);
-  const [planSearchTerm, setPlanSearchTerm] = useState('');
-
-  // Fetch meal plans when the dialog is about to open
-  useEffect(() => {
-    if (isPlanDialogOpen && db) {
-      const plansQuery = query(collection(db, 'mealPlans'));
-      const unsubscribe = onSnapshot(plansQuery, (snapshot) => {
-        const plansData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as MealPlan));
-        setMealPlans(plansData);
-        if (plansData.length > 0 && !selectedPlanId) {
-          setSelectedPlanId(plansData[0].id);
-        }
-      });
-      return () => unsubscribe();
-    }
-  }, [isPlanDialogOpen, selectedPlanId, db]);
-
 
   const handleDelete = () => {
     deleteRecipe(recipe.id);
@@ -67,55 +40,7 @@ export default function RecipeCard({ recipe, onOpen }: RecipeCardProps) {
       variant: 'destructive',
     });
   };
-  
-  const handleAddToPlan = async () => {
-    if (!selectedPlanId || !recipe.id || !db) {
-      toast({ title: "שגיאה", description: "אנא בחר תכנית.", variant: "destructive" });
-      return;
-    }
-    setIsAddingToPlan(true);
-    try {
-      const planRef = doc(db, 'mealPlans', selectedPlanId);
-      const planSnap = await getDoc(planRef);
-      if (planSnap.exists()) {
-        const planData = planSnap.data();
-        const items = planData.items || [];
-        const existingItemIndex = items.findIndex((item: any) => item.recipeId === recipe.id);
 
-        let updatedItems;
-        if (existingItemIndex > -1) {
-          updatedItems = [...items];
-          updatedItems[existingItemIndex].multiplier += 1;
-        } else {
-          updatedItems = [...items, { id: generateId(), recipeId: recipe.id, multiplier: 1 }];
-        }
-        await updateDoc(planRef, { items: updatedItems });
-        
-        toast({
-          title: "המתכון נוסף!",
-          description: `"${recipe?.name}" נוסף לתכנית "${planData.name}".`,
-        });
-        setIsPlanDialogOpen(false);
-      }
-    } catch (error) {
-      console.error("Error adding recipe to plan:", error);
-      toast({ title: 'שגיאה', description: 'לא ניתן היה להוסיף את המתכון לתכנית.', variant: 'destructive' });
-    } finally {
-      setIsAddingToPlan(false);
-      setPlanSearchTerm(''); // Reset search
-    }
-  };
-
-  const filteredMealPlans = useMemo(() => {
-    if (!planSearchTerm) {
-      return mealPlans;
-    }
-    return mealPlans.filter(plan =>
-      plan.name.toLowerCase().includes(planSearchTerm.toLowerCase())
-    );
-  }, [mealPlans, planSearchTerm]);
-
-  
   const totalTime = () => {
     return `${recipe.prepTime}${recipe.cookTime ? `, ${recipe.cookTime}` : ''}`;
   }
@@ -168,54 +93,25 @@ export default function RecipeCard({ recipe, onOpen }: RecipeCardProps) {
                     <Edit3 size={16} />
                 </Link>
             </Button>
-            <Dialog open={isPlanDialogOpen} onOpenChange={setIsPlanDialogOpen}>
-                <DialogTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" title="הוסף לתכנית">
-                        <CalendarPlus size={16} />
-                    </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                      <DialogTitle>הוסף את "{recipe.name}" לתכנית ארוחות</DialogTitle>
-                  </DialogHeader>
-                  {mealPlans.length > 0 ? (
-                      <div className="space-y-4 py-4">
-                          <Input
-                              placeholder="חפש תכנית..."
-                              value={planSearchTerm}
-                              onChange={(e) => setPlanSearchTerm(e.target.value)}
-                              className="mb-4"
-                          />
-                          <RadioGroup
-                              value={selectedPlanId}
-                              onValueChange={setSelectedPlanId}
-                              className="space-y-2 max-h-60 overflow-y-auto"
-                          >
-                              {filteredMealPlans.map(plan => (
-                                  <div key={plan.id} className="flex items-center space-x-2">
-                                      <RadioGroupItem value={plan.id} id={`card-${recipe.id}-${plan.id}`} />
-                                      <Label htmlFor={`card-${recipe.id}-${plan.id}`}>{plan.name}</Label>
-                                  </div>
-                              ))}
-                          </RadioGroup>
-                          {filteredMealPlans.length === 0 && (
-                              <p className="text-sm text-muted-foreground text-center">לא נמצאו תכניות תואמות.</p>
-                          )}
-                      </div>
-                  ) : (
-                      <div className="py-4 text-center text-muted-foreground">
-                          <p>לא נמצאו תכניות ארוחות.</p>
-                          <Button variant="link" asChild><Link href="/meal-plans">צור תכנית חדשה</Link></Button>
-                      </div>
-                  )}
-                  <DialogFooter>
-                      <DialogClose asChild><Button variant="ghost">ביטול</Button></DialogClose>
-                      <Button onClick={handleAddToPlan} disabled={isAddingToPlan || !selectedPlanId}>
-                          {isAddingToPlan ? <Loader2 className="animate-spin" /> : "הוסף לתכנית"}
-                      </Button>
-                  </DialogFooter>
-              </DialogContent>
-            </Dialog>
+            <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive/70 hover:text-destructive" title="מחק מתכון">
+                      <Trash2 size={16} />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>האם אתה בטוח?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            פעולה זו תמחק את המתכון "{recipe.name}" לצמיתות.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>ביטול</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete}>מחק</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
       </CardFooter>
     </Card>

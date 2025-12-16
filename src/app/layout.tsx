@@ -7,7 +7,6 @@ import Footer from '@/components/layout/Footer';
 import { Providers } from './providers';
 import { Belleza, Rubik } from 'next/font/google';
 import { Suspense } from 'react';
-import { FirebaseProvider } from '@/firebase/provider';
 
 
 const belleza = Belleza({
@@ -37,20 +36,18 @@ export default function RootLayout({
         <meta name="theme-color" content="#E07A5F" />
       </head>
       <body className="font-body antialiased">
-        <FirebaseProvider>
-          <Providers>
-            <div className="flex flex-col min-h-screen">
-              <Header />
-              <main className="flex-grow container mx-auto px-4 py-8">
-                <Suspense fallback={<div>Loading...</div>}>
-                  {children}
-                </Suspense>
-              </main>
-              <Footer />
-              <Toaster />
-            </div>
-          </Providers>
-        </FirebaseProvider>
+        <Providers>
+          <div className="flex flex-col min-h-screen">
+            <Header />
+            <main className="flex-grow container mx-auto px-4 py-8">
+              <Suspense fallback={<div>Loading...</div>}>
+                {children}
+              </Suspense>
+            </main>
+            <Footer />
+            <Toaster />
+          </div>
+        </Providers>
       </body>
     </html>
   );
