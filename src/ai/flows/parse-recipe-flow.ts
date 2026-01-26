@@ -7,7 +7,7 @@
  * - ParseRecipeInput - The input type for the parseRecipe function.
  * - ParseRecipeOutput - The return type for the parseRecipe function (matches RecipeFormData).
  */
-
+import { getAuth } from 'firebase-admin/auth';
 import { ai } from '@/ai/genkit';
 import { recipeSchema, RecipeFormData } from '@/components/recipes/RecipeSchema';
 import { z } from 'zod';
@@ -53,9 +53,20 @@ const parseRecipeFlow = ai.defineFlow(
     name: 'parseRecipeFlow',
     inputSchema: ParseRecipeInputSchema,
     outputSchema: recipeSchema,
+    authPolicy: (auth, input) => {
+      if (!auth) {
+        throw new Error('חובה להתחבר כדי להשתמש ב-AI');
+      }
+    },
   },
   async (input) => {
     const { output } = await prompt(input);
+        
+    if (!output) {
+      throw new Error("ה-AI לא הצליח להחזיר תוצאה. ייתכן שחרגת מהמכסה.");
+    }
+
     return output!;
   }
 );
+

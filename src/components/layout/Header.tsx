@@ -5,7 +5,7 @@ import { ChefHat, Home, ShoppingCart, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-
+import { AuthButton } from "@/components/AuthButton";
 
 const navItems = [
   { href: '/', label: 'בית', icon: Home },
@@ -23,6 +23,7 @@ export default function Header() {
           <h1 className="text-3xl font-headline">Lopiansky's Cookbook</h1>
           <ChefHat size={36} />
         </Link>
+        <AuthButton />
         <nav>
           <ul className="flex items-center space-x-1 sm:space-x-2 rtl:space-x">
             {navItems.map(item => (
