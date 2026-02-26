@@ -1,6 +1,6 @@
 import { initializeApp, getApps } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
-
+import { getFirestore, initializeFirestore } from "firebase/firestore"; // 1. הוסף ייבוא זה
 // הנתונים האלו הם "תעודת הזהות" של האתר שלך מול גוגל
 const firebaseConfig = {
   apiKey: "AIzaSyASF7deNn4S17yZLwUmMOU122LxjTI0ICU",
@@ -16,3 +16,6 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0
 
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+export const db = initializeFirestore(app, {
+  experimentalForceLongPolling: true, 
+});

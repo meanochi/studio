@@ -6,7 +6,8 @@ import { generateId } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import type { RecipeFormData } from '@/components/recipes/RecipeSchema';
 import initialRecipes from '@/lib/initial-recipes';
-
+import { db } from '@/lib/firebase'; 
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 interface RecipeContextType {
   recipes: Recipe[];
   addRecipe: (recipeData: RecipeFormData) => Promise<Recipe | null>;
@@ -31,29 +32,43 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [recentlyViewed, setRecentlyViewed] = useState<Recipe[]>([]);
   const [recentlyViewedIds, setRecentlyViewedIds] = useState<string[]>([]);
 
-  useEffect(() => {
+useEffect(() => {
+  const fetchRecipes = async () => {
+    setLoading(true);
     try {
-      const storedRecipes = localStorage.getItem(RECIPES_STORAGE_KEY);
-      if (storedRecipes) {
-        setRecipes(JSON.parse(storedRecipes));
-      } else {
-        // If no recipes in storage, load initial ones
-        setRecipes(initialRecipes);
+      // 1. ניסיון טעינה מהענן (Firebase)
+      const querySnapshot = await getDocs(collection(db, "recipes"));
+      const recipesData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Recipe[];
+      
+      setRecipes(recipesData);
+      
+      // 2. עדכון הגיבוי המקומי למקרה של חוסר אינטרנט בעתיד
+      localStorage.setItem(RECIPES_STORAGE_KEY, JSON.stringify(recipesData));
+    } catch (error) {
+      console.error("Firebase fetch failed, trying localStorage:", error);
+      // 3. גיבוי: אם אין אינטרנט, טען מהזיכרון המקומי
+      const stored = localStorage.getItem(RECIPES_STORAGE_KEY);
+      if (stored) {
+        setRecipes(JSON.parse(stored));
       }
-    } catch (error) {
-      console.error("Failed to load recipes from localStorage", error);
-      setRecipes(initialRecipes); // Fallback to initial data
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  }, []);
+  };
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(RECIPES_STORAGE_KEY, JSON.stringify(recipes));
-    } catch (error) {
-      console.error("Failed to save recipes to localStorage", error);
-    }
-  }, [recipes]);
+  fetchRecipes();
+}, []); // מערך תלות ריק מבטיח שזה ירוץ רק פעם אחת בטעינת האתר
+// 
+//   useEffect(() => {
+//     try {
+//       localStorage.setItem(RECIPES_STORAGE_KEY, JSON.stringify(recipes));
+//     } catch (error) {
+//       console.error("Failed to save recipes to localStorage", error);
+//     }
+//   }, [recipes]);
   
   useEffect(() => {
     try {
@@ -74,7 +89,17 @@ export const RecipeProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       setRecentlyViewed(viewedRecipes);
     }
   }, [recentlyViewedIds, recipes]);
-
+useEffect(() => {
+  const fetchRecipes = async () => {
+    const querySnapshot = await getDocs(collection(db, "recipes"));
+    const recipesData = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as Recipe[];
+    setRecipes(recipesData);
+  };
+  fetchRecipes();
+}, []);
 
   const addRecentlyViewed = useCallback((recipeId: string) => {
     setRecentlyViewedIds(prevIds => {
